@@ -114,7 +114,7 @@ export default function SignInPage() {
             Welcome back
           </h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Sign in to access your dashboard and custom prompts
+            Log in to access your dashboard and custom prompts
           </p>
         </div>
 
@@ -225,7 +225,7 @@ export default function SignInPage() {
             href="/register"
             className={`font-semibold text-brand hover:underline rounded ${focusRing}`}
           >
-            Sign Up
+            Register here
           </Link>
         </div>
       </div>
