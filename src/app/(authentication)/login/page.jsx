@@ -162,13 +162,6 @@ export default function SignInPage() {
               >
                 Password
               </label>
-              {/* Optional: Add a stylized link if password resets are implemented */}
-              <Link
-                href="/forgot-password"
-                className={`text-xs font-semibold text-brand hover:underline rounded ${focusRing}`}
-              >
-                Forgot password?
-              </Link>
             </div>
             <div className="relative w-full">
               <input
