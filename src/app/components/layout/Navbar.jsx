@@ -23,18 +23,18 @@ const NAV_LINKS = [
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
 
-// Desktop actions
+// Sleek, compact sizes for desktop (h-10, text-sm)
 const ghostBtn =
-  "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md px-3 text-base font-medium text-text-secondary transition-colors duration-150 hover:bg-surface-hover hover:text-text-primary " +
+  "inline-flex h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium text-text-secondary transition-colors duration-150 hover:bg-surface-hover hover:text-text-primary " +
   focusRing;
 const primaryBtn =
-  "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-brand px-4 text-base font-semibold text-on-brand transition-all duration-200 hover:bg-brand-hover active:scale-[0.98] " +
+  "inline-flex h-10 items-center justify-center gap-2 rounded-md bg-brand px-4 text-sm font-semibold text-on-brand transition-all duration-200 hover:bg-brand-hover active:scale-[0.98] " +
   focusRing;
 const iconBtn =
-  "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-text-secondary transition-colors duration-150 hover:bg-surface-hover hover:text-text-primary " +
+  "inline-flex h-10 w-10 items-center justify-center rounded-md text-text-secondary transition-colors duration-150 hover:bg-surface-hover hover:text-text-primary " +
   focusRing;
 
-// Mobile drawer actions (full-width, paired)
+// Keeping mobile drawer actions large and touch-friendly
 const outlineBlock =
   "inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md border text-base font-medium text-text-primary transition-colors duration-150 hover:bg-surface-hover " +
   focusRing;
@@ -42,7 +42,6 @@ const primaryBlock =
   "inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-brand text-base font-semibold text-on-brand transition-all duration-200 hover:bg-brand-hover active:scale-[0.98] " +
   focusRing;
 
-// Pass isLoggedIn={true} to show Dashboard + Logout instead of Login + Register.
 export function Navbar({ name = "Promptly", isLoggedIn = false }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -69,7 +68,7 @@ export function Navbar({ name = "Promptly", isLoggedIn = false }) {
   const isActive = (href) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
-  const ThemeButton = () => (
+  const ThemeButton = ({ iconClassName = "h-4 w-4" }) => (
     <button
       type="button"
       onClick={toggleTheme}
@@ -77,17 +76,17 @@ export function Navbar({ name = "Promptly", isLoggedIn = false }) {
       className={iconBtn}
     >
       {theme === "dark" ? (
-        <Moon className="h-5 w-5" />
+        <Moon className={iconClassName} />
       ) : (
-        <Sun className="h-5 w-5" />
+        <Sun className={iconClassName} />
       )}
     </button>
   );
 
   return (
     <header className="fixed left-0 right-0 top-0 z-50 border-b bg-surface">
-      <div className="mx-auto flex w-full h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo + website name */}
+      <div className="mx-auto flex h-16 w-full max-w-[1600px] items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Logo */}
         <Link
           href="/"
           aria-label={`${name} home`}
@@ -108,7 +107,7 @@ export function Navbar({ name = "Promptly", isLoggedIn = false }) {
               key={link.href}
               href={link.href}
               className={
-                "inline-flex h-16 items-center border-b-2 px-4 text-base transition-colors duration-150 " +
+                "inline-flex h-16 items-center border-b-2 px-4 text-sm transition-colors duration-150 " +
                 focusRing +
                 (isActive(link.href)
                   ? " border-brand font-semibold text-text-primary"
@@ -120,26 +119,26 @@ export function Navbar({ name = "Promptly", isLoggedIn = false }) {
           ))}
         </nav>
 
-        {/* Desktop actions */}
+        {/* Desktop actions (Optimized Sizes) */}
         <div className="hidden items-center gap-1 lg:flex">
-          <ThemeButton />
-          <span className="mx-2 h-6 w-px bg-border" aria-hidden="true" />
+          <ThemeButton iconClassName="h-4 w-4" />
+          <span className="mx-2 h-5 w-px bg-border" aria-hidden="true" />
           {isLoggedIn ? (
             <>
               <Link href="/dashboard" className={ghostBtn}>
-                <LayoutDashboard className="h-5 w-5" /> Dashboard
+                <LayoutDashboard className="h-4 w-4" /> Dashboard
               </Link>
               <button type="button" className={ghostBtn}>
-                <LogOut className="h-5 w-5" /> Logout
+                <LogOut className="h-4 w-4" /> Logout
               </button>
             </>
           ) : (
             <>
               <Link href="/login" className={ghostBtn}>
-                <LogIn className="h-5 w-5" /> Login
+                <LogIn className="h-4 w-4" /> Login
               </Link>
               <Link href="/register" className={primaryBtn}>
-                <UserPlus className="h-5 w-5" /> Register
+                <UserPlus className="h-4 w-4" /> Register
               </Link>
             </>
           )}
@@ -147,7 +146,7 @@ export function Navbar({ name = "Promptly", isLoggedIn = false }) {
 
         {/* Mobile controls */}
         <div className="flex items-center gap-1 lg:hidden">
-          <ThemeButton />
+          <ThemeButton iconClassName="h-5 w-5" />
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
@@ -162,7 +161,7 @@ export function Navbar({ name = "Promptly", isLoggedIn = false }) {
 
       {/* Mobile drawer */}
       {open && (
-        <nav className="bg-surface lg:hidden" aria-label="Mobile">
+        <nav className="bg-surface lg:hidden border-b" aria-label="Mobile">
           <ul className="px-3 py-2">
             {NAV_LINKS.map((link) => (
               <li key={link.href}>
@@ -170,11 +169,11 @@ export function Navbar({ name = "Promptly", isLoggedIn = false }) {
                   href={link.href}
                   onClick={() => setOpen(false)}
                   className={
-                    "flex min-h-[44px] items-center border-l-2 px-3 text-base transition-colors duration-150 " +
+                    "flex min-h-[44px] items-center border-l-2 px-3 text-base " +
                     focusRing +
                     (isActive(link.href)
                       ? " border-brand font-semibold text-text-primary"
-                      : " border-transparent font-medium text-text-secondary hover:text-text-primary")
+                      : " border-transparent font-medium text-text-secondary")
                   }
                 >
                   {link.label}
