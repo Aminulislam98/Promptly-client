@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Search, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -31,8 +31,11 @@ const fadeUp = {
 
 export function HeroBanner() {
   const [search, setSearch] = useState("");
+  const [mounted, setMounted] = useState(false);
   const { data: session } = authClient.useSession();
-  const isLoggedIn = !!session?.user;
+
+  useEffect(() => setMounted(true), []);
+  const isLoggedIn = mounted && !!session?.user;
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -42,15 +45,15 @@ export function HeroBanner() {
   };
 
   return (
-    <section className="w-full border-b bg-surface px-4 py-20 sm:px-6 sm:py-28 lg:px-8 lg:py-36">
-      <div className="mx-auto max-w-4xl">
+    <section className="w-full border-b bg-surface px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
+      <div className="mx-auto max-w-3xl">
         {/* Label */}
         <motion.p
           custom={0}
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="text-base font-semibold uppercase tracking-widest text-brand"
+          className="text-sm font-semibold uppercase tracking-widest text-brand"
         >
           AI Prompt Marketplace
         </motion.p>
@@ -61,11 +64,10 @@ export function HeroBanner() {
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="mt-4 text-2xl font-bold leading-tight text-text-primary sm:text-3xl lg:text-4xl"
+          className="mt-3 text-2xl font-bold leading-tight text-text-primary sm:text-3xl lg:text-4xl"
         >
           Discover, Share &amp; Master
-          <br />
-          AI Prompts for Every Tool
+          <br className="hidden sm:block" /> AI Prompts for Every Tool
         </motion.h1>
 
         {/* Subtext */}
@@ -74,11 +76,10 @@ export function HeroBanner() {
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="mt-5 max-w-2xl text-base leading-relaxed text-text-secondary"
+          className="mt-4 max-w-xl text-base leading-relaxed text-text-secondary"
         >
           A community-driven platform for high-quality prompts across ChatGPT,
-          Gemini, Claude, Midjourney, and more. Find what works, copy it, and
-          create faster.
+          Gemini, Claude, Midjourney, and more.
         </motion.p>
 
         {/* Search */}
@@ -88,7 +89,7 @@ export function HeroBanner() {
           animate="visible"
           variants={fadeUp}
           onSubmit={handleSearch}
-          className="mt-8 flex w-full max-w-2xl items-center gap-3 border-b-2 border-border pb-2 transition-colors focus-within:border-brand"
+          className="mt-8 flex w-full items-center gap-2 border-b-2 border-border pb-2 transition-colors focus-within:border-brand"
         >
           <Search className="h-5 w-5 shrink-0 text-text-secondary" />
           <input
@@ -101,11 +102,11 @@ export function HeroBanner() {
           <button
             type="submit"
             className={
-              "inline-flex h-10 items-center gap-2 rounded-md bg-brand px-5 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] " +
+              "shrink-0 text-base font-semibold text-brand transition-colors hover:text-brand-hover " +
               focusRing
             }
           >
-            Search <ArrowRight className="h-4 w-4" />
+            Search →
           </button>
         </motion.form>
 
@@ -115,9 +116,9 @@ export function HeroBanner() {
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="mt-6 flex flex-wrap items-center gap-2"
+          className="mt-5 flex flex-wrap items-center gap-2"
         >
-          <span className="text-base font-medium text-text-secondary">
+          <span className="text-sm font-medium text-text-secondary">
             Trending:
           </span>
           {TRENDING_TAGS.map((tag) => (
@@ -125,7 +126,7 @@ export function HeroBanner() {
               key={tag}
               href={`/prompts?search=${tag}`}
               className={
-                "rounded-md border px-3 py-1 text-base font-medium text-text-secondary transition-colors hover:border-brand hover:text-brand " +
+                "rounded-md border px-2.5 py-1 text-sm font-medium text-text-secondary transition-colors hover:border-brand hover:text-brand " +
                 focusRing
               }
             >
@@ -140,12 +141,12 @@ export function HeroBanner() {
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="mt-10 flex flex-wrap items-center gap-4"
+          className="mt-8 flex flex-wrap items-center gap-3"
         >
           <Link
             href="/prompts"
             className={
-              "inline-flex h-11 items-center gap-2 rounded-md bg-brand px-6 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] " +
+              "inline-flex h-11 items-center gap-2 rounded-md bg-brand px-5 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] " +
               focusRing
             }
           >
@@ -155,7 +156,7 @@ export function HeroBanner() {
             <Link
               href="/register"
               className={
-                "inline-flex h-11 items-center gap-2 rounded-md border px-6 text-base font-semibold text-text-primary transition-colors hover:bg-surface-hover active:scale-[0.98] " +
+                "inline-flex h-11 items-center gap-2 rounded-md border px-5 text-base font-semibold text-text-primary transition-colors hover:bg-surface-hover active:scale-[0.98] " +
                 focusRing
               }
             >
