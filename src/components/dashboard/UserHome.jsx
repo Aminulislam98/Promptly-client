@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -9,7 +7,6 @@ import {
   Crown,
   PlusCircle,
 } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
@@ -41,39 +38,16 @@ const QUICK_LINKS = [
   },
 ];
 
-export default function DashboardOverviewPage() {
-  const { data: session, isPending } = authClient.useSession();
-  const user = session?.user;
-
-  // Skeleton while loading
-  if (isPending) {
-    return (
-      <div className="flex flex-col gap-6">
-        <div className="h-10 w-64 animate-pulse rounded-lg bg-surface-hover" />
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              className="h-24 animate-pulse rounded-xl bg-surface-hover"
-            />
-          ))}
-        </div>
-        <div className="h-28 animate-pulse rounded-xl bg-surface-hover" />
-      </div>
-    );
-  }
-
-  // Replace these with real API values later
+export default function UserHome({ user }) {
   const stats = [
-    { label: "Total Prompts", value: "2 / 3" },
+    { label: "Total Prompts", value: "0 / 3" },
     { label: "Saved Prompts", value: "0" },
     { label: "Reviews Given", value: "0" },
-    { label: "Plan", value: user?.isPremium ? "Premium" : "Free" },
+    { label: "Plan", value: "Free" },
   ];
 
   return (
     <section>
-      {/* Heading */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold leading-tight text-text-primary">
           Welcome back, {user?.name?.split(" ")[0] ?? "there"}
@@ -98,7 +72,7 @@ export default function DashboardOverviewPage() {
         ))}
       </div>
 
-      {/* Upgrade banner — free users only */}
+      {/* Upgrade banner */}
       {!user?.isPremium && (
         <div className="mt-6 flex flex-col gap-3 rounded-xl border border-brand bg-brand-light px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
