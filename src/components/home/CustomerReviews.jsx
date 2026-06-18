@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Star, MessageSquare } from "lucide-react";
 
 // Replace with real API call later
 const REVIEWS = [
@@ -62,104 +63,101 @@ const REVIEWS = [
 
 function Stars({ rating }) {
   return (
-    <div
-      className="flex items-center gap-0.5"
-      aria-label={`${rating} out of 5`}
-    >
+    <div className="flex items-center gap-1" aria-label={`${rating} out of 5`}>
       {[1, 2, 3, 4, 5].map((s) => (
-        <svg
+        <Star
           key={s}
-          viewBox="0 0 16 16"
-          className={
-            "h-4 w-4 " +
-            (s <= rating
-              ? "fill-warning text-warning"
-              : "fill-border text-border")
-          }
+          // Swapped out black/gray for premium vibrant rating gold
+          className={`h-5 w-5 ${
+            s <= rating
+              ? "text-amber-500 fill-amber-500"
+              : "text-text-primary/20 fill-transparent"
+          }`}
           aria-hidden="true"
-        >
-          <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25z" />
-        </svg>
+        />
       ))}
     </div>
   );
 }
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i = 0) => ({
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.03 },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.4, delay: i * 0.08 },
-  }),
+    transition: { duration: 0.4, ease: "easeOut" },
+  },
 };
 
 export function CustomerReviews() {
   return (
-    <section className="w-full border-b bg-surface px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="max-w-2xl">
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-base font-semibold uppercase tracking-widest text-brand"
-          >
-            Reviews
-          </motion.p>
-          <motion.h2
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="mt-2 text-xl font-bold leading-tight text-text-primary sm:text-2xl"
-          >
-            What people are saying
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-            className="mt-3 text-base leading-relaxed text-text-secondary"
-          >
+    <section className="w-full bg-page-bg py-12">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        {/* Large Typography Header Block */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10 pb-4 border-b-2 border-border">
+          <div>
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-text-primary px-3 py-1 text-xs font-extrabold uppercase tracking-widest text-surface shadow-sm">
+              <MessageSquare className="h-3.5 w-3.5" /> Reviews
+            </div>
+            <h2 className="mt-4 text-2xl font-black tracking-tight text-text-primary sm:text-3xl max-w-2xl">
+              What people are saying
+            </h2>
+          </div>
+          <p className="text-sm font-bold text-text-primary sm:text-base max-w-md sm:text-right">
             Real feedback from real users across the Promptly community.
-          </motion.p>
+          </p>
         </div>
 
-        {/* Reviews grid */}
-        <div className="mt-10 grid grid-cols-1 gap-px border bg-border sm:grid-cols-2 lg:grid-cols-3">
-          {REVIEWS.map((review, i) => (
+        {/* High-Contrast Full Screen Responsive Grid */}
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={containerVariants}
+          className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+        >
+          {REVIEWS.map((review) => (
             <motion.article
               key={review._id}
-              custom={i}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeUp}
-              className="flex flex-col gap-4 bg-surface p-6"
+              variants={cardVariants}
+              className="group flex flex-col justify-between rounded-2xl bg-surface p-6 border-2 border-border transition-colors duration-200 hover:border-text-primary"
             >
-              <Stars rating={review.rating} />
+              <div>
+                {/* Premium Golden Stars */}
+                <Stars rating={review.rating} />
 
-              <p className="flex-1 text-base leading-relaxed text-text-primary">
-                &ldquo;{review.comment}&rdquo;
-              </p>
+                {/* Scaled & Legible Comment Body */}
+                <p className="mt-5 text-base font-bold leading-relaxed text-text-primary sm:text-lg">
+                  &ldquo;{review.comment}&rdquo;
+                </p>
+              </div>
 
-              <div className="flex items-center gap-3 border-t pt-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center border bg-brand text-base font-bold text-on-brand">
+              {/* Stack-Safe Footer Info Container */}
+              <div className="mt-8 pt-4 border-t-2 border-border flex items-center gap-4">
+                {/* Monochromatic Geometric Avatar */}
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-text-primary text-base font-black text-surface tracking-wide transition-transform duration-300 group-hover:scale-105">
                   {review.name.charAt(0)}
                 </div>
-                <div>
-                  <p className="text-base font-semibold text-text-primary">
+
+                <div className="min-w-0">
+                  <p className="text-base font-black text-text-primary tracking-tight truncate">
                     {review.name}
                   </p>
-                  <p className="text-base text-text-secondary">{review.role}</p>
+                  <p className="text-xs font-black text-brand uppercase tracking-wider mt-0.5">
+                    {review.role}
+                  </p>
                 </div>
               </div>
             </motion.article>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

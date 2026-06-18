@@ -1,9 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Copy, FileText } from "lucide-react";
+import { Copy, FileText, Award } from "lucide-react";
 
-// Replace with real API call later
 const TOP_CREATORS = [
   { _id: "1", name: "John Doe", prompts: 24, copies: 420, initials: "JD" },
   { _id: "2", name: "Jane Smith", prompts: 18, copies: 310, initials: "JS" },
@@ -13,90 +12,109 @@ const TOP_CREATORS = [
   { _id: "6", name: "Lena Park", prompts: 9, copies: 143, initials: "LP" },
 ];
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i = 0) => ({
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.03 },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.4, delay: i * 0.08 },
-  }),
+    transition: { duration: 0.4, ease: "easeOut" },
+  },
 };
 
 export function TopCreators() {
   return (
-    <section className="w-full border-b bg-page-bg px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="max-w-2xl">
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-base font-semibold uppercase tracking-widest text-brand"
-          >
-            Community
-          </motion.p>
-          <motion.h2
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="mt-2 text-xl font-bold leading-tight text-text-primary sm:text-2xl"
-          >
-            Top Creators
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-            className="mt-3 text-base leading-relaxed text-text-secondary"
-          >
-            Meet the people building the best prompts on Promptly.
-          </motion.p>
+    <section className="w-full bg-page-bg py-12">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        {/* Unified Header Layout */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+          <div>
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-600 px-3 py-1 text-xs font-extrabold uppercase tracking-widest text-white shadow-sm">
+              <Award className="h-3.5 w-3.5 fill-white" /> Leaderboard
+            </div>
+            <h2 className="mt-4 text-2xl font-black tracking-tight text-text-primary sm:text-3xl max-w-2xl">
+              Top Creators
+            </h2>
+          </div>
+          <p className="text-sm font-bold text-text-primary sm:text-base max-w-md sm:text-right">
+            Meet the power users crafting the community's best prompts.
+          </p>
         </div>
 
-        {/* Creators grid */}
-        <div className="mt-10 grid grid-cols-1 gap-px border bg-border sm:grid-cols-2 lg:grid-cols-3">
+        {/* Grid Layout */}
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={containerVariants}
+          className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+        >
           {TOP_CREATORS.map((creator, i) => (
             <motion.div
               key={creator._id}
-              custom={i}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeUp}
-              className="flex items-center gap-5 bg-surface p-6"
+              variants={cardVariants}
+              className="group flex flex-col justify-between rounded-2xl bg-surface p-5 border-2 border-border transition-colors duration-200 hover:border-text-primary"
             >
-              {/* Rank */}
-              <span className="w-6 shrink-0 text-lg font-bold text-text-secondary">
-                {String(i + 1).padStart(2, "0")}
-              </span>
+              {/* Top Block: Profile Identity & Rank position */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  {/* Glassmorphism Blurred Avatar Badge */}
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-text-primary/10 border border-border backdrop-blur-md text-sm font-black text-text-primary transition-transform duration-300 group-hover:scale-105">
+                    {creator.initials}
+                  </div>
 
-              {/* Avatar */}
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center border bg-brand text-base font-bold text-on-brand">
-                {creator.initials}
+                  {/* Identity Labels */}
+                  <div className="min-w-0">
+                    <h3 className="text-base font-black text-text-primary tracking-tight truncate sm:text-lg">
+                      {creator.name}
+                    </h3>
+                    <p className="text-[11px] font-black text-brand uppercase tracking-wider mt-0.5">
+                      Pro Engineer
+                    </p>
+                  </div>
+                </div>
+
+                {/* Clean Geometric Rank Indicator Pill */}
+                <span className="text-xs font-black tracking-tighter text-text-primary bg-page-bg border-2 border-border px-2.5 py-1 rounded-lg shrink-0 group-hover:border-text-primary transition-colors">
+                  #{String(i + 1).padStart(2, "0")}
+                </span>
               </div>
 
-              {/* Info */}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-base font-semibold text-text-primary">
-                  {creator.name}
-                </p>
-                <div className="mt-1 flex items-center gap-4 text-base text-text-secondary">
-                  <span className="flex items-center gap-1">
-                    <FileText className="h-3.5 w-3.5" />
-                    {creator.prompts} prompts
+              {/* Bottom Block: Isolated Metrics Grid */}
+              <div className="mt-6 pt-4 border-t-2 border-border grid grid-cols-2 gap-2 text-center">
+                <div className="flex flex-col items-center justify-center border-r-2 border-border pr-2">
+                  <div className="flex items-center gap-1.5">
+                    <FileText className="h-4 w-4 text-indigo-500" />
+                    <span className="text-lg font-black text-text-primary leading-none">
+                      {creator.prompts}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-text-primary/60 mt-1.5">
+                    Prompts
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Copy className="h-3.5 w-3.5" />
-                    {creator.copies} copies
+                </div>
+
+                <div className="flex flex-col items-center justify-center pl-2">
+                  <div className="flex items-center gap-1.5">
+                    <Copy className="h-4 w-4 text-amber-500" />
+                    <span className="text-lg font-black text-text-primary leading-none">
+                      {creator.copies}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-text-primary/60 mt-1.5">
+                    Copies
                   </span>
                 </div>
               </div>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

@@ -25,7 +25,11 @@ const fadeUp = {
   visible: (i = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, delay: i * 0.1 },
+    transition: {
+      duration: 0.6,
+      delay: i * 0.08,
+      ease: [0.21, 0.47, 0.32, 0.98],
+    },
   }),
 };
 
@@ -40,20 +44,21 @@ export function HeroBanner() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (search.trim()) {
-      window.location.href = `/prompts?search=${encodeURIComponent(search)}`;
+      window.location.href = `/prompts?search=${encodeURIComponent(search.trim())}`;
     }
   };
 
   return (
-    <section className="w-full border-b bg-surface px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
-      <div className="mx-auto max-w-3xl">
+    <section className="relative w-full overflow-hidden border-b bg-surface px-4 py-20 sm:px-8 md:py-28 lg:py-36 xl:py-40">
+      {/* Container optimized for wide screen displays */}
+      <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
         {/* Label */}
         <motion.p
           custom={0}
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="text-sm font-semibold uppercase tracking-widest text-brand"
+          className="text-xs font-bold uppercase tracking-widest text-brand sm:text-sm"
         >
           AI Prompt Marketplace
         </motion.p>
@@ -64,10 +69,13 @@ export function HeroBanner() {
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="mt-3 text-2xl font-bold leading-tight text-text-primary sm:text-3xl lg:text-4xl"
+          className="mt-4 text-3xl font-extrabold tracking-tight text-text-primary sm:text-4xl md:text-5xl lg:text-6xl lg:leading-[1.15]"
         >
-          Discover, Share &amp; Master
-          <br className="hidden sm:block" /> AI Prompts for Every Tool
+          Discover, Share &amp; Master <br className="hidden sm:inline" />
+          <span className="bg-gradient-to-r from-brand to-brand-hover bg-clip-text text-transparent">
+            AI Prompts
+          </span>{" "}
+          for Every Tool
         </motion.h1>
 
         {/* Subtext */}
@@ -76,37 +84,34 @@ export function HeroBanner() {
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="mt-4 max-w-xl text-base leading-relaxed text-text-secondary"
+          className="mt-6 max-w-2xl text-base leading-relaxed text-text-secondary sm:text-lg md:text-xl"
         >
           A community-driven platform for high-quality prompts across ChatGPT,
           Gemini, Claude, Midjourney, and more.
         </motion.p>
 
-        {/* Search */}
+        {/* Search Input Group */}
         <motion.form
           custom={3}
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           onSubmit={handleSearch}
-          className="mt-8 flex w-full items-center gap-2 border-b-2 border-border pb-2 transition-colors focus-within:border-brand"
+          className="mt-10 flex w-full max-w-2xl items-center gap-3 rounded-full border bg-background px-4 py-2.5 shadow-sm transition-all duration-200 focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10 sm:px-5 sm:py-3"
         >
-          <Search className="h-5 w-5 shrink-0 text-text-secondary" />
+          <Search className="h-5 w-5 shrink-0 text-text-muted" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search prompts, tags, AI tools..."
-            className="flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted outline-none"
+            className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none sm:text-base"
           />
           <button
             type="submit"
-            className={
-              "shrink-0 text-base font-semibold text-brand transition-colors hover:text-brand-hover " +
-              focusRing
-            }
+            className={`shrink-0 rounded-full bg-brand px-4 py-1.5 text-sm font-semibold text-on-brand transition-colors hover:bg-brand-hover sm:px-5 sm:py-2 ${focusRing}`}
           >
-            Search →
+            Search
           </button>
         </motion.form>
 
@@ -116,19 +121,16 @@ export function HeroBanner() {
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="mt-5 flex flex-wrap items-center gap-2"
+          className="mt-6 flex flex-wrap justify-center items-center gap-2 px-4"
         >
-          <span className="text-sm font-medium text-text-secondary">
+          <span className="text-xs font-semibold uppercase tracking-wider text-text-muted mr-1 sm:text-sm">
             Trending:
           </span>
           {TRENDING_TAGS.map((tag) => (
             <Link
               key={tag}
               href={`/prompts?search=${tag}`}
-              className={
-                "rounded-md border px-2.5 py-1 text-sm font-medium text-text-secondary transition-colors hover:border-brand hover:text-brand " +
-                focusRing
-              }
+              className={`rounded-full border bg-background px-3 py-1 text-xs font-medium text-text-secondary transition-colors hover:border-brand hover:text-brand sm:text-sm ${focusRing}`}
             >
               {tag}
             </Link>
@@ -141,24 +143,18 @@ export function HeroBanner() {
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="mt-8 flex flex-wrap items-center gap-3"
+          className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto"
         >
           <Link
             href="/prompts"
-            className={
-              "inline-flex h-11 items-center gap-2 rounded-md bg-brand px-5 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] " +
-              focusRing
-            }
+            className={`inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-brand px-6 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] shadow-md shadow-brand/10 ${focusRing}`}
           >
             Browse All Prompts <ArrowRight className="h-4 w-4" />
           </Link>
           {!isLoggedIn && (
             <Link
               href="/register"
-              className={
-                "inline-flex h-11 items-center gap-2 rounded-md border px-5 text-base font-semibold text-text-primary transition-colors hover:bg-surface-hover active:scale-[0.98] " +
-                focusRing
-              }
+              className={`inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl border bg-background px-6 text-base font-semibold text-text-primary transition-colors hover:bg-surface-hover active:scale-[0.98] ${focusRing}`}
             >
               Get Started Free
             </Link>
