@@ -140,9 +140,7 @@ export default function DashboardLayout({ children }) {
           (expanded ? "lg:ml-56" : "lg:ml-16")
         }
       >
-        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-          {children}
-        </div>
+        <div className="p-4 sm:p-6">{children}</div>
       </main>
 
       {/* Mobile bottom tab bar */}
