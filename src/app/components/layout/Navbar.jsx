@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Command,
   Menu,
@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   UserPlus,
 } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -23,7 +24,6 @@ const NAV_LINKS = [
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
 
-// Sleek, compact sizes for desktop (h-10, text-sm)
 const ghostBtn =
   "inline-flex h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium text-text-secondary transition-colors duration-150 hover:bg-surface-hover hover:text-text-primary " +
   focusRing;
@@ -33,8 +33,6 @@ const primaryBtn =
 const iconBtn =
   "inline-flex h-10 w-10 items-center justify-center rounded-md text-text-secondary transition-colors duration-150 hover:bg-surface-hover hover:text-text-primary " +
   focusRing;
-
-// Keeping mobile drawer actions large and touch-friendly
 const outlineBlock =
   "inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md border text-base font-medium text-text-primary transition-colors duration-150 hover:bg-surface-hover " +
   focusRing;
@@ -42,10 +40,21 @@ const primaryBlock =
   "inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-brand text-base font-semibold text-on-brand transition-all duration-200 hover:bg-brand-hover active:scale-[0.98] " +
   focusRing;
 
-export function Navbar({ name = "Promptly", isLoggedIn = false }) {
+function getDashboardPath(role) {
+  if (role === "admin") return "/admin";
+  if (role === "creator") return "/creator";
+  return "/dashboard";
+}
+
+export function Navbar({ name = "Promptly" }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState(null);
+
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
+  const dashboardPath = getDashboardPath(user?.role);
 
   useEffect(() => {
     const stored = localStorage.getItem("theme");
@@ -63,6 +72,13 @@ export function Navbar({ name = "Promptly", isLoggedIn = false }) {
     setTheme(next);
     localStorage.setItem("theme", next);
     document.documentElement.classList.toggle("dark", next === "dark");
+  };
+
+  const handleLogout = async () => {
+    await authClient.signOut();
+    setOpen(false);
+    router.push("/");
+    router.refresh();
   };
 
   const isActive = (href) =>
@@ -83,6 +99,71 @@ export function Navbar({ name = "Promptly", isLoggedIn = false }) {
     </button>
   );
 
+  const AuthDesktop = () => {
+    if (isPending)
+      return (
+        <span className="h-10 w-32 animate-pulse rounded-md bg-surface-hover" />
+      );
+    if (user)
+      return (
+        <>
+          <Link href={dashboardPath} className={ghostBtn}>
+            <LayoutDashboard className="h-4 w-4" /> Dashboard
+          </Link>
+          <button type="button" onClick={handleLogout} className={ghostBtn}>
+            <LogOut className="h-4 w-4" /> Logout
+          </button>
+        </>
+      );
+    return (
+      <>
+        <Link href="/login" className={ghostBtn}>
+          <LogIn className="h-4 w-4" /> Login
+        </Link>
+        <Link href="/register" className={primaryBtn}>
+          <UserPlus className="h-4 w-4" /> Register
+        </Link>
+      </>
+    );
+  };
+
+  const AuthMobile = () => {
+    if (isPending) return null;
+    if (user)
+      return (
+        <>
+          <Link
+            href={dashboardPath}
+            onClick={() => setOpen(false)}
+            className={outlineBlock}
+          >
+            <LayoutDashboard className="h-5 w-5" /> Dashboard
+          </Link>
+          <button type="button" onClick={handleLogout} className={outlineBlock}>
+            <LogOut className="h-5 w-5" /> Logout
+          </button>
+        </>
+      );
+    return (
+      <>
+        <Link
+          href="/login"
+          onClick={() => setOpen(false)}
+          className={outlineBlock}
+        >
+          <LogIn className="h-5 w-5" /> Login
+        </Link>
+        <Link
+          href="/register"
+          onClick={() => setOpen(false)}
+          className={primaryBlock}
+        >
+          <UserPlus className="h-5 w-5" /> Register
+        </Link>
+      </>
+    );
+  };
+
   return (
     <header className="fixed left-0 right-0 top-0 z-50 border-b bg-surface">
       <div className="mx-auto flex h-16 w-full max-w-[1600px] items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -100,7 +181,7 @@ export function Navbar({ name = "Promptly", isLoggedIn = false }) {
           </span>
         </Link>
 
-        {/* Desktop links */}
+        {/* Desktop nav links */}
         <nav className="hidden items-center lg:flex" aria-label="Primary">
           {NAV_LINKS.map((link) => (
             <Link
@@ -119,29 +200,11 @@ export function Navbar({ name = "Promptly", isLoggedIn = false }) {
           ))}
         </nav>
 
-        {/* Desktop actions (Optimized Sizes) */}
+        {/* Desktop actions */}
         <div className="hidden items-center gap-1 lg:flex">
           <ThemeButton iconClassName="h-4 w-4" />
           <span className="mx-2 h-5 w-px bg-border" aria-hidden="true" />
-          {isLoggedIn ? (
-            <>
-              <Link href="/dashboard" className={ghostBtn}>
-                <LayoutDashboard className="h-4 w-4" /> Dashboard
-              </Link>
-              <button type="button" className={ghostBtn}>
-                <LogOut className="h-4 w-4" /> Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link href="/login" className={ghostBtn}>
-                <LogIn className="h-4 w-4" /> Login
-              </Link>
-              <Link href="/register" className={primaryBtn}>
-                <UserPlus className="h-4 w-4" /> Register
-              </Link>
-            </>
-          )}
+          <AuthDesktop />
         </div>
 
         {/* Mobile controls */}
@@ -161,7 +224,7 @@ export function Navbar({ name = "Promptly", isLoggedIn = false }) {
 
       {/* Mobile drawer */}
       {open && (
-        <nav className="bg-surface lg:hidden border-b" aria-label="Mobile">
+        <nav className="border-b bg-surface lg:hidden" aria-label="Mobile">
           <ul className="px-3 py-2">
             {NAV_LINKS.map((link) => (
               <li key={link.href}>
@@ -169,11 +232,11 @@ export function Navbar({ name = "Promptly", isLoggedIn = false }) {
                   href={link.href}
                   onClick={() => setOpen(false)}
                   className={
-                    "flex min-h-[44px] items-center border-l-2 px-3 text-base " +
+                    "flex min-h-[44px] items-center border-l-2 px-3 text-base transition-colors duration-150 " +
                     focusRing +
                     (isActive(link.href)
                       ? " border-brand font-semibold text-text-primary"
-                      : " border-transparent font-medium text-text-secondary")
+                      : " border-transparent font-medium text-text-secondary hover:text-text-primary")
                   }
                 >
                   {link.label}
@@ -182,41 +245,7 @@ export function Navbar({ name = "Promptly", isLoggedIn = false }) {
             ))}
           </ul>
           <div className="flex flex-col gap-2 border-t px-4 py-3">
-            {isLoggedIn ? (
-              <>
-                <Link
-                  href="/dashboard"
-                  onClick={() => setOpen(false)}
-                  className={outlineBlock}
-                >
-                  <LayoutDashboard className="h-5 w-5" /> Dashboard
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className={outlineBlock}
-                >
-                  <LogOut className="h-5 w-5" /> Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  onClick={() => setOpen(false)}
-                  className={outlineBlock}
-                >
-                  <LogIn className="h-5 w-5" /> Login
-                </Link>
-                <Link
-                  href="/register"
-                  onClick={() => setOpen(false)}
-                  className={primaryBlock}
-                >
-                  <UserPlus className="h-5 w-5" /> Register
-                </Link>
-              </>
-            )}
+            <AuthMobile />
           </div>
         </nav>
       )}
