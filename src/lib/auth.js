@@ -14,10 +14,14 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       role: {
-        default: "user",
+        type: "string",
+        defaultValue: "user", // ← default → defaultValue
+        input: false,
       },
       plan: {
-        default: "free",
+        type: "string",
+        defaultValue: "free", // ← default → defaultValue
+        input: false,
       },
     },
   },
