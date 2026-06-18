@@ -88,9 +88,6 @@ export default function SignInPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center gap-3">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-brand">
-            <Command className="h-6 w-6 text-on-brand" />
-          </span>
           <div className="text-center">
             <h1 className="text-2xl font-bold leading-tight text-text-primary">
               Welcome back
