@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff, LogIn } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
@@ -64,14 +65,25 @@ export default function SignInPage() {
     if (valid) {
       setIsLoading(true);
       try {
-        const credentialsToVerify = {
-          email: formData.email,
-          password: formData.password,
-        };
+        const { data, error } = await authClient.signIn.email({
+          email: formData.email, // required
+          password: formData.password, // required
+          rememberMe: true,
+          callbackURL: "/",
+        });
+
         console.log(
           "Credentials bundled for server-side verification:",
           credentialsToVerify,
         );
+        if (error) {
+          toast.error(
+            error.message ||
+              "An error occurred during sign-in. Please try again.",
+          );
+        } else {
+          toast.success("Signed in successfully!");
+        }
       } catch (error) {
         console.error("Authentication error:", error);
       } finally {
@@ -178,7 +190,7 @@ export default function SignInPage() {
             type="submit"
             disabled={isLoading}
             className={
-              "mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-text-primary text-base font-semibold text-surface transition-all duration-200 hover:opacity-80 active:scale-[0.98] disabled:opacity-60 " +
+              "mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand text-base font-semibold text-on-brand transition-all duration-200 hover:bg-brand-hover active:scale-[0.98] disabled:opacity-60 " +
               focusRing
             }
           >

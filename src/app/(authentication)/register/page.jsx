@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Eye, EyeOff, UserPlus } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import toast, { Toaster } from "react-hot-toast";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
@@ -59,6 +61,7 @@ export default function SignupPage() {
     e.preventDefault();
     let valid = true;
     const newErrors = { name: "", email: "", photoUrl: "", password: "" };
+
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
       valid = false;
@@ -75,32 +78,42 @@ export default function SignupPage() {
       newErrors.password = "Password must be at least 8 characters";
       valid = false;
     }
+
     setErrors(newErrors);
-    if (valid) {
-      setIsLoading(true);
-      try {
-        const userDataToSend = {
-          name: formData.name,
-          email: formData.email,
-          photoUrl: formData.photoUrl,
-          password: formData.password,
-          role: "User",
-          subscription: "Free",
-          createdAt: new Date(),
-        };
-        console.log("Data packaged for MongoDB:", userDataToSend);
-      } catch (error) {
-        console.error("Registration error:", error);
-      } finally {
-        setIsLoading(false);
+
+    // Show toast for first validation error
+    if (!valid) {
+      const firstError = Object.values(newErrors).find((e) => e !== "");
+      toast.error(firstError);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await authClient.signUp.email({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        image: formData.photoUrl,
+      });
+
+      if (error) {
+        toast.error(error.message || "Registration failed. Please try again.");
+      } else {
+        toast.success("Account created successfully!");
       }
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+      console.error("Registration error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-surface px-4 pb-16 pt-24">
+      <Toaster position="top-center" />
       <div className="w-full max-w-md">
-        {/* Heading — left aligned like the reference */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold leading-tight text-text-primary">
             Create Account
@@ -110,13 +123,11 @@ export default function SignupPage() {
           </p>
         </div>
 
-        {/* Form — no card, no box, just the fields */}
         <form
           onSubmit={handleSubmit}
           className="flex flex-col gap-3"
           noValidate
         >
-          {/* Full name */}
           <div>
             <input
               id="name"
@@ -136,7 +147,6 @@ export default function SignupPage() {
             )}
           </div>
 
-          {/* Email */}
           <div>
             <input
               id="email"
@@ -156,7 +166,6 @@ export default function SignupPage() {
             )}
           </div>
 
-          {/* Photo URL */}
           <div>
             <input
               id="photoUrl"
@@ -179,7 +188,6 @@ export default function SignupPage() {
             )}
           </div>
 
-          {/* Password */}
           <div>
             <div className="relative">
               <input
@@ -220,26 +228,23 @@ export default function SignupPage() {
             )}
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={isLoading}
             className={
-              "mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-text-primary text-base font-semibold text-surface transition-all duration-200 hover:opacity-80 active:scale-[0.98] disabled:opacity-60 " +
+              "mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand text-base font-semibold text-on-brand transition-all duration-200 hover:bg-brand-hover active:scale-[0.98] disabled:opacity-60 " +
               focusRing
             }
           >
             {isLoading ? "Creating account…" : "Create Account"}
           </button>
 
-          {/* Divider */}
           <div className="my-2 flex items-center gap-4">
             <span className="h-px flex-1 bg-border" />
             <span className="text-base text-text-secondary">or</span>
             <span className="h-px flex-1 bg-border" />
           </div>
 
-          {/* Google — below submit, matching reference */}
           <button
             type="button"
             className={
@@ -252,7 +257,6 @@ export default function SignupPage() {
           </button>
         </form>
 
-        {/* Footer */}
         <p className="mt-6 text-center text-base text-text-secondary">
           Already have an account?{" "}
           <Link
