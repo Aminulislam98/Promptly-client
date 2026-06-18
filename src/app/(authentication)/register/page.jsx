@@ -8,7 +8,7 @@ const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
 
 const inputBase =
-  "w-full h-12 rounded-lg border-0 bg-surface-hover px-4 text-base text-text-primary placeholder:text-text-muted outline-none ring-1 ring-border transition-all duration-150 focus:ring-2 focus:ring-brand";
+  "w-full h-12 rounded-full border-0 bg-surface-hover px-5 text-base text-text-primary placeholder:text-text-muted outline-none ring-1 ring-border transition-all duration-150 focus:ring-2 focus:ring-brand";
 
 function GoogleIcon() {
   return (
@@ -98,193 +98,167 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-page-bg px-4 pb-16 pt-24">
+    <main className="flex min-h-screen items-center justify-center bg-surface px-4 pb-16 pt-24">
       <div className="w-full max-w-md">
-        {/* Heading */}
-        <div className="mb-8 text-center">
+        {/* Heading — left aligned like the reference */}
+        <div className="mb-8">
           <h1 className="text-3xl font-bold leading-tight text-text-primary">
-            Create your account
+            Create Account
           </h1>
-          <p className="mt-2 text-base text-text-secondary">
-            Join Promptly and start sharing AI prompts
+          <p className="mt-1 text-base text-text-secondary">
+            Join Promptly today
           </p>
         </div>
 
-        {/* Card */}
-        <div className="rounded-2xl bg-surface p-8">
-          {/* Google */}
+        {/* Form — no card, no box, just the fields */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-3"
+          noValidate
+        >
+          {/* Full name */}
+          <div>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              required
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Full name"
+              className={
+                inputBase + (errors.name ? " ring-error focus:ring-error" : "")
+              }
+            />
+            {errors.name && (
+              <p className="mt-1 pl-4 text-base text-error">{errors.name}</p>
+            )}
+          </div>
+
+          {/* Email */}
+          <div>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Email address"
+              className={
+                inputBase + (errors.email ? " ring-error focus:ring-error" : "")
+              }
+            />
+            {errors.email && (
+              <p className="mt-1 pl-4 text-base text-error">{errors.email}</p>
+            )}
+          </div>
+
+          {/* Photo URL */}
+          <div>
+            <input
+              id="photoUrl"
+              name="photoUrl"
+              type="url"
+              autoComplete="url"
+              required
+              value={formData.photoUrl}
+              onChange={handleChange}
+              placeholder="Photo URL"
+              className={
+                inputBase +
+                (errors.photoUrl ? " ring-error focus:ring-error" : "")
+              }
+            />
+            {errors.photoUrl && (
+              <p className="mt-1 pl-4 text-base text-error">
+                {errors.photoUrl}
+              </p>
+            )}
+          </div>
+
+          {/* Password */}
+          <div>
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                required
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Password"
+                className={
+                  inputBase +
+                  " pr-12" +
+                  (errors.password ? " ring-error focus:ring-error" : "")
+                }
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className={
+                  "absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1 text-text-secondary transition-colors duration-150 hover:text-text-primary " +
+                  focusRing
+                }
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
+            {errors.password && (
+              <p className="mt-1 pl-4 text-base text-error">
+                {errors.password}
+              </p>
+            )}
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={
+              "mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-text-primary text-base font-semibold text-surface transition-all duration-200 hover:opacity-80 active:scale-[0.98] disabled:opacity-60 " +
+              focusRing
+            }
+          >
+            {isLoading ? "Creating account…" : "Create Account"}
+          </button>
+
+          {/* Divider */}
+          <div className="my-2 flex items-center gap-4">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-base text-text-secondary">or</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          {/* Google — below submit, matching reference */}
           <button
             type="button"
             className={
-              "flex h-12 w-full items-center justify-center gap-3 rounded-lg border bg-surface text-base font-medium text-text-primary transition-colors duration-150 hover:bg-surface-hover active:scale-[0.98] " +
+              "flex h-12 w-full items-center justify-center gap-3 rounded-full border bg-surface text-base font-medium text-text-primary transition-colors duration-150 hover:bg-surface-hover active:scale-[0.98] " +
               focusRing
             }
           >
             <GoogleIcon />
             Continue with Google
           </button>
+        </form>
 
-          {/* Divider */}
-          <div className="my-6 flex items-center gap-4">
-            <span className="h-px flex-1 bg-border" />
-            <span className="text-base text-text-secondary">or</span>
-            <span className="h-px flex-1 bg-border" />
-          </div>
-
-          {/* Form */}
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col gap-5"
-            noValidate
-          >
-            {/* Full name */}
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="name"
-                className="text-base font-medium text-text-primary"
-              >
-                Full name
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                required
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="John Doe"
-                className={
-                  inputBase +
-                  (errors.name ? " ring-error focus:ring-error" : "")
-                }
-              />
-              {errors.name && (
-                <p className="text-base text-error">{errors.name}</p>
-              )}
-            </div>
-
-            {/* Email */}
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="email"
-                className="text-base font-medium text-text-primary"
-              >
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="you@example.com"
-                className={
-                  inputBase +
-                  (errors.email ? " ring-error focus:ring-error" : "")
-                }
-              />
-              {errors.email && (
-                <p className="text-base text-error">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Photo URL */}
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="photoUrl"
-                className="text-base font-medium text-text-primary"
-              >
-                Photo URL
-              </label>
-              <input
-                id="photoUrl"
-                name="photoUrl"
-                type="url"
-                autoComplete="url"
-                required
-                value={formData.photoUrl}
-                onChange={handleChange}
-                placeholder="https://example.com/photo.jpg"
-                className={
-                  inputBase +
-                  (errors.photoUrl ? " ring-error focus:ring-error" : "")
-                }
-              />
-              {errors.photoUrl && (
-                <p className="text-base text-error">{errors.photoUrl}</p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="password"
-                className="text-base font-medium text-text-primary"
-              >
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="At least 8 characters"
-                  className={
-                    inputBase +
-                    " pr-12" +
-                    (errors.password ? " ring-error focus:ring-error" : "")
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  className={
-                    "absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-text-secondary transition-colors duration-150 hover:text-text-primary " +
-                    focusRing
-                  }
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-base text-error">{errors.password}</p>
-              )}
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={
-                "mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand text-base font-semibold text-on-brand transition-all duration-200 hover:bg-brand-hover active:scale-[0.98] disabled:opacity-60 " +
-                focusRing
-              }
-            >
-              <UserPlus className="h-5 w-5" />
-              {isLoading ? "Creating account…" : "Create account"}
-            </button>
-          </form>
-        </div>
-
-        {/* Sign in link */}
+        {/* Footer */}
         <p className="mt-6 text-center text-base text-text-secondary">
           Already have an account?{" "}
           <Link
             href="/login"
             className={
-              "font-semibold text-brand hover:underline rounded " + focusRing
+              "font-bold text-text-primary hover:underline rounded " + focusRing
             }
           >
             Sign in

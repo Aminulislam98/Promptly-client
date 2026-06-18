@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Command, Eye, EyeOff, LogIn } from "lucide-react";
+import { Eye, EyeOff, LogIn } from "lucide-react";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
+
+const inputBase =
+  "w-full h-12 rounded-full border-0 bg-surface-hover px-5 text-base text-text-primary placeholder:text-text-muted outline-none ring-1 ring-border transition-all duration-150 focus:ring-2 focus:ring-brand";
 
 function GoogleIcon() {
   return (
@@ -46,7 +49,6 @@ export default function SignInPage() {
     e.preventDefault();
     let valid = true;
     const newErrors = { email: "", password: "" };
-
     if (!formData.email.trim()) {
       newErrors.email = "Email address is required";
       valid = false;
@@ -55,12 +57,10 @@ export default function SignInPage() {
       newErrors.password = "Password is required";
       valid = false;
     } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters long";
+      newErrors.password = "Password must be at least 8 characters";
       valid = false;
     }
-
     setErrors(newErrors);
-
     if (valid) {
       setIsLoading(true);
       try {
@@ -73,163 +73,145 @@ export default function SignInPage() {
           credentialsToVerify,
         );
       } catch (error) {
-        console.error("Authentication submission error:", error);
+        console.error("Authentication error:", error);
       } finally {
         setIsLoading(false);
       }
     }
   };
 
-  const inputBase =
-    "w-full rounded-lg border-0 bg-surface-hover px-4 text-base text-text-primary placeholder:text-text-muted outline-none ring-1 ring-border transition-all duration-150 focus:ring-2 focus:ring-brand h-12";
-
   return (
-    <main className="flex min-h-screen items-center justify-center bg-page-bg px-4 py-24">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold leading-tight text-text-primary">
-              Welcome back
-            </h1>
-            <p className="mt-1 text-base text-text-secondary">
-              Sign in to your Promptly account
-            </p>
-          </div>
+    <main className="flex min-h-screen items-center justify-center bg-surface px-4 pb-16 pt-24">
+      <div className="w-full max-w-md">
+        {/* Heading — left aligned */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold leading-tight text-text-primary">
+            Sign In
+          </h1>
+          <p className="mt-1 text-base text-text-secondary">
+            Welcome back to Promptly
+          </p>
         </div>
 
-        {/* Card */}
-        <div className="rounded-2xl bg-surface px-6 py-8 sm:px-8">
-          {/* Google login */}
+        {/* Form */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-3"
+          noValidate
+        >
+          {/* Email */}
+          <div>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Email address"
+              className={
+                inputBase + (errors.email ? " ring-error focus:ring-error" : "")
+              }
+            />
+            {errors.email && (
+              <p className="mt-1 pl-4 text-base text-error">{errors.email}</p>
+            )}
+          </div>
+
+          {/* Password */}
+          <div>
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Password"
+                className={
+                  inputBase +
+                  " pr-12" +
+                  (errors.password ? " ring-error focus:ring-error" : "")
+                }
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className={
+                  "absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1 text-text-secondary transition-colors duration-150 hover:text-text-primary " +
+                  focusRing
+                }
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
+            {errors.password && (
+              <p className="mt-1 pl-4 text-base text-error">
+                {errors.password}
+              </p>
+            )}
+          </div>
+
+          {/* Forgot password */}
+          <div className="flex justify-end">
+            <Link
+              href="/forgot-password"
+              className={
+                "text-base font-medium text-text-primary hover:underline rounded " +
+                focusRing
+              }
+            >
+              Forgot password?
+            </Link>
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={
+              "mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-text-primary text-base font-semibold text-surface transition-all duration-200 hover:opacity-80 active:scale-[0.98] disabled:opacity-60 " +
+              focusRing
+            }
+          >
+            {isLoading ? "Signing in…" : "Sign In"}
+          </button>
+
+          {/* Divider */}
+          <div className="my-2 flex items-center gap-4">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-base text-text-secondary">or</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          {/* Google */}
           <button
             type="button"
             className={
-              "flex h-12 w-full items-center justify-center gap-3 rounded-lg border bg-surface text-base font-medium text-text-primary transition-colors duration-150 hover:bg-surface-hover active:scale-[0.98] " +
+              "flex h-12 w-full items-center justify-center gap-3 rounded-full border bg-surface text-base font-medium text-text-primary transition-colors duration-150 hover:bg-surface-hover active:scale-[0.98] " +
               focusRing
             }
           >
             <GoogleIcon />
             Continue with Google
           </button>
+        </form>
 
-          {/* Divider */}
-          <div className="my-6 flex items-center gap-3">
-            <span className="h-px flex-1 bg-border" />
-            <span className="text-base text-text-secondary">or</span>
-            <span className="h-px flex-1 bg-border" />
-          </div>
-
-          {/* Form */}
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col gap-5"
-            noValidate
-          >
-            {/* Email */}
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="email"
-                className="text-base font-medium text-text-primary"
-              >
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="you@example.com"
-                className={
-                  inputBase +
-                  (errors.email ? " ring-error focus:ring-error" : "")
-                }
-              />
-              {errors.email && (
-                <p className="text-base text-error">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="password"
-                  className="text-base font-medium text-text-primary"
-                >
-                  Password
-                </label>
-                <Link
-                  href="/forgot-password"
-                  className={
-                    "text-base font-medium text-brand hover:underline rounded " +
-                    focusRing
-                  }
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative">
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="••••••••"
-                  className={
-                    inputBase +
-                    " pr-12" +
-                    (errors.password ? " ring-error focus:ring-error" : "")
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  className={
-                    "absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-text-secondary transition-colors duration-150 hover:text-text-primary " +
-                    focusRing
-                  }
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-base text-error">{errors.password}</p>
-              )}
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={
-                "mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand text-base font-semibold text-on-brand transition-all duration-200 hover:bg-brand-hover active:scale-[0.98] disabled:opacity-60 " +
-                focusRing
-              }
-            >
-              <LogIn className="h-5 w-5" />
-              {isLoading ? "Signing in…" : "Sign in"}
-            </button>
-          </form>
-        </div>
-
-        {/* Register link */}
+        {/* Footer */}
         <p className="mt-6 text-center text-base text-text-secondary">
           Don&apos;t have an account?{" "}
           <Link
             href="/register"
             className={
-              "font-semibold text-brand hover:underline rounded " + focusRing
+              "font-bold text-text-primary hover:underline rounded " + focusRing
             }
           >
             Create one
