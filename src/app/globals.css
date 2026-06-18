@@ -1,11 +1,6 @@
-@import "tailwindcss";
-
 @import "@heroui/styles";
-
-/* dark mode */
 @import "tailwindcss";
 
-/* Class-based dark mode — the Navbar toggles `dark` on <html> */
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
@@ -15,10 +10,15 @@
   --border: #e4e6ea;
   --text-primary: #0b0c0c;
   --text-secondary: #4b4f56;
+  --text-muted: #737373;
+  --text-disabled: #bdbdbd;
   --brand: #1d4ed8;
   --brand-hover: #1a44bb;
   --brand-light: #eaf0fd;
   --on-brand: #ffffff;
+  --error: #d93025;
+  --success: #1e8e3e;
+  --warning: #f29900;
 }
 
 .dark {
@@ -28,13 +28,17 @@
   --border: #30363d;
   --text-primary: #e6edf3;
   --text-secondary: #adb6bf;
+  --text-muted: #8b949e;
+  --text-disabled: #6e7681;
   --brand: #2563eb;
   --brand-hover: #3b82f6;
   --brand-light: #15233f;
   --on-brand: #ffffff;
+  --error: #f85149;
+  --success: #3fb950;
+  --warning: #d29922;
 }
 
-/* Map tokens to Tailwind colour utilities. `inline` makes them follow .dark */
 @theme inline {
   --color-page-bg: var(--page-bg);
   --color-surface: var(--surface);
@@ -42,17 +46,26 @@
   --color-border: var(--border);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-disabled: var(--text-disabled);
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
   --color-brand-light: var(--brand-light);
   --color-on-brand: var(--on-brand);
+  --color-error: var(--error);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
 }
 
-/* v4 made the default border colour `currentColor`; restore the token */
 @layer base {
   *,
   ::before,
   ::after {
     border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--page-bg);
+    color: var(--text-primary);
   }
 }
