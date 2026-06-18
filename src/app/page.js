@@ -1,9 +1,17 @@
-import Image from "next/image";
+import { HeroBanner } from "@/components/home/HeroBanner";
+import { FeaturedPrompts } from "@/components/home/FeaturedPrompts";
+import { WhyChooseUs } from "@/components/home/WhyChooseUs";
+import { TopCreators } from "@/components/home/TopCreators";
+import { CustomerReviews } from "@/components/home/CustomerReviews";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-between p-24">
-      <h1 className="text-3xl font-bold underline">Home Page</h1>
-    </div>
+    <>
+      <HeroBanner />
+      <FeaturedPrompts />
+      <WhyChooseUs />
+      <TopCreators />
+      <CustomerReviews />
+    </>
   );
 }
