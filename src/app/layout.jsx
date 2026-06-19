@@ -30,7 +30,7 @@ export default function RootLayout({ children }) {
         {/* navbar */}
         <Navbar />
         <Toaster position="top-center" />
-        <main className="flex-1">{children}</main>
+        <main className="pt-16">{children}</main>
         {/* footer */}
         <Footer />
       </body>

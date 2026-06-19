@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { Copy, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
-import { authClient } from "@/lib/auth-client";
+import { Search, Copy, ArrowRight, SlidersHorizontal, X } from "lucide-react";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
 
-const FEATURED_PROMPTS = [
+const inputBase =
+  "w-full rounded-md border-0 bg-surface-hover px-4 text-base text-text-primary placeholder:text-text-muted outline-none ring-1 ring-border transition-all duration-150 focus:ring-2 focus:ring-brand h-10";
+
+// Placeholder data — replace with real API
+const MOCK_PROMPTS = [
   {
     _id: "1",
     title: "Write a killer cold email that gets replies",
@@ -18,6 +20,7 @@ const FEATURED_PROMPTS = [
     copyCount: 42,
     creatorName: "John Doe",
     difficulty: "Beginner",
+    tags: ["email", "sales"],
   },
   {
     _id: "2",
@@ -27,6 +30,7 @@ const FEATURED_PROMPTS = [
     copyCount: 18,
     creatorName: "Jane Smith",
     difficulty: "Intermediate",
+    tags: ["react", "coding"],
   },
   {
     _id: "3",
@@ -36,6 +40,7 @@ const FEATURED_PROMPTS = [
     copyCount: 91,
     creatorName: "Alex Ray",
     difficulty: "Beginner",
+    tags: ["seo", "writing"],
   },
   {
     _id: "4",
@@ -45,6 +50,7 @@ const FEATURED_PROMPTS = [
     copyCount: 34,
     creatorName: "Sara Khan",
     difficulty: "Pro",
+    tags: ["business", "planning"],
   },
   {
     _id: "5",
@@ -54,6 +60,7 @@ const FEATURED_PROMPTS = [
     copyCount: 67,
     creatorName: "Mike Chen",
     difficulty: "Beginner",
+    tags: ["midjourney", "portrait"],
   },
   {
     _id: "6",
@@ -63,7 +70,64 @@ const FEATURED_PROMPTS = [
     copyCount: 29,
     creatorName: "Lena Park",
     difficulty: "Intermediate",
+    tags: ["python", "debugging"],
   },
+  {
+    _id: "7",
+    title: "LinkedIn profile rewriter for job seekers",
+    category: "Marketing",
+    aiTool: "ChatGPT",
+    copyCount: 55,
+    creatorName: "Tom W.",
+    difficulty: "Beginner",
+    tags: ["linkedin", "jobs"],
+  },
+  {
+    _id: "8",
+    title: "Fantasy world building system prompt",
+    category: "Writing",
+    aiTool: "Claude",
+    copyCount: 38,
+    creatorName: "Priya S.",
+    difficulty: "Intermediate",
+    tags: ["fantasy", "worldbuilding"],
+  },
+  {
+    _id: "9",
+    title: "Logo concept generator for startups",
+    category: "Design",
+    aiTool: "Midjourney",
+    copyCount: 44,
+    creatorName: "Kai L.",
+    difficulty: "Beginner",
+    tags: ["logo", "design"],
+  },
+];
+
+const CATEGORIES = [
+  "All",
+  "Marketing",
+  "Coding",
+  "Writing",
+  "Business",
+  "Design",
+  "Education",
+  "Productivity",
+];
+const AI_TOOLS = [
+  "All",
+  "ChatGPT",
+  "Claude",
+  "Gemini",
+  "Midjourney",
+  "DALL-E",
+  "Stable Diffusion",
+];
+const DIFFICULTIES = ["All", "Beginner", "Intermediate", "Pro"];
+const SORT_OPTIONS = [
+  { value: "latest", label: "Latest" },
+  { value: "popular", label: "Most Popular" },
+  { value: "copies", label: "Most Copied" },
 ];
 
 const DIFFICULTY_STYLES = {
@@ -72,143 +136,275 @@ const DIFFICULTY_STYLES = {
   Pro: "text-error",
 };
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, delay: i * 0.08 },
-  }),
-};
-
-export default function PromptsPage() {
-  const [mounted, setMounted] = useState(false);
-  const { data: session } = authClient.useSession();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
+function FilterSection({ label, options, value, onChange }) {
   return (
-    <section className="w-full border-b bg-page-bg py-10 sm:py-12 lg:py-16">
-      {/* Heading */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between">
-          <div>
-            <motion.p
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-base font-semibold uppercase tracking-widest text-brand"
-            >
-              Trending Now
-            </motion.p>
-            <motion.h2
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.1 }}
-              className="mt-2 text-xl font-bold text-text-primary sm:text-2xl"
-            >
-              Featured Prompts
-            </motion.h2>
-          </div>
-          <Link
-            href="/prompts"
+    <div className="flex flex-col gap-2">
+      <p className="text-base font-semibold text-text-primary">{label}</p>
+      <div className="flex flex-col gap-1">
+        {options.map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onChange(opt)}
             className={
-              "hidden items-center gap-1 text-base font-medium text-brand hover:underline sm:flex " +
+              "flex h-9 items-center rounded-md px-3 text-base font-medium transition-colors duration-150 text-left " +
+              focusRing +
+              (value === opt
+                ? " bg-brand-light text-brand"
+                : " text-text-secondary hover:bg-surface-hover hover:text-text-primary")
+            }
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function AllPromptsPage() {
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("All");
+  const [aiTool, setAiTool] = useState("All");
+  const [difficulty, setDifficulty] = useState("All");
+  const [sort, setSort] = useState("latest");
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  // Client-side filter (replace with server-side later)
+  const filtered = MOCK_PROMPTS.filter((p) => {
+    const matchSearch =
+      !search.trim() ||
+      p.title.toLowerCase().includes(search.toLowerCase()) ||
+      p.tags.some((t) => t.toLowerCase().includes(search.toLowerCase())) ||
+      p.aiTool.toLowerCase().includes(search.toLowerCase());
+    const matchCategory = category === "All" || p.category === category;
+    const matchTool = aiTool === "All" || p.aiTool === aiTool;
+    const matchDifficulty = difficulty === "All" || p.difficulty === difficulty;
+    return matchSearch && matchCategory && matchTool && matchDifficulty;
+  }).sort((a, b) => {
+    if (sort === "copies") return b.copyCount - a.copyCount;
+    if (sort === "popular") return b.copyCount - a.copyCount;
+    return 0;
+  });
+
+  const clearFilters = () => {
+    setSearch("");
+    setCategory("All");
+    setAiTool("All");
+    setDifficulty("All");
+    setSort("latest");
+  };
+
+  const hasActiveFilters =
+    search || category !== "All" || aiTool !== "All" || difficulty !== "All";
+
+  const Filters = () => (
+    <div className="flex flex-col gap-6">
+      <FilterSection
+        label="Category"
+        options={CATEGORIES}
+        value={category}
+        onChange={setCategory}
+      />
+      <div className="h-px bg-border" />
+      <FilterSection
+        label="AI Tool"
+        options={AI_TOOLS}
+        value={aiTool}
+        onChange={setAiTool}
+      />
+      <div className="h-px bg-border" />
+      <FilterSection
+        label="Difficulty"
+        options={DIFFICULTIES}
+        value={difficulty}
+        onChange={setDifficulty}
+      />
+      {hasActiveFilters && (
+        <>
+          <div className="h-px bg-border" />
+          <button
+            type="button"
+            onClick={clearFilters}
+            className={
+              "flex h-9 items-center gap-2 rounded-md px-3 text-base font-medium text-error transition-colors hover:bg-error/10 " +
               focusRing
             }
           >
-            View all <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
+            <X className="h-4 w-4" /> Clear filters
+          </button>
+        </>
+      )}
+    </div>
+  );
 
-      {/* Grid */}
-      <div className="mt-8 grid grid-cols-1 gap-px border-y bg-border sm:grid-cols-2 lg:grid-cols-3">
-        {FEATURED_PROMPTS.map((prompt, i) => (
-          <motion.article
-            key={prompt._id}
-            custom={i}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-            className="flex flex-col bg-surface p-6"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-base font-medium text-brand">
-                {prompt.category}
-              </span>
-              <span
+  return (
+    <main className="min-h-screen bg-page-bg">
+      <div className="w-full px-3 pt-20 pb-10">
+        {/* Search + Sort bar */}
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-1 items-center gap-2 rounded-md border bg-surface px-3">
+            <Search className="h-4 w-4 shrink-0 text-text-secondary" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by title, tag, or AI tool..."
+              className="flex-1 bg-transparent py-2.5 text-base text-text-primary placeholder:text-text-muted outline-none"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="text-text-secondary hover:text-text-primary"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Sort */}
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className={
+                "rounded-md border bg-surface px-3 text-base text-text-primary outline-none h-10 cursor-pointer " +
+                focusRing
+              }
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+
+            {/* Mobile filter toggle */}
+            <button
+              type="button"
+              onClick={() => setMobileFiltersOpen((v) => !v)}
+              className={
+                "inline-flex h-10 items-center gap-2 rounded-md border bg-surface px-3 text-base font-medium text-text-primary transition-colors hover:bg-surface-hover lg:hidden " +
+                focusRing
+              }
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filters
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile filters drawer */}
+        {mobileFiltersOpen && (
+          <div className="mb-6 rounded-md border bg-surface p-5 lg:hidden">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-base font-semibold text-text-primary">
+                Filters
+              </p>
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(false)}
                 className={
-                  "text-base font-medium " +
-                  DIFFICULTY_STYLES[prompt.difficulty]
+                  "rounded-md p-1 text-text-secondary hover:text-text-primary " +
+                  focusRing
                 }
               >
-                {prompt.difficulty}
-              </span>
+                <X className="h-5 w-5" />
+              </button>
             </div>
+            <Filters />
+          </div>
+        )}
 
-            <h3 className="mt-3 text-lg font-semibold leading-snug text-text-primary line-clamp-2">
-              {prompt.title}
-            </h3>
-
-            <div className="mt-3 flex items-center gap-3 text-base text-text-secondary">
-              <span className="rounded-md border px-2 py-0.5">
-                {prompt.aiTool}
-              </span>
-              <span className="flex items-center gap-1">
-                <Copy className="h-3.5 w-3.5" /> {prompt.copyCount}
-              </span>
+        <div className="flex gap-6">
+          {/* Desktop sidebar */}
+          <aside className="hidden w-48 shrink-0 lg:block">
+            <div className="sticky top-24 rounded-md border bg-surface p-5">
+              <Filters />
             </div>
+          </aside>
 
-            <p className="mt-2 text-base text-text-secondary">
-              by {prompt.creatorName}
-            </p>
-
-            <div className="mt-auto border-t pt-4 mt-6">
-              {!mounted ? (
-                <div className="h-10 w-full rounded-md bg-surface-hover animate-pulse" />
-              ) : session?.user ? (
-                <Link
-                  href={`/prompts/${prompt._id}`}
+          {/* Prompts grid */}
+          <div className="flex-1 min-w-0">
+            {filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-md border bg-surface py-16 text-center">
+                <Search className="h-10 w-10 text-text-secondary" />
+                <h2 className="mt-4 text-xl font-semibold text-text-primary">
+                  No prompts found
+                </h2>
+                <p className="mt-2 text-base text-text-secondary">
+                  Try adjusting your filters or search term.
+                </p>
+                <button
+                  type="button"
+                  onClick={clearFilters}
                   className={
-                    "flex h-10 w-full items-center justify-center gap-2 rounded-md bg-brand text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] " +
+                    "mt-6 inline-flex h-10 items-center gap-2 rounded-md bg-brand px-5 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover " +
                     focusRing
                   }
                 >
-                  View Details <ArrowRight className="h-4 w-4" />
-                </Link>
-              ) : (
-                <Link
-                  href="/login"
-                  className={
-                    "flex h-10 w-full items-center justify-center rounded-md border text-base font-medium text-text-primary transition-colors hover:bg-surface-hover " +
-                    focusRing
-                  }
-                >
-                  Login to View
-                </Link>
-              )}
-            </div>
-          </motion.article>
-        ))}
+                  Clear all filters
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className="mb-4 text-base text-text-secondary">
+                  {filtered.length} prompt{filtered.length !== 1 ? "s" : ""}{" "}
+                  found
+                </p>
+                <div className="grid grid-cols-1 gap-px border bg-border sm:grid-cols-2 xl:grid-cols-3">
+                  {filtered.map((prompt) => (
+                    <article
+                      key={prompt._id}
+                      className="flex flex-col bg-surface p-5"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-base font-medium text-brand">
+                          {prompt.category}
+                        </span>
+                        <span
+                          className={
+                            "text-base font-medium " +
+                            DIFFICULTY_STYLES[prompt.difficulty]
+                          }
+                        >
+                          {prompt.difficulty}
+                        </span>
+                      </div>
+                      <h2 className="mt-3 text-lg font-semibold leading-snug text-text-primary line-clamp-2">
+                        {prompt.title}
+                      </h2>
+                      <div className="mt-3 flex items-center gap-3 text-base text-text-secondary">
+                        <span className="rounded-md border px-2 py-0.5">
+                          {prompt.aiTool}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Copy className="h-3.5 w-3.5" /> {prompt.copyCount}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-base text-text-secondary">
+                        by {prompt.creatorName}
+                      </p>
+                      <div className="mt-auto border-t pt-4 mt-5">
+                        <Link
+                          href={`/prompts/${prompt._id}`}
+                          className={
+                            "flex h-10 w-full items-center justify-center gap-2 rounded-md bg-brand text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] " +
+                            focusRing
+                          }
+                        >
+                          View Details <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
-
-      {/* Mobile view all */}
-      <div className="mt-6 px-4 sm:hidden sm:px-6">
-        <Link
-          href="/prompts"
-          className={
-            "flex h-11 w-full items-center justify-center gap-2 rounded-md border text-base font-semibold text-text-primary transition-colors hover:bg-surface-hover " +
-            focusRing
-          }
-        >
-          View all prompts <ArrowRight className="h-4 w-4" />
-        </Link>
-      </div>
-    </section>
+    </main>
   );
 }
