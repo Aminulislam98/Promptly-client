@@ -26,7 +26,7 @@ async function apiFetch(endpoint, options = {}) {
   return data;
 }
 
-// ── Prompts ──────────────────────────────────────────────────────────────────
+// ── Prompts
 
 export const getPrompts = (params = {}) => {
   const query = new URLSearchParams(params).toString();
@@ -54,7 +54,7 @@ export const incrementCopyCount = (id) =>
 
 export const getMyPrompts = () => apiFetch("/api/my-prompts");
 
-// ── Reviews ───────────────────────────────────────────────────────────────────
+// ── Reviews
 
 export const getReviews = (promptId) => apiFetch(`/api/reviews/${promptId}`);
 
@@ -66,7 +66,7 @@ export const getMyReviews = () => apiFetch("/api/my-reviews");
 export const deleteReview = (id) =>
   apiFetch(`/api/reviews/${id}`, { method: "DELETE" });
 
-// ── Bookmarks ─────────────────────────────────────────────────────────────────
+// ── Bookmarks
 
 export const getBookmarks = () => apiFetch("/api/bookmarks");
 
@@ -79,12 +79,12 @@ export const toggleBookmark = (promptId) =>
 export const removeBookmark = (promptId) =>
   apiFetch(`/api/bookmarks/${promptId}`, { method: "DELETE" });
 
-// ── Reports ───────────────────────────────────────────────────────────────────
+// ── Reports
 
 export const reportPrompt = (data) =>
   apiFetch("/api/reports", { method: "POST", body: JSON.stringify(data) });
 
-// ── Creator Requests ──────────────────────────────────────────────────────────
+// ── Creator Requests
 
 export const applyForCreator = (data) =>
   apiFetch("/api/creator-requests", {
@@ -95,15 +95,15 @@ export const applyForCreator = (data) =>
 export const getCreatorRequestStatus = () =>
   apiFetch("/api/creator-requests/status");
 
-// ── Top Creators ──────────────────────────────────────────────────────────────
+// ── Top Creators
 
 export const getTopCreators = () => apiFetch("/api/top-creators");
 
-// ── User ──────────────────────────────────────────────────────────────────────
+// ── User
 
 export const getMyProfile = () => apiFetch("/api/users/me");
 
-// ── Payment ───────────────────────────────────────────────────────────────────
+// ── Payment
 
 export const createCheckout = () =>
   apiFetch("/api/payment/create-checkout", { method: "POST" });
@@ -114,7 +114,7 @@ export const confirmPayment = (sessionId) =>
     body: JSON.stringify({ sessionId }),
   });
 
-// ── Admin ─────────────────────────────────────────────────────────────────────
+// ── Admin
 
 export const getAdminUsers = () => apiFetch("/api/admin/users");
 
