@@ -1,61 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Star, Trash2, ExternalLink } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import { getMyReviews, deleteReview } from "@/lib/api";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
-
-// Placeholder — replace with real API call
-const MOCK_REVIEWS = [
-  {
-    _id: "1",
-    promptTitle: "Write a killer cold email",
-    promptId: "p1",
-    rating: 5,
-    comment:
-      "This prompt saved me hours. The output was clean and professional.",
-    createdAt: "2026-06-01",
-  },
-  {
-    _id: "2",
-    promptTitle: "Generate a React component",
-    promptId: "p2",
-    rating: 4,
-    comment:
-      "Very useful for boilerplate code. Would love more customization options.",
-    createdAt: "2026-06-10",
-  },
-  {
-    _id: "3",
-    promptTitle: "SEO meta description writer",
-    promptId: "p3",
-    rating: 3,
-    comment: "Decent prompt but needs more context for niche industries.",
-    createdAt: "2026-06-15",
-  },
-];
-
-function StarRating({ rating }) {
-  return (
-    <div
-      className="flex items-center gap-0.5"
-      aria-label={`${rating} out of 5 stars`}
-    >
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          className={
-            "h-4 w-4 " +
-            (star <= rating ? "fill-warning text-warning" : "text-border")
-          }
-        />
-      ))}
-    </div>
-  );
-}
 
 function DeleteModal({ review, onConfirm, onCancel }) {
   return (
@@ -96,46 +48,84 @@ function DeleteModal({ review, onConfirm, onCancel }) {
   );
 }
 
+function StarRating({ rating }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((s) => (
+        <Star
+          key={s}
+          className={
+            "h-4 w-4 " +
+            (s <= rating ? "fill-warning text-warning" : "text-border")
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function MyReviewsPage() {
-  const [reviews, setReviews] = useState(MOCK_REVIEWS);
+  const [reviews, setReviews] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const handleDelete = (id) => {
-    setReviews((prev) => prev.filter((r) => r._id !== id));
-    setDeleteTarget(null);
-    toast.success("Review deleted");
-    // TODO: await fetch(`/api/reviews/${id}`, { method: "DELETE" });
+  useEffect(() => {
+    getMyReviews()
+      .then((data) => setReviews(data.reviews || []))
+      .catch(() => toast.error("Failed to load reviews"))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteReview(id);
+      setReviews((prev) => prev.filter((r) => r._id !== id));
+      toast.success("Review deleted");
+    } catch {
+      toast.error("Failed to delete review");
+    } finally {
+      setDeleteTarget(null);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-32 animate-pulse rounded-xl bg-surface-hover"
+          />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <section>
       <Toaster position="top-center" />
-
-      {/* Heading */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold leading-tight text-text-primary">
           My Reviews
         </h1>
         <p className="mt-1 text-base text-text-secondary">
-          All reviews you have written across prompts.
+          All reviews you have written.
         </p>
       </div>
 
-      {/* Empty state */}
       {reviews.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border bg-surface px-6 py-16 text-center">
           <Star className="h-10 w-10 text-text-secondary" />
           <h2 className="mt-4 text-xl font-semibold text-text-primary">
             No reviews yet
           </h2>
-          <p className="mt-2 max-w-sm text-base text-text-secondary">
-            You have not written any reviews. Explore prompts and share your
-            feedback.
+          <p className="mt-2 text-base text-text-secondary">
+            Explore prompts and share your feedback.
           </p>
           <Link
             href="/prompts"
             className={
-              "mt-6 inline-flex h-10 items-center gap-2 rounded-lg bg-brand px-5 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] " +
+              "mt-6 inline-flex h-10 items-center gap-2 rounded-lg bg-brand px-5 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover " +
               focusRing
             }
           >
@@ -150,7 +140,6 @@ export default function MyReviewsPage() {
               className="rounded-xl border bg-surface px-5 py-5 transition-colors hover:bg-surface-hover"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                {/* Left — review content */}
                 <div className="flex flex-col gap-2 min-w-0">
                   <div className="flex flex-wrap items-center gap-3">
                     <StarRating rating={review.rating} />
@@ -169,15 +158,13 @@ export default function MyReviewsPage() {
                       focusRing
                     }
                   >
-                    {review.promptTitle}
+                    {review.promptTitle}{" "}
                     <ExternalLink className="h-4 w-4 shrink-0" />
                   </Link>
                   <p className="text-base leading-relaxed text-text-secondary max-w-2xl">
                     {review.comment}
                   </p>
                 </div>
-
-                {/* Right — delete */}
                 <button
                   type="button"
                   onClick={() => setDeleteTarget(review)}
@@ -195,7 +182,6 @@ export default function MyReviewsPage() {
         </div>
       )}
 
-      {/* Delete modal */}
       {deleteTarget && (
         <DeleteModal
           review={deleteTarget}

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Upload, X } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
+import { addPrompt } from "@/lib/api";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
@@ -85,6 +86,17 @@ export default function AddPromptPage() {
     return newErrors;
   };
 
+  const uploadThumbnail = async (file) => {
+    const data = new FormData();
+    data.append("image", file);
+    const res = await fetch(
+      `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_KEY}`,
+      { method: "POST", body: data },
+    );
+    const json = await res.json();
+    return json.data?.url || "";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
@@ -96,15 +108,9 @@ export default function AddPromptPage() {
 
     setIsLoading(true);
     try {
-      // Upload thumbnail if selected (imgbb or cloudinary)
       let thumbnailUrl = "";
       if (thumbnail) {
-        // TODO: upload to imgbb/cloudinary and get URL
-        // const formData = new FormData();
-        // formData.append("image", thumbnail);
-        // const res = await fetch(`https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_KEY}`, { method: "POST", body: formData });
-        // const data = await res.json();
-        // thumbnailUrl = data.data.url;
+        thumbnailUrl = await uploadThumbnail(thumbnail);
       }
 
       const payload = {
@@ -122,23 +128,13 @@ export default function AddPromptPage() {
         thumbnail: thumbnailUrl,
         copyCount: 0,
         status: "pending",
-        creatorId: session?.user?.id,
       };
 
-      // TODO: send to your Express backend
-      // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/prompts`, {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(payload),
-      // });
-      // if (!res.ok) throw new Error("Failed to submit");
-
-      console.log("Prompt payload:", payload);
+      await addPrompt(payload);
       toast.success("Prompt submitted for review!");
       setTimeout(() => router.push("/dashboard/my-prompts"), 1500);
     } catch (err) {
-      toast.error("Something went wrong. Please try again.");
-      console.error(err);
+      toast.error(err.message || "Failed to submit prompt");
     } finally {
       setIsLoading(false);
     }
@@ -148,7 +144,6 @@ export default function AddPromptPage() {
     <section>
       <Toaster position="top-center" />
 
-      {/* Heading */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold leading-tight text-text-primary">
           Add Prompt
@@ -159,12 +154,12 @@ export default function AddPromptPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
+        {/* Basic Info */}
         <div className="rounded-xl border bg-surface px-6 py-6">
           <h2 className="mb-5 text-xl font-semibold text-text-primary">
             Basic Info
           </h2>
           <div className="flex flex-col gap-5">
-            {/* Title */}
             <div className="flex flex-col gap-2">
               <label htmlFor="title" className={labelClass}>
                 Prompt Title <span className="text-error">*</span>
@@ -183,7 +178,6 @@ export default function AddPromptPage() {
               )}
             </div>
 
-            {/* Description */}
             <div className="flex flex-col gap-2">
               <label htmlFor="description" className={labelClass}>
                 Description <span className="text-error">*</span>
@@ -205,7 +199,6 @@ export default function AddPromptPage() {
               )}
             </div>
 
-            {/* Prompt Content */}
             <div className="flex flex-col gap-2">
               <label htmlFor="content" className={labelClass}>
                 Prompt Content <span className="text-error">*</span>
@@ -213,7 +206,7 @@ export default function AddPromptPage() {
               <textarea
                 id="content"
                 name="content"
-                rows={6}
+                rows={8}
                 value={formData.content}
                 onChange={handleChange}
                 placeholder="Write your full prompt here..."
@@ -235,7 +228,6 @@ export default function AddPromptPage() {
             Details
           </h2>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            {/* Category */}
             <div className="flex flex-col gap-2">
               <label htmlFor="category" className={labelClass}>
                 Category <span className="text-error">*</span>
@@ -263,7 +255,6 @@ export default function AddPromptPage() {
               )}
             </div>
 
-            {/* AI Tool */}
             <div className="flex flex-col gap-2">
               <label htmlFor="aiTool" className={labelClass}>
                 AI Tool <span className="text-error">*</span>
@@ -291,7 +282,6 @@ export default function AddPromptPage() {
               )}
             </div>
 
-            {/* Difficulty */}
             <div className="flex flex-col gap-2">
               <label htmlFor="difficulty" className={labelClass}>
                 Difficulty <span className="text-error">*</span>
@@ -319,7 +309,6 @@ export default function AddPromptPage() {
               )}
             </div>
 
-            {/* Visibility */}
             <div className="flex flex-col gap-2">
               <label htmlFor="visibility" className={labelClass}>
                 Visibility
@@ -336,11 +325,10 @@ export default function AddPromptPage() {
               </select>
             </div>
 
-            {/* Tags */}
             <div className="flex flex-col gap-2 sm:col-span-2">
               <label htmlFor="tags" className={labelClass}>
                 Tags{" "}
-                <span className="text-base text-text-secondary font-normal">
+                <span className="text-base font-normal text-text-secondary">
                   (comma separated)
                 </span>
               </label>
@@ -414,7 +402,7 @@ export default function AddPromptPage() {
             type="button"
             onClick={() => router.back()}
             className={
-              "inline-flex h-11 items-center justify-center rounded-lg border px-6 text-base font-medium text-text-primary transition-colors duration-150 hover:bg-surface-hover active:scale-[0.98] " +
+              "inline-flex h-11 items-center justify-center rounded-lg border px-6 text-base font-medium text-text-primary transition-colors hover:bg-surface-hover active:scale-[0.98] " +
               focusRing
             }
           >
@@ -424,7 +412,7 @@ export default function AddPromptPage() {
             type="submit"
             disabled={isLoading}
             className={
-              "inline-flex h-11 items-center justify-center rounded-lg bg-brand px-6 text-base font-semibold text-on-brand transition-all duration-200 hover:bg-brand-hover active:scale-[0.98] disabled:opacity-60 " +
+              "inline-flex h-11 items-center justify-center rounded-lg bg-brand px-6 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] disabled:opacity-60 " +
               focusRing
             }
           >

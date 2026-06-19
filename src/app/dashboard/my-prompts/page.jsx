@@ -1,46 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Pencil, Trash2, BarChart2, PlusCircle, Eye } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  BarChart2,
+  PlusCircle,
+  Eye,
+  FileText,
+} from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import { getMyPrompts, deletePrompt } from "@/lib/api";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
-
-// Placeholder data — replace with real API call
-const MOCK_PROMPTS = [
-  {
-    _id: "1",
-    title: "Write a killer cold email",
-    category: "Marketing",
-    aiTool: "ChatGPT",
-    difficulty: "Beginner",
-    visibility: "Public",
-    status: "approved",
-    copyCount: 12,
-  },
-  {
-    _id: "2",
-    title: "Generate a React component",
-    category: "Coding",
-    aiTool: "Claude",
-    difficulty: "Intermediate",
-    visibility: "Private",
-    status: "pending",
-    copyCount: 0,
-  },
-  {
-    _id: "3",
-    title: "SEO meta description writer",
-    category: "Writing",
-    aiTool: "Gemini",
-    difficulty: "Beginner",
-    visibility: "Public",
-    status: "rejected",
-    copyCount: 0,
-  },
-];
 
 const STATUS_STYLES = {
   approved: "bg-success/10 text-success",
@@ -88,30 +62,42 @@ function DeleteModal({ prompt, onConfirm, onCancel }) {
 }
 
 export default function MyPromptsPage() {
-  const [prompts, setPrompts] = useState(MOCK_PROMPTS);
+  const [prompts, setPrompts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // TODO: replace with real API call
-  // useEffect(() => {
-  //   fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/prompts/my`, {
-  //     headers: { Authorization: `Bearer ${token}` },
-  //   })
-  //     .then((r) => r.json())
-  //     .then((data) => setPrompts(data));
-  // }, []);
+  useEffect(() => {
+    getMyPrompts()
+      .then((data) => setPrompts(data.prompts || []))
+      .catch(() => toast.error("Failed to load prompts"))
+      .finally(() => setIsLoading(false));
+  }, []);
 
-  const handleDelete = (id) => {
-    setPrompts((prev) => prev.filter((p) => p._id !== id));
-    setDeleteTarget(null);
-    toast.success("Prompt deleted");
-    // TODO: await fetch(`/api/prompts/${id}`, { method: "DELETE" });
+  const handleDelete = async (id) => {
+    try {
+      await deletePrompt(id);
+      setPrompts((prev) => prev.filter((p) => p._id !== id));
+      toast.success("Prompt deleted");
+    } catch {
+      toast.error("Failed to delete prompt");
+    } finally {
+      setDeleteTarget(null);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="h-8 w-48 animate-pulse rounded bg-surface-hover" />
+        <div className="h-64 animate-pulse rounded-xl bg-surface-hover" />
+      </div>
+    );
+  }
 
   return (
     <section>
       <Toaster position="top-center" />
 
-      {/* Heading */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold leading-tight text-text-primary">
@@ -132,7 +118,6 @@ export default function MyPromptsPage() {
         </Link>
       </div>
 
-      {/* Empty state */}
       {prompts.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border bg-surface px-6 py-16 text-center">
           <FileText className="h-10 w-10 text-text-secondary" />
@@ -140,7 +125,7 @@ export default function MyPromptsPage() {
             No prompts yet
           </h2>
           <p className="mt-2 text-base text-text-secondary">
-            You have not submitted any prompts. Create your first one.
+            Create your first prompt to get started.
           </p>
           <Link
             href="/dashboard/add-prompt"
@@ -153,7 +138,6 @@ export default function MyPromptsPage() {
           </Link>
         </div>
       ) : (
-        /* Table */
         <div className="overflow-x-auto rounded-xl border bg-surface">
           <table className="w-full min-w-[640px] text-base">
             <thead>
@@ -202,7 +186,7 @@ export default function MyPromptsPage() {
                     <span
                       className={
                         "inline-flex items-center rounded-full px-3 py-1 text-base font-medium capitalize " +
-                        STATUS_STYLES[prompt.status]
+                        (STATUS_STYLES[prompt.status] || "")
                       }
                     >
                       {prompt.status}
@@ -215,7 +199,7 @@ export default function MyPromptsPage() {
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/prompts/${prompt._id}`}
-                        aria-label="View prompt"
+                        aria-label="View"
                         className={
                           "inline-flex h-9 w-9 items-center justify-center rounded-lg border text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary " +
                           focusRing
@@ -225,7 +209,7 @@ export default function MyPromptsPage() {
                       </Link>
                       <Link
                         href={`/dashboard/my-prompts/${prompt._id}/edit`}
-                        aria-label="Edit prompt"
+                        aria-label="Edit"
                         className={
                           "inline-flex h-9 w-9 items-center justify-center rounded-lg border text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary " +
                           focusRing
@@ -235,7 +219,7 @@ export default function MyPromptsPage() {
                       </Link>
                       <Link
                         href={`/dashboard/my-prompts/${prompt._id}/analytics`}
-                        aria-label="View analytics"
+                        aria-label="Analytics"
                         className={
                           "inline-flex h-9 w-9 items-center justify-center rounded-lg border text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary " +
                           focusRing
@@ -246,7 +230,7 @@ export default function MyPromptsPage() {
                       <button
                         type="button"
                         onClick={() => setDeleteTarget(prompt)}
-                        aria-label="Delete prompt"
+                        aria-label="Delete"
                         className={
                           "inline-flex h-9 w-9 items-center justify-center rounded-lg border text-text-secondary transition-colors hover:border-error hover:bg-error/10 hover:text-error " +
                           focusRing
@@ -263,7 +247,6 @@ export default function MyPromptsPage() {
         </div>
       )}
 
-      {/* Delete confirmation modal */}
       {deleteTarget && (
         <DeleteModal
           prompt={deleteTarget}

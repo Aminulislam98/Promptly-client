@@ -2,59 +2,20 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  Copy,
-  Bookmark,
-  Flag,
-  Star,
-  Lock,
-  ArrowLeft,
-  Check,
-} from "lucide-react";
+import { Copy, Bookmark, Flag, ArrowLeft, Check, Lock } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
+import {
+  getPromptById,
+  getReviews,
+  incrementCopyCount,
+  toggleBookmark,
+  addReview,
+  reportPrompt,
+} from "@/lib/api";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
-
-// Placeholder — replace with real API call using params.id
-const MOCK_PROMPT = {
-  _id: "1",
-  title: "Write a killer cold email that gets replies",
-  description:
-    "This prompt helps you craft personalised cold emails that convert. It uses psychological triggers and a proven framework used by top sales reps.",
-  content:
-    "You are an expert cold email copywriter. Write a cold email for [YOUR PRODUCT/SERVICE] targeting [TARGET AUDIENCE]. The email should:\n\n1. Open with a personalised observation\n2. Identify a specific pain point\n3. Present your solution clearly\n4. Include social proof\n5. End with a low-friction CTA\n\nKeep it under 150 words. Be conversational, not salesy.",
-  category: "Marketing",
-  aiTool: "ChatGPT",
-  tags: ["email", "sales", "copywriting"],
-  difficulty: "Beginner",
-  usageInstructions:
-    "Replace [YOUR PRODUCT/SERVICE] and [TARGET AUDIENCE] with your specific details. Paste into ChatGPT and iterate based on the output.",
-  visibility: "Public",
-  copyCount: 42,
-  isBookmarked: false,
-  creator: { name: "John Doe", email: "john@example.com" },
-  reviews: [
-    {
-      _id: "r1",
-      name: "Priya S.",
-      email: "priya@example.com",
-      rating: 5,
-      comment: "Generated 3 replies in the first day. Incredible prompt.",
-      date: "2026-06-01",
-    },
-    {
-      _id: "r2",
-      name: "Tom W.",
-      email: "tom@example.com",
-      rating: 4,
-      comment:
-        "Solid framework. Had to tweak slightly for B2B but worked well.",
-      date: "2026-06-10",
-    },
-  ],
-};
 
 const REPORT_REASONS = [
   "Inappropriate Content",
@@ -100,17 +61,26 @@ function Stars({ rating, interactive = false, onRate }) {
   );
 }
 
-function ReportModal({ onClose }) {
+function ReportModal({ onClose, promptId }) {
   const [reason, setReason] = useState("");
   const [desc, setDesc] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!reason) {
       toast.error("Please select a reason");
       return;
     }
-    toast.success("Report submitted");
-    onClose();
+    setIsLoading(true);
+    try {
+      await reportPrompt({ promptId, reason, description: desc });
+      toast.success("Report submitted");
+      onClose();
+    } catch {
+      toast.error("Failed to submit report");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -118,7 +88,7 @@ function ReportModal({ onClose }) {
       <div className="w-full max-w-md rounded-xl border bg-surface px-6 py-6">
         <h3 className="text-xl font-bold text-text-primary">Report Prompt</h3>
         <p className="mt-1 text-base text-text-secondary">
-          Help us keep Promptly safe and high quality.
+          Help us keep Promptly safe.
         </p>
         <div className="mt-4 flex flex-col gap-2">
           <label className="text-base font-medium text-text-primary">
@@ -169,12 +139,13 @@ function ReportModal({ onClose }) {
           <button
             type="button"
             onClick={handleSubmit}
+            disabled={isLoading}
             className={
-              "inline-flex h-10 items-center justify-center rounded-lg bg-error px-4 text-base font-semibold text-on-brand transition-all hover:opacity-80 " +
+              "inline-flex h-10 items-center justify-center rounded-lg bg-error px-4 text-base font-semibold text-on-brand transition-all hover:opacity-80 disabled:opacity-60 " +
               focusRing
             }
           >
-            Submit Report
+            {isLoading ? "Submitting…" : "Submit Report"}
           </button>
         </div>
       </div>
@@ -184,56 +155,136 @@ function ReportModal({ onClose }) {
 
 export default function PromptDetailsPage({ params }) {
   const [mounted, setMounted] = useState(false);
+  const [prompt, setPrompt] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [bookmarked, setBookmarked] = useState(MOCK_PROMPT.isBookmarked);
+  const [bookmarked, setBookmarked] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [rating, setRating] = useState(0);
-  const [review, setReview] = useState("");
+  const [reviewText, setReviewText] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
   const { data: session } = authClient.useSession();
 
   useEffect(() => setMounted(true), []);
 
+  useEffect(() => {
+    if (!params?.id) return;
+    Promise.all([getPromptById(params.id), getReviews(params.id)])
+      .then(([promptData, reviewData]) => {
+        setPrompt(promptData.prompt);
+        setReviews(reviewData.reviews || []);
+      })
+      .catch(() => toast.error("Failed to load prompt"))
+      .finally(() => setIsLoading(false));
+  }, [params?.id]);
+
   const user = mounted ? session?.user : null;
   const isPremium = user?.plan === "premium";
-  const isPrivate = MOCK_PROMPT.visibility === "Private";
+  const isPrivate = prompt?.visibility === "Private";
   const isLocked = isPrivate && !isPremium;
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (isLocked) return;
-    navigator.clipboard.writeText(MOCK_PROMPT.content);
+    navigator.clipboard.writeText(prompt.content);
     setCopied(true);
     toast.success("Prompt copied to clipboard");
     setTimeout(() => setCopied(false), 2000);
-    // TODO: increment copyCount via API
+    try {
+      await incrementCopyCount(prompt._id);
+    } catch {}
   };
 
-  const handleBookmark = () => {
-    setBookmarked((v) => !v);
-    toast.success(bookmarked ? "Bookmark removed" : "Prompt bookmarked");
-    // TODO: toggle bookmark via API
+  const handleBookmark = async () => {
+    if (!user) {
+      toast.error("Please login to bookmark");
+      return;
+    }
+    try {
+      const data = await toggleBookmark(prompt._id);
+      setBookmarked(data.action === "added");
+      toast.success(
+        data.action === "added" ? "Prompt bookmarked" : "Bookmark removed",
+      );
+    } catch {
+      toast.error("Failed to update bookmark");
+    }
   };
 
-  const handleReview = (e) => {
+  const handleReview = async (e) => {
     e.preventDefault();
     if (!rating) {
       toast.error("Please select a rating");
       return;
     }
-    if (!review.trim()) {
+    if (!reviewText.trim()) {
       toast.error("Please write a review");
       return;
     }
-    toast.success("Review submitted");
-    setRating(0);
-    setReview("");
-    // TODO: submit review via API
+    setSubmittingReview(true);
+    try {
+      await addReview({
+        promptId: prompt._id,
+        promptTitle: prompt.title,
+        name: user.name,
+        email: user.email,
+        rating,
+        comment: reviewText,
+      });
+      toast.success("Review submitted");
+      setRating(0);
+      setReviewText("");
+      const data = await getReviews(prompt._id);
+      setReviews(data.reviews || []);
+    } catch {
+      toast.error("Failed to submit review");
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
+  if (isLoading) {
+    return (
+      <main className="min-h-screen bg-page-bg px-3 py-6">
+        <div className="mx-auto w-full max-w-screen-xl">
+          <div className="h-6 w-32 animate-pulse rounded bg-surface-hover" />
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2 flex flex-col gap-4">
+              <div className="h-48 animate-pulse rounded-xl bg-surface-hover" />
+              <div className="h-64 animate-pulse rounded-xl bg-surface-hover" />
+            </div>
+            <div className="h-64 animate-pulse rounded-xl bg-surface-hover" />
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!prompt) {
+    return (
+      <main className="min-h-screen bg-page-bg px-3 py-6">
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <h1 className="text-2xl font-bold text-text-primary">
+            Prompt not found
+          </h1>
+          <Link
+            href="/prompts"
+            className={
+              "mt-4 inline-flex h-10 items-center gap-2 rounded-md bg-brand px-5 text-base font-semibold text-on-brand " +
+              focusRing
+            }
+          >
+            Back to All Prompts
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-page-bg px-3 py-10">
+    <main className="min-h-screen bg-page-bg px-3 py-6">
       <Toaster position="top-center" />
       <div className="mx-auto w-full max-w-screen-xl">
-        {/* Back */}
         <Link
           href="/prompts"
           className={
@@ -247,40 +298,42 @@ export default function PromptDetailsPage({ params }) {
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Main content */}
           <div className="flex flex-col gap-6 lg:col-span-2">
-            {/* Header card */}
+            {/* Header */}
             <div className="rounded-xl border bg-surface p-6">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-md border px-3 py-1 text-base font-medium text-text-secondary">
-                  {MOCK_PROMPT.aiTool}
+                  {prompt.aiTool}
                 </span>
                 <span className="rounded-md border px-3 py-1 text-base font-medium text-text-secondary">
-                  {MOCK_PROMPT.category}
+                  {prompt.category}
                 </span>
                 <span
                   className={
                     "rounded-md px-3 py-1 text-base font-medium " +
-                    DIFFICULTY_STYLES[MOCK_PROMPT.difficulty]
+                    (DIFFICULTY_STYLES[prompt.difficulty] || "")
                   }
                 >
-                  {MOCK_PROMPT.difficulty}
+                  {prompt.difficulty}
                 </span>
               </div>
               <h1 className="mt-4 text-2xl font-bold leading-tight text-text-primary sm:text-3xl">
-                {MOCK_PROMPT.title}
+                {prompt.title}
               </h1>
               <p className="mt-3 text-base leading-relaxed text-text-secondary">
-                {MOCK_PROMPT.description}
+                {prompt.description}
               </p>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                {MOCK_PROMPT.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-md bg-brand-light px-3 py-1 text-base font-medium text-brand"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
+              {prompt.tags?.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {prompt.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-md bg-brand-light px-3 py-1 text-base font-medium text-brand"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Prompt content */}
@@ -314,7 +367,7 @@ export default function PromptDetailsPage({ params }) {
               {isLocked ? (
                 <div className="relative mt-4 overflow-hidden rounded-lg border">
                   <pre className="select-none p-4 text-base leading-relaxed text-text-secondary opacity-30 blur-sm line-clamp-4 font-mono whitespace-pre-wrap">
-                    {MOCK_PROMPT.content}
+                    {prompt.content}
                   </pre>
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-surface/80 p-6 text-center">
                     <Lock className="h-8 w-8 text-text-secondary" />
@@ -337,55 +390,61 @@ export default function PromptDetailsPage({ params }) {
                 </div>
               ) : (
                 <pre className="mt-4 whitespace-pre-wrap rounded-lg bg-surface-hover p-4 font-mono text-base leading-relaxed text-text-primary">
-                  {MOCK_PROMPT.content}
+                  {prompt.content}
                 </pre>
               )}
             </div>
 
             {/* Usage instructions */}
-            <div className="rounded-xl border bg-surface p-6">
-              <h2 className="text-xl font-semibold text-text-primary">
-                Usage Instructions
-              </h2>
-              <p className="mt-3 text-base leading-relaxed text-text-secondary">
-                {MOCK_PROMPT.usageInstructions}
-              </p>
-            </div>
+            {prompt.usageInstructions && (
+              <div className="rounded-xl border bg-surface p-6">
+                <h2 className="text-xl font-semibold text-text-primary">
+                  Usage Instructions
+                </h2>
+                <p className="mt-3 text-base leading-relaxed text-text-secondary">
+                  {prompt.usageInstructions}
+                </p>
+              </div>
+            )}
 
             {/* Reviews */}
             <div className="rounded-xl border bg-surface p-6">
               <h2 className="text-xl font-semibold text-text-primary">
-                Reviews & Ratings
+                Reviews & Ratings ({reviews.length})
               </h2>
 
-              {/* Existing reviews */}
-              <div className="mt-4 flex flex-col divide-y">
-                {MOCK_PROMPT.reviews.map((r) => (
-                  <div key={r._id} className="py-4">
-                    <div className="flex items-center justify-between">
-                      <Stars rating={r.rating} />
-                      <span className="text-base text-text-secondary">
-                        {new Date(r.date).toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </span>
+              {reviews.length === 0 ? (
+                <p className="mt-4 text-base text-text-secondary">
+                  No reviews yet. Be the first to review!
+                </p>
+              ) : (
+                <div className="mt-4 flex flex-col divide-y">
+                  {reviews.map((r) => (
+                    <div key={r._id} className="py-4">
+                      <div className="flex items-center justify-between">
+                        <Stars rating={r.rating} />
+                        <span className="text-base text-text-secondary">
+                          {new Date(r.createdAt).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-base font-semibold text-text-primary">
+                        {r.name}
+                      </p>
+                      <p className="mt-1 text-base text-text-secondary">
+                        {r.email}
+                      </p>
+                      <p className="mt-2 text-base leading-relaxed text-text-primary">
+                        {r.comment}
+                      </p>
                     </div>
-                    <p className="mt-1 text-base font-semibold text-text-primary">
-                      {r.name}
-                    </p>
-                    <p className="mt-1 text-base text-text-secondary">
-                      {r.email}
-                    </p>
-                    <p className="mt-2 text-base leading-relaxed text-text-primary">
-                      {r.comment}
-                    </p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
-              {/* Write review */}
               {user && !isLocked && (
                 <form
                   onSubmit={handleReview}
@@ -410,8 +469,8 @@ export default function PromptDetailsPage({ params }) {
                     <textarea
                       id="review"
                       rows={4}
-                      value={review}
-                      onChange={(e) => setReview(e.target.value)}
+                      value={reviewText}
+                      onChange={(e) => setReviewText(e.target.value)}
                       placeholder="Share your experience with this prompt..."
                       className={
                         "w-full rounded-lg border bg-surface-hover px-4 py-3 text-base text-text-primary placeholder:text-text-muted outline-none focus:ring-2 focus:ring-brand resize-none " +
@@ -421,12 +480,13 @@ export default function PromptDetailsPage({ params }) {
                   </div>
                   <button
                     type="submit"
+                    disabled={submittingReview}
                     className={
-                      "inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] " +
+                      "inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] disabled:opacity-60 " +
                       focusRing
                     }
                   >
-                    Submit Review
+                    {submittingReview ? "Submitting…" : "Submit Review"}
                   </button>
                 </form>
               )}
@@ -447,13 +507,12 @@ export default function PromptDetailsPage({ params }) {
 
           {/* Sidebar */}
           <aside className="flex flex-col gap-4">
-            {/* Actions card */}
+            {/* Actions */}
             <div className="rounded-xl border bg-surface p-5">
               <div className="flex items-center gap-3 text-base text-text-secondary">
                 <Copy className="h-4 w-4" />
-                <span>{MOCK_PROMPT.copyCount} copies</span>
+                <span>{prompt.copyCount} copies</span>
               </div>
-
               <div className="mt-4 flex flex-col gap-3">
                 <button
                   type="button"
@@ -510,37 +569,37 @@ export default function PromptDetailsPage({ params }) {
               </div>
             </div>
 
-            {/* Creator info */}
+            {/* Creator */}
             <div className="rounded-xl border bg-surface p-5">
               <h2 className="text-base font-semibold text-text-primary">
                 Creator
               </h2>
               <div className="mt-3 flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand text-base font-bold text-on-brand">
-                  {MOCK_PROMPT.creator.name.charAt(0)}
+                  {prompt.creatorName?.charAt(0).toUpperCase() || "?"}
                 </div>
                 <div>
                   <p className="text-base font-semibold text-text-primary">
-                    {MOCK_PROMPT.creator.name}
+                    {prompt.creatorName}
                   </p>
                   <p className="text-base text-text-secondary">
-                    {MOCK_PROMPT.creator.email}
+                    {prompt.creatorEmail}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Prompt meta */}
+            {/* Details */}
             <div className="rounded-xl border bg-surface p-5">
               <h2 className="text-base font-semibold text-text-primary">
                 Details
               </h2>
               <div className="mt-3 flex flex-col divide-y">
                 {[
-                  { label: "Category", value: MOCK_PROMPT.category },
-                  { label: "AI Tool", value: MOCK_PROMPT.aiTool },
-                  { label: "Difficulty", value: MOCK_PROMPT.difficulty },
-                  { label: "Visibility", value: MOCK_PROMPT.visibility },
+                  { label: "Category", value: prompt.category },
+                  { label: "AI Tool", value: prompt.aiTool },
+                  { label: "Difficulty", value: prompt.difficulty },
+                  { label: "Visibility", value: prompt.visibility },
                 ].map(({ label, value }) => (
                   <div
                     key={label}
@@ -560,7 +619,12 @@ export default function PromptDetailsPage({ params }) {
         </div>
       </div>
 
-      {showReport && <ReportModal onClose={() => setShowReport(false)} />}
+      {showReport && (
+        <ReportModal
+          promptId={prompt._id}
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </main>
   );
 }
