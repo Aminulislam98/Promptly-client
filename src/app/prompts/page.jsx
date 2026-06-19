@@ -1,108 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Search, Copy, ArrowRight, SlidersHorizontal, X } from "lucide-react";
+import { getPrompts } from "@/lib/api";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
-
-const inputBase =
-  "w-full rounded-md border-0 bg-surface-hover px-4 text-base text-text-primary placeholder:text-text-muted outline-none ring-1 ring-border transition-all duration-150 focus:ring-2 focus:ring-brand h-10";
-
-// Placeholder data — replace with real API
-const MOCK_PROMPTS = [
-  {
-    _id: "1",
-    title: "Write a killer cold email that gets replies",
-    category: "Marketing",
-    aiTool: "ChatGPT",
-    copyCount: 42,
-    creatorName: "John Doe",
-    difficulty: "Beginner",
-    tags: ["email", "sales"],
-  },
-  {
-    _id: "2",
-    title: "Generate a production-ready React component",
-    category: "Coding",
-    aiTool: "Claude",
-    copyCount: 18,
-    creatorName: "Jane Smith",
-    difficulty: "Intermediate",
-    tags: ["react", "coding"],
-  },
-  {
-    _id: "3",
-    title: "SEO meta description writer for any page",
-    category: "Writing",
-    aiTool: "Gemini",
-    copyCount: 91,
-    creatorName: "Alex Ray",
-    difficulty: "Beginner",
-    tags: ["seo", "writing"],
-  },
-  {
-    _id: "4",
-    title: "Complete business plan generator",
-    category: "Business",
-    aiTool: "ChatGPT",
-    copyCount: 34,
-    creatorName: "Sara Khan",
-    difficulty: "Pro",
-    tags: ["business", "planning"],
-  },
-  {
-    _id: "5",
-    title: "Cinematic portrait prompt for Midjourney",
-    category: "Design",
-    aiTool: "Midjourney",
-    copyCount: 67,
-    creatorName: "Mike Chen",
-    difficulty: "Beginner",
-    tags: ["midjourney", "portrait"],
-  },
-  {
-    _id: "6",
-    title: "Python debugging assistant with context",
-    category: "Coding",
-    aiTool: "Claude",
-    copyCount: 29,
-    creatorName: "Lena Park",
-    difficulty: "Intermediate",
-    tags: ["python", "debugging"],
-  },
-  {
-    _id: "7",
-    title: "LinkedIn profile rewriter for job seekers",
-    category: "Marketing",
-    aiTool: "ChatGPT",
-    copyCount: 55,
-    creatorName: "Tom W.",
-    difficulty: "Beginner",
-    tags: ["linkedin", "jobs"],
-  },
-  {
-    _id: "8",
-    title: "Fantasy world building system prompt",
-    category: "Writing",
-    aiTool: "Claude",
-    copyCount: 38,
-    creatorName: "Priya S.",
-    difficulty: "Intermediate",
-    tags: ["fantasy", "worldbuilding"],
-  },
-  {
-    _id: "9",
-    title: "Logo concept generator for startups",
-    category: "Design",
-    aiTool: "Midjourney",
-    copyCount: 44,
-    creatorName: "Kai L.",
-    difficulty: "Beginner",
-    tags: ["logo", "design"],
-  },
-];
 
 const CATEGORIES = [
   "All",
@@ -136,11 +40,28 @@ const DIFFICULTY_STYLES = {
   Pro: "text-error",
 };
 
+function SkeletonCard() {
+  return (
+    <div className="flex flex-col bg-surface p-5 animate-pulse">
+      <div className="flex justify-between">
+        <div className="h-4 w-20 rounded bg-surface-hover" />
+        <div className="h-4 w-16 rounded bg-surface-hover" />
+      </div>
+      <div className="mt-3 h-5 w-3/4 rounded bg-surface-hover" />
+      <div className="mt-2 h-4 w-1/2 rounded bg-surface-hover" />
+      <div className="mt-2 h-4 w-1/3 rounded bg-surface-hover" />
+      <div className="mt-auto border-t pt-4 mt-5">
+        <div className="h-10 w-full rounded-md bg-surface-hover" />
+      </div>
+    </div>
+  );
+}
+
 function FilterSection({ label, options, value, onChange }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1">
       <p className="text-base font-semibold text-text-primary">{label}</p>
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-0.5">
         {options.map((opt) => (
           <button
             key={opt}
@@ -169,23 +90,33 @@ export default function AllPromptsPage() {
   const [difficulty, setDifficulty] = useState("All");
   const [sort, setSort] = useState("latest");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [prompts, setPrompts] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const LIMIT = 12;
 
-  // Client-side filter (replace with server-side later)
-  const filtered = MOCK_PROMPTS.filter((p) => {
-    const matchSearch =
-      !search.trim() ||
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.tags.some((t) => t.toLowerCase().includes(search.toLowerCase())) ||
-      p.aiTool.toLowerCase().includes(search.toLowerCase());
-    const matchCategory = category === "All" || p.category === category;
-    const matchTool = aiTool === "All" || p.aiTool === aiTool;
-    const matchDifficulty = difficulty === "All" || p.difficulty === difficulty;
-    return matchSearch && matchCategory && matchTool && matchDifficulty;
-  }).sort((a, b) => {
-    if (sort === "copies") return b.copyCount - a.copyCount;
-    if (sort === "popular") return b.copyCount - a.copyCount;
-    return 0;
-  });
+  const fetchPrompts = useCallback(() => {
+    setIsLoading(true);
+    const params = { page, limit: LIMIT, sort };
+    if (search.trim()) params.search = search.trim();
+    if (category !== "All") params.category = category;
+    if (aiTool !== "All") params.aiTool = aiTool;
+    if (difficulty !== "All") params.difficulty = difficulty;
+
+    getPrompts(params)
+      .then((data) => {
+        setPrompts(data.prompts || []);
+        setTotal(data.total || 0);
+      })
+      .catch(() => setPrompts([]))
+      .finally(() => setIsLoading(false));
+  }, [search, category, aiTool, difficulty, sort, page]);
+
+  useEffect(() => {
+    const timer = setTimeout(fetchPrompts, 300);
+    return () => clearTimeout(timer);
+  }, [fetchPrompts]);
 
   const clearFilters = () => {
     setSearch("");
@@ -193,32 +124,43 @@ export default function AllPromptsPage() {
     setAiTool("All");
     setDifficulty("All");
     setSort("latest");
+    setPage(1);
   };
 
   const hasActiveFilters =
     search || category !== "All" || aiTool !== "All" || difficulty !== "All";
+  const totalPages = Math.ceil(total / LIMIT);
 
   const Filters = () => (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <FilterSection
         label="Category"
         options={CATEGORIES}
         value={category}
-        onChange={setCategory}
+        onChange={(v) => {
+          setCategory(v);
+          setPage(1);
+        }}
       />
       <div className="h-px bg-border" />
       <FilterSection
         label="AI Tool"
         options={AI_TOOLS}
         value={aiTool}
-        onChange={setAiTool}
+        onChange={(v) => {
+          setAiTool(v);
+          setPage(1);
+        }}
       />
       <div className="h-px bg-border" />
       <FilterSection
         label="Difficulty"
         options={DIFFICULTIES}
         value={difficulty}
-        onChange={setDifficulty}
+        onChange={(v) => {
+          setDifficulty(v);
+          setPage(1);
+        }}
       />
       {hasActiveFilters && (
         <>
@@ -240,34 +182,51 @@ export default function AllPromptsPage() {
 
   return (
     <main className="min-h-screen bg-page-bg">
-      <div className="w-full px-3 pt-5 pb-10">
-        {/* Search + Sort bar */}
+      <div className="w-full px-3 py-6">
+        {/* Heading */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold leading-tight text-text-primary">
+            All Prompts
+          </h1>
+          <p className="mt-1 text-base text-text-secondary">
+            Browse {total} prompts across all categories and AI tools.
+          </p>
+        </div>
+
+        {/* Search + Sort */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-1 items-center gap-2 rounded-md border bg-surface px-3">
             <Search className="h-4 w-4 shrink-0 text-text-secondary" />
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               placeholder="Search by title, tag, or AI tool..."
               className="flex-1 bg-transparent py-2.5 text-base text-text-primary placeholder:text-text-muted outline-none"
             />
             {search && (
               <button
                 type="button"
-                onClick={() => setSearch("")}
+                onClick={() => {
+                  setSearch("");
+                  setPage(1);
+                }}
                 className="text-text-secondary hover:text-text-primary"
               >
                 <X className="h-4 w-4" />
               </button>
             )}
           </div>
-
           <div className="flex items-center gap-2">
-            {/* Sort */}
             <select
               value={sort}
-              onChange={(e) => setSort(e.target.value)}
+              onChange={(e) => {
+                setSort(e.target.value);
+                setPage(1);
+              }}
               className={
                 "rounded-md border bg-surface px-3 text-base text-text-primary outline-none h-10 cursor-pointer " +
                 focusRing
@@ -279,8 +238,6 @@ export default function AllPromptsPage() {
                 </option>
               ))}
             </select>
-
-            {/* Mobile filter toggle */}
             <button
               type="button"
               onClick={() => setMobileFiltersOpen((v) => !v)}
@@ -289,13 +246,12 @@ export default function AllPromptsPage() {
                 focusRing
               }
             >
-              <SlidersHorizontal className="h-4 w-4" />
-              Filters
+              <SlidersHorizontal className="h-4 w-4" /> Filters
             </button>
           </div>
         </div>
 
-        {/* Mobile filters drawer */}
+        {/* Mobile filters */}
         {mobileFiltersOpen && (
           <div className="mb-6 rounded-md border bg-surface p-5 lg:hidden">
             <div className="mb-4 flex items-center justify-between">
@@ -317,17 +273,29 @@ export default function AllPromptsPage() {
           </div>
         )}
 
-        <div className="flex gap-6">
+        <div className="flex gap-4">
           {/* Desktop sidebar */}
-          <aside className="hidden w-48 shrink-0 lg:block">
-            <div className="sticky top-24 rounded-md border bg-surface p-5">
+          <aside className="hidden w-44 shrink-0 lg:block">
+            <div className="sticky top-20 rounded-md border bg-surface p-4">
               <Filters />
             </div>
           </aside>
 
-          {/* Prompts grid */}
+          {/* Prompts */}
           <div className="flex-1 min-w-0">
-            {filtered.length === 0 ? (
+            {!isLoading && (
+              <p className="mb-4 text-base text-text-secondary">
+                {total} prompt{total !== 1 ? "s" : ""} found
+              </p>
+            )}
+
+            {isLoading ? (
+              <div className="grid grid-cols-1 gap-px border-y bg-border sm:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonCard key={i} />
+                ))}
+              </div>
+            ) : prompts.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-md border bg-surface py-16 text-center">
                 <Search className="h-10 w-10 text-text-secondary" />
                 <h2 className="mt-4 text-xl font-semibold text-text-primary">
@@ -349,12 +317,8 @@ export default function AllPromptsPage() {
               </div>
             ) : (
               <>
-                <p className="mb-4 text-base text-text-secondary">
-                  {filtered.length} prompt{filtered.length !== 1 ? "s" : ""}{" "}
-                  found
-                </p>
-                <div className="grid grid-cols-1 gap-px border bg-border sm:grid-cols-2 xl:grid-cols-3">
-                  {filtered.map((prompt) => (
+                <div className="grid grid-cols-1 gap-px border-y bg-border sm:grid-cols-2 xl:grid-cols-3">
+                  {prompts.map((prompt) => (
                     <article
                       key={prompt._id}
                       className="flex flex-col bg-surface p-5"
@@ -366,7 +330,8 @@ export default function AllPromptsPage() {
                         <span
                           className={
                             "text-base font-medium " +
-                            DIFFICULTY_STYLES[prompt.difficulty]
+                            (DIFFICULTY_STYLES[prompt.difficulty] ||
+                              "text-text-secondary")
                           }
                         >
                           {prompt.difficulty}
@@ -400,6 +365,39 @@ export default function AllPromptsPage() {
                     </article>
                   ))}
                 </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="mt-8 flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                      className={
+                        "inline-flex h-10 items-center justify-center rounded-md border px-4 text-base font-medium text-text-primary transition-colors hover:bg-surface-hover disabled:opacity-40 " +
+                        focusRing
+                      }
+                    >
+                      Previous
+                    </button>
+                    <span className="text-base text-text-secondary">
+                      Page {page} of {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      disabled={page === totalPages}
+                      className={
+                        "inline-flex h-10 items-center justify-center rounded-md border px-4 text-base font-medium text-text-primary transition-colors hover:bg-surface-hover disabled:opacity-40 " +
+                        focusRing
+                      }
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </div>
