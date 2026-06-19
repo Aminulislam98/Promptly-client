@@ -19,6 +19,14 @@ export const auth = betterAuth({
     },
   },
 
+  // Add this
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["google"],
+    },
+  },
+
   user: {
     additionalFields: {
       role: {

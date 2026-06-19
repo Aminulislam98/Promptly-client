@@ -113,7 +113,7 @@ export default function DashboardLayout({ children }) {
     return null;
 
   return (
-    <div className="flex min-h-screen bg-page-bg pt-16">
+    <div className="flex min-h-screen bg-page-bg">
       {/* Desktop collapsible sidebar */}
       <aside
         onMouseEnter={() => setExpanded(true)}
@@ -137,10 +137,10 @@ export default function DashboardLayout({ children }) {
       <main
         className={
           "flex-1 pb-24 transition-all duration-200 lg:pb-8 " +
-          (expanded ? "lg:ml-56" : "lg:ml-16")
+          (expanded ? "lg:ml-56" : "lg:ml-20")
         }
       >
-        <div className="p-4 sm:p-6">{children}</div>
+        <div className="px-4 pt-4 pb-6">{children}</div>
       </main>
 
       {/* Mobile bottom tab bar */}

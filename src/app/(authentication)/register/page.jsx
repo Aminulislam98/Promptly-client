@@ -81,7 +81,6 @@ export default function SignupPage() {
 
     setErrors(newErrors);
 
-    // Show toast for first validation error
     if (!valid) {
       const firstError = Object.values(newErrors).find((e) => e !== "");
       toast.error(firstError);
@@ -108,6 +107,13 @@ export default function SignupPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoogleLogin = async () => {
+    await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/dashboard",
+    });
   };
 
   return (
@@ -247,6 +253,7 @@ export default function SignupPage() {
 
           <button
             type="button"
+            onClick={handleGoogleLogin}
             className={
               "flex h-12 w-full items-center justify-center gap-3 rounded-full border bg-surface text-base font-medium text-text-primary transition-colors duration-150 hover:bg-surface-hover active:scale-[0.98] " +
               focusRing
