@@ -240,7 +240,7 @@ export default function AllPromptsPage() {
 
   return (
     <main className="min-h-screen bg-page-bg">
-      <div className="w-full px-3 pt-20 pb-10">
+      <div className="w-full px-3 pt-5 pb-10">
         {/* Search + Sort bar */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-1 items-center gap-2 rounded-md border bg-surface px-3">

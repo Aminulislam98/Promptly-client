@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Eye, EyeOff, LogIn } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import toast, { Toaster } from "react-hot-toast";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
@@ -50,6 +51,7 @@ export default function SignInPage() {
     e.preventDefault();
     let valid = true;
     const newErrors = { email: "", password: "" };
+
     if (!formData.email.trim()) {
       newErrors.email = "Email address is required";
       valid = false;
@@ -61,41 +63,47 @@ export default function SignInPage() {
       newErrors.password = "Password must be at least 8 characters";
       valid = false;
     }
-    setErrors(newErrors);
-    if (valid) {
-      setIsLoading(true);
-      try {
-        const { data, error } = await authClient.signIn.email({
-          email: formData.email, // required
-          password: formData.password, // required
-          rememberMe: true,
-          callbackURL: "/",
-        });
 
-        console.log(
-          "Credentials bundled for server-side verification:",
-          credentialsToVerify,
-        );
-        if (error) {
-          toast.error(
-            error.message ||
-              "An error occurred during sign-in. Please try again.",
-          );
-        } else {
-          toast.success("Signed in successfully!");
-        }
-      } catch (error) {
-        console.error("Authentication error:", error);
-      } finally {
-        setIsLoading(false);
-      }
+    setErrors(newErrors);
+
+    if (!valid) {
+      const firstError = Object.values(newErrors).find((e) => e !== "");
+      toast.error(firstError);
+      return;
     }
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await authClient.signIn.email({
+        email: formData.email,
+        password: formData.password,
+        rememberMe: true,
+        callbackURL: "/dashboard",
+      });
+      if (error) {
+        toast.error(error.message || "Sign in failed. Please try again.");
+      } else {
+        toast.success("Signed in successfully!");
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+      console.error("Authentication error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/dashboard",
+    });
   };
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-surface px-4 pb-16 pt-24">
+      <Toaster position="top-center" />
       <div className="w-full max-w-md">
-        {/* Heading — left aligned */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold leading-tight text-text-primary">
             Sign In
@@ -105,13 +113,11 @@ export default function SignInPage() {
           </p>
         </div>
 
-        {/* Form */}
         <form
           onSubmit={handleSubmit}
           className="flex flex-col gap-3"
           noValidate
         >
-          {/* Email */}
           <div>
             <input
               id="email"
@@ -131,7 +137,6 @@ export default function SignInPage() {
             )}
           </div>
 
-          {/* Password */}
           <div>
             <div className="relative">
               <input
@@ -172,7 +177,6 @@ export default function SignInPage() {
             )}
           </div>
 
-          {/* Forgot password */}
           <div className="flex justify-end">
             <Link
               href="/forgot-password"
@@ -185,7 +189,6 @@ export default function SignInPage() {
             </Link>
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={isLoading}
@@ -197,16 +200,15 @@ export default function SignInPage() {
             {isLoading ? "Signing in…" : "Sign In"}
           </button>
 
-          {/* Divider */}
           <div className="my-2 flex items-center gap-4">
             <span className="h-px flex-1 bg-border" />
             <span className="text-base text-text-secondary">or</span>
             <span className="h-px flex-1 bg-border" />
           </div>
 
-          {/* Google */}
           <button
             type="button"
+            onClick={handleGoogleLogin}
             className={
               "flex h-12 w-full items-center justify-center gap-3 rounded-full border bg-surface text-base font-medium text-text-primary transition-colors duration-150 hover:bg-surface-hover active:scale-[0.98] " +
               focusRing
@@ -217,7 +219,6 @@ export default function SignInPage() {
           </button>
         </form>
 
-        {/* Footer */}
         <p className="mt-6 text-center text-base text-text-secondary">
           Don&apos;t have an account?{" "}
           <Link
