@@ -2,6 +2,7 @@
 
 import { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Copy, Bookmark, Flag, ArrowLeft, Check, Lock } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
@@ -155,6 +156,7 @@ function ReportModal({ onClose, promptId }) {
 
 export default function PromptDetailsPage({ params }) {
   const { id } = use(params);
+  const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
   const [prompt, setPrompt] = useState(null);
@@ -172,6 +174,13 @@ export default function PromptDetailsPage({ params }) {
 
   useEffect(() => setMounted(true), []);
 
+  // Private route — redirect to login if not logged in
+  useEffect(() => {
+    if (mounted && !session?.user) {
+      router.replace("/login");
+    }
+  }, [mounted, session, router]);
+
   useEffect(() => {
     if (!id) return;
     Promise.all([getPromptById(id), getReviews(id)])
@@ -185,19 +194,24 @@ export default function PromptDetailsPage({ params }) {
   }, [id]);
 
   const user = mounted ? session?.user : null;
-  const isPremium = user?.plan === "premium";
+  const isPremium = user?.isPremium === true;
   const isPrivate = prompt?.visibility === "Private";
   const isLocked = isPrivate && !isPremium;
 
   const handleCopy = async () => {
     if (isLocked || copyingRef.current) return;
+    const copiedKey = `copied_${prompt._id}`;
+    const alreadyCopied = localStorage.getItem(copiedKey);
     copyingRef.current = true;
     try {
       await navigator.clipboard.writeText(prompt.content);
       setCopied(true);
-      setCopyCount((prev) => prev + 1);
+      if (!alreadyCopied) {
+        setCopyCount((prev) => prev + 1);
+        await incrementCopyCount(prompt._id);
+        localStorage.setItem(copiedKey, "true");
+      }
       toast.success("Prompt copied to clipboard");
-      await incrementCopyCount(prompt._id);
       setTimeout(() => {
         setCopied(false);
         copyingRef.current = false;
@@ -255,6 +269,9 @@ export default function PromptDetailsPage({ params }) {
       setSubmittingReview(false);
     }
   };
+
+  // Show nothing while checking auth
+  if (!mounted || !session?.user) return null;
 
   if (isLoading) {
     return (
@@ -502,17 +519,6 @@ export default function PromptDetailsPage({ params }) {
                     {submittingReview ? "Submitting…" : "Submit Review"}
                   </button>
                 </form>
-              )}
-              {!user && (
-                <p className="mt-4 border-t pt-4 text-base text-text-secondary">
-                  <Link
-                    href="/login"
-                    className="font-semibold text-brand hover:underline"
-                  >
-                    Login
-                  </Link>{" "}
-                  to write a review.
-                </p>
               )}
             </div>
           </div>

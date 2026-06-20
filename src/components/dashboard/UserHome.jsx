@@ -64,7 +64,7 @@ export default function UserHome({ user }) {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const maxPrompts = isPremium ? "∞" : "3";
+  const maxPrompts = user?.role === "creator" ? "∞" : "3";
 
   const stats = [
     {
@@ -78,7 +78,16 @@ export default function UserHome({ user }) {
     ,
     { label: "Saved Prompts", value: isLoading ? "…" : savedCount },
     { label: "Reviews Given", value: isLoading ? "…" : reviewCount },
-    { label: "Plan", value: isLoading ? "…" : isPremium ? "Premium" : "Free" },
+    {
+      label: "Plan",
+      value: isLoading
+        ? "…"
+        : isPremium
+          ? "Premium"
+          : user?.role === "creator"
+            ? "Creator"
+            : "Free",
+    },
   ];
 
   return (

@@ -152,3 +152,5 @@ export const rejectCreatorRequest = (id) =>
   apiFetch(`/api/admin/creator-requests/${id}/reject`, { method: "PATCH" });
 
 export const getAdminAnalytics = () => apiFetch("/api/admin/analytics");
+export const getCreatorAnalytics = () =>
+  fetchWithAuth(`${API_URL}/api/creator/analytics`);

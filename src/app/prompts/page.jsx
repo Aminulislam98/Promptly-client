@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Search, Copy, ArrowRight, SlidersHorizontal, X } from "lucide-react";
 import { getPrompts } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
@@ -84,6 +85,7 @@ function FilterSection({ label, options, value, onChange }) {
 }
 
 export default function AllPromptsPage() {
+  const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [aiTool, setAiTool] = useState("All");
@@ -95,6 +97,12 @@ export default function AllPromptsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const LIMIT = 12;
+
+  const { data: session } = authClient.useSession();
+
+  useEffect(() => setMounted(true), []);
+
+  const isLoggedIn = mounted && !!session?.user;
 
   const fetchPrompts = useCallback(() => {
     setIsLoading(true);
@@ -183,7 +191,6 @@ export default function AllPromptsPage() {
   return (
     <main className="min-h-screen bg-page-bg">
       <div className="w-full px-3 py-6">
-        {/* Heading */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold leading-tight text-text-primary">
             All Prompts
@@ -193,7 +200,6 @@ export default function AllPromptsPage() {
           </p>
         </div>
 
-        {/* Search + Sort */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-1 items-center gap-2 rounded-md border bg-surface px-3">
             <Search className="h-4 w-4 shrink-0 text-text-secondary" />
@@ -251,7 +257,6 @@ export default function AllPromptsPage() {
           </div>
         </div>
 
-        {/* Mobile filters */}
         {mobileFiltersOpen && (
           <div className="mb-6 rounded-md border bg-surface p-5 lg:hidden">
             <div className="mb-4 flex items-center justify-between">
@@ -274,14 +279,12 @@ export default function AllPromptsPage() {
         )}
 
         <div className="flex gap-4">
-          {/* Desktop sidebar */}
           <aside className="hidden w-44 shrink-0 lg:block">
             <div className="sticky top-20 rounded-md border bg-surface p-4">
               <Filters />
             </div>
           </aside>
 
-          {/* Prompts */}
           <div className="flex-1 min-w-0">
             {!isLoading && (
               <p className="mb-4 text-base text-text-secondary">
@@ -347,26 +350,42 @@ export default function AllPromptsPage() {
                         <span className="flex items-center gap-1">
                           <Copy className="h-3.5 w-3.5" /> {prompt.copyCount}
                         </span>
+                        {prompt.visibility === "Private" && (
+                          <span className="rounded-md bg-warning/10 px-2 py-0.5 text-base font-medium text-warning">
+                            Premium
+                          </span>
+                        )}
                       </div>
                       <p className="mt-2 text-base text-text-secondary">
                         by {prompt.creatorName}
                       </p>
                       <div className="mt-auto border-t pt-4 mt-5">
-                        <Link
-                          href={`/prompts/${prompt._id}`}
-                          className={
-                            "flex h-10 w-full items-center justify-center gap-2 rounded-md bg-brand text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] " +
-                            focusRing
-                          }
-                        >
-                          View Details <ArrowRight className="h-4 w-4" />
-                        </Link>
+                        {isLoggedIn ? (
+                          <Link
+                            href={`/prompts/${prompt._id}`}
+                            className={
+                              "flex h-10 w-full items-center justify-center gap-2 rounded-md bg-brand text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] " +
+                              focusRing
+                            }
+                          >
+                            View Details <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        ) : (
+                          <Link
+                            href="/login"
+                            className={
+                              "flex h-10 w-full items-center justify-center rounded-md border text-base font-medium text-text-primary transition-colors hover:bg-surface-hover " +
+                              focusRing
+                            }
+                          >
+                            Login to View
+                          </Link>
+                        )}
                       </div>
                     </article>
                   ))}
                 </div>
 
-                {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="mt-8 flex items-center justify-center gap-2">
                     <button
