@@ -31,8 +31,15 @@ export default function AdminReportedPage() {
 
   const handleWarn = async (id) => {
     try {
-      await warnCreator(id);
-      toast.success("Warning sent to creator");
+      const data = await warnCreator(id);
+      setReports((prev) =>
+        prev.map((r) => (r._id === id ? { ...r, warned: true } : r)),
+      );
+      if (data.suspended) {
+        toast.success("Creator suspended and prompt removed!");
+      } else {
+        toast.success("Warning sent to creator");
+      }
     } catch {
       toast.error("Failed to send warning");
     }
@@ -95,16 +102,22 @@ export default function AdminReportedPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => handleWarn(report._id)}
-                    className={
-                      "inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-base font-medium text-warning hover:bg-warning/10 " +
-                      focusRing
-                    }
-                  >
-                    <AlertTriangle className="h-4 w-4" /> Warn
-                  </button>
+                  {report.warned ? (
+                    <span className="inline-flex h-9 items-center gap-2 rounded-lg border border-warning bg-warning/10 px-3 text-base font-medium text-warning">
+                      <AlertTriangle className="h-4 w-4" /> Warned
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleWarn(report._id)}
+                      className={
+                        "inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-base font-medium text-warning hover:bg-warning/10 " +
+                        focusRing
+                      }
+                    >
+                      <AlertTriangle className="h-4 w-4" /> Warn
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleDismiss(report._id)}

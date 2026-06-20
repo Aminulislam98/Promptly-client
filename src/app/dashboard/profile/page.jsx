@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Crown, Mail, Shield, FileText, BadgeCheck } from "lucide-react";
+import { Crown, Mail, Shield, BadgeCheck, AlertTriangle } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { applyForCreator, getCreatorRequestStatus } from "@/lib/api";
+import {
+  applyForCreator,
+  getCreatorRequestStatus,
+  getMyProfile,
+} from "@/lib/api";
 import { useState, useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -16,11 +20,16 @@ export default function ProfilePage() {
   const user = session?.user;
   const [requestStatus, setRequestStatus] = useState(null);
   const [applying, setApplying] = useState(false);
+  const [profileData, setProfileData] = useState(null);
 
   useEffect(() => {
     if (user) {
       getCreatorRequestStatus()
         .then((data) => setRequestStatus(data.request?.status || null))
+        .catch(() => {});
+
+      getMyProfile()
+        .then((data) => setProfileData(data.user))
         .catch(() => {});
     }
   }, [user]);
@@ -52,13 +61,16 @@ export default function ProfilePage() {
     );
   }
 
+  const warningCount = profileData?.warnings?.length || 0;
+  const isSuspended = profileData?.isSuspended || false;
+
   const INFO_ROWS = [
     { icon: Mail, label: "Email", value: user?.email },
     { icon: Shield, label: "Role", value: user?.role || "user" },
     {
       icon: BadgeCheck,
       label: "Subscription",
-      value: user?.isPremium ? "Premium" : "Free",
+      value: profileData?.isPremium ? "Premium" : "Free",
     },
   ];
 
@@ -73,6 +85,45 @@ export default function ProfilePage() {
           Manage your account and subscription.
         </p>
       </div>
+
+      {/* Suspension banner */}
+      {isSuspended && (
+        <div className="mb-6 flex items-start gap-3 rounded-xl border border-error bg-error/10 px-5 py-4">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-error" />
+          <div>
+            <p className="text-base font-semibold text-error">
+              Your account is suspended
+            </p>
+            <p className="mt-1 text-base text-text-secondary">
+              You have received 3 or more warnings and can no longer add
+              prompts. Contact{" "}
+              <a
+                href="mailto:support@promptly.ai"
+                className="text-brand hover:underline"
+              >
+                support@promptly.ai
+              </a>{" "}
+              to appeal.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Warning banner */}
+      {!isSuspended && warningCount > 0 && (
+        <div className="mb-6 flex items-start gap-3 rounded-xl border border-warning bg-warning/10 px-5 py-4">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
+          <div>
+            <p className="text-base font-semibold text-warning">
+              You have {warningCount}/3 warning{warningCount > 1 ? "s" : ""}
+            </p>
+            <p className="mt-1 text-base text-text-secondary">
+              Please review our community guidelines. At 3 warnings your account
+              will be suspended and reported prompts removed.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Profile card */}
       <div className="rounded-xl border bg-surface px-6 py-6">
@@ -104,13 +155,18 @@ export default function ProfilePage() {
               <span className="inline-flex items-center gap-1 rounded-full bg-brand-light px-3 py-1 text-base font-medium text-brand">
                 <Shield className="h-4 w-4" /> {user?.role ?? "user"}
               </span>
-              {user?.isPremium ? (
+              {profileData?.isPremium ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-3 py-1 text-base font-medium text-success">
                   <Crown className="h-4 w-4" /> Premium
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-base font-medium text-text-secondary">
                   Free Plan
+                </span>
+              )}
+              {isSuspended && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-error/10 px-3 py-1 text-base font-medium text-error">
+                  <AlertTriangle className="h-4 w-4" /> Suspended
                 </span>
               )}
             </div>
@@ -135,7 +191,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Upgrade banner */}
-      {!user?.isPremium && (
+      {!profileData?.isPremium && (
         <div className="mt-6 flex flex-col gap-3 rounded-xl border border-brand bg-brand-light px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <Crown className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
@@ -161,7 +217,7 @@ export default function ProfilePage() {
       )}
 
       {/* Become a creator */}
-      {user?.role === "user" && (
+      {user?.role === "user" && !isSuspended && (
         <div className="mt-4 flex flex-col gap-4 rounded-xl border px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-base font-semibold text-text-primary">

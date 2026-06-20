@@ -116,7 +116,7 @@ export default function AdminLayout({ children }) {
   if (session.user.role !== "admin") return null;
 
   return (
-    <div className="flex min-h-screen bg-page-bg pt-16">
+    <div className="flex min-h-screen bg-page-bg ">
       {/* Desktop sidebar */}
       <aside
         onMouseEnter={() => setExpanded(true)}

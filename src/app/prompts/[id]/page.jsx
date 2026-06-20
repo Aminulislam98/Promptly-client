@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Copy, Bookmark, Flag, ArrowLeft, Check, Lock } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
@@ -154,30 +154,35 @@ function ReportModal({ onClose, promptId }) {
 }
 
 export default function PromptDetailsPage({ params }) {
+  const { id } = use(params);
+
   const [mounted, setMounted] = useState(false);
   const [prompt, setPrompt] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [copyCount, setCopyCount] = useState(0);
   const [bookmarked, setBookmarked] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+  const copyingRef = useRef(false);
   const { data: session } = authClient.useSession();
 
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    if (!params?.id) return;
-    Promise.all([getPromptById(params.id), getReviews(params.id)])
+    if (!id) return;
+    Promise.all([getPromptById(id), getReviews(id)])
       .then(([promptData, reviewData]) => {
         setPrompt(promptData.prompt);
+        setCopyCount(promptData.prompt?.copyCount || 0);
         setReviews(reviewData.reviews || []);
       })
       .catch(() => toast.error("Failed to load prompt"))
       .finally(() => setIsLoading(false));
-  }, [params?.id]);
+  }, [id]);
 
   const user = mounted ? session?.user : null;
   const isPremium = user?.plan === "premium";
@@ -185,14 +190,22 @@ export default function PromptDetailsPage({ params }) {
   const isLocked = isPrivate && !isPremium;
 
   const handleCopy = async () => {
-    if (isLocked) return;
-    navigator.clipboard.writeText(prompt.content);
-    setCopied(true);
-    toast.success("Prompt copied to clipboard");
-    setTimeout(() => setCopied(false), 2000);
+    if (isLocked || copyingRef.current) return;
+    copyingRef.current = true;
     try {
+      await navigator.clipboard.writeText(prompt.content);
+      setCopied(true);
+      setCopyCount((prev) => prev + 1);
+      toast.success("Prompt copied to clipboard");
       await incrementCopyCount(prompt._id);
-    } catch {}
+      setTimeout(() => {
+        setCopied(false);
+        copyingRef.current = false;
+      }, 2000);
+    } catch {
+      toast.error("Failed to copy");
+      copyingRef.current = false;
+    }
   };
 
   const handleBookmark = async () => {
@@ -296,7 +309,6 @@ export default function PromptDetailsPage({ params }) {
         </Link>
 
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Main content */}
           <div className="flex flex-col gap-6 lg:col-span-2">
             {/* Header */}
             <div className="rounded-xl border bg-surface p-6">
@@ -347,13 +359,17 @@ export default function PromptDetailsPage({ params }) {
                     type="button"
                     onClick={handleCopy}
                     className={
-                      "inline-flex h-9 items-center gap-2 rounded-md border px-3 text-base font-medium text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary " +
+                      "inline-flex h-9 items-center gap-2 rounded-md border px-3 text-base font-medium transition-colors hover:bg-surface-hover " +
+                      (copied
+                        ? "border-success text-success"
+                        : "text-text-secondary hover:text-text-primary") +
+                      " " +
                       focusRing
                     }
                   >
                     {copied ? (
                       <>
-                        <Check className="h-4 w-4 text-success" /> Copied
+                        <Check className="h-4 w-4" /> Copied
                       </>
                     ) : (
                       <>
@@ -363,7 +379,6 @@ export default function PromptDetailsPage({ params }) {
                   </button>
                 )}
               </div>
-
               {isLocked ? (
                 <div className="relative mt-4 overflow-hidden rounded-lg border">
                   <pre className="select-none p-4 text-base leading-relaxed text-text-secondary opacity-30 blur-sm line-clamp-4 font-mono whitespace-pre-wrap">
@@ -412,7 +427,6 @@ export default function PromptDetailsPage({ params }) {
               <h2 className="text-xl font-semibold text-text-primary">
                 Reviews & Ratings ({reviews.length})
               </h2>
-
               {reviews.length === 0 ? (
                 <p className="mt-4 text-base text-text-secondary">
                   No reviews yet. Be the first to review!
@@ -444,7 +458,6 @@ export default function PromptDetailsPage({ params }) {
                   ))}
                 </div>
               )}
-
               {user && !isLocked && (
                 <form
                   onSubmit={handleReview}
@@ -490,7 +503,6 @@ export default function PromptDetailsPage({ params }) {
                   </button>
                 </form>
               )}
-
               {!user && (
                 <p className="mt-4 border-t pt-4 text-base text-text-secondary">
                   <Link
@@ -507,11 +519,10 @@ export default function PromptDetailsPage({ params }) {
 
           {/* Sidebar */}
           <aside className="flex flex-col gap-4">
-            {/* Actions */}
             <div className="rounded-xl border bg-surface p-5">
               <div className="flex items-center gap-3 text-base text-text-secondary">
                 <Copy className="h-4 w-4" />
-                <span>{prompt.copyCount} copies</span>
+                <span>{copyCount} copies</span>
               </div>
               <div className="mt-4 flex flex-col gap-3">
                 <button
@@ -519,13 +530,17 @@ export default function PromptDetailsPage({ params }) {
                   onClick={handleCopy}
                   disabled={isLocked}
                   className={
-                    "flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] disabled:opacity-50 " +
+                    "flex h-11 w-full items-center justify-center gap-2 rounded-lg text-base font-semibold text-on-brand transition-all active:scale-[0.98] disabled:opacity-50 " +
+                    (copied
+                      ? "bg-success hover:opacity-90"
+                      : "bg-brand hover:bg-brand-hover") +
+                    " " +
                     focusRing
                   }
                 >
                   {copied ? (
                     <>
-                      <Check className="h-4 w-4" /> Copied
+                      <Check className="h-4 w-4" /> Copied!
                     </>
                   ) : (
                     <>
@@ -533,7 +548,6 @@ export default function PromptDetailsPage({ params }) {
                     </>
                   )}
                 </button>
-
                 {user && (
                   <>
                     <button
@@ -569,7 +583,6 @@ export default function PromptDetailsPage({ params }) {
               </div>
             </div>
 
-            {/* Creator */}
             <div className="rounded-xl border bg-surface p-5">
               <h2 className="text-base font-semibold text-text-primary">
                 Creator
@@ -589,7 +602,6 @@ export default function PromptDetailsPage({ params }) {
               </div>
             </div>
 
-            {/* Details */}
             <div className="rounded-xl border bg-surface p-5">
               <h2 className="text-base font-semibold text-text-primary">
                 Details
