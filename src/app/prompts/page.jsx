@@ -553,15 +553,6 @@ export default function AllPromptsPage() {
       )}
 
       <div className="w-full px-3 py-6">
-        <div className="mb-5">
-          <h1 className="text-3xl font-bold leading-tight text-text-primary">
-            All Prompts
-          </h1>
-          <p className="mt-1 text-base text-text-secondary">
-            Browse {total} prompts across all categories.
-          </p>
-        </div>
-
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div
             onClick={() => setSearchOverlayOpen(true)}
