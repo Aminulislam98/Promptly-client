@@ -1,15 +1,18 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 async function apiFetch(endpoint, options = {}) {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("server_token") : null;
+
   const headers = {
     "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
     ...options.headers,
   };
 
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers,
-    credentials: "include", // sends Better Auth cookies automatically
   });
 
   const data = await res.json();
