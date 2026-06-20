@@ -39,6 +39,11 @@ export const auth = betterAuth({
         defaultValue: "free",
         input: false,
       },
+      isPremium: {
+        type: "boolean",
+        defaultValue: false,
+        input: false,
+      },
     },
   },
 });

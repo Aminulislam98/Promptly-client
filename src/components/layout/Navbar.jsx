@@ -76,6 +76,7 @@ export function Navbar({ name = "Promptly" }) {
 
   const handleLogout = async () => {
     await authClient.signOut();
+    localStorage.removeItem("server_token");
     setOpen(false);
     router.push("/");
     router.refresh();

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, Crown, Lock } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import { createCheckout } from "@/lib/api";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
@@ -29,7 +30,10 @@ export default function PaymentPage() {
   const handlePayment = async () => {
     setIsLoading(true);
     try {
-      toast.success("Redirecting to payment...");
+      const data = await createCheckout();
+      if (data.url) {
+        window.location.href = data.url;
+      }
     } catch {
       toast.error("Payment failed. Please try again.");
     } finally {
@@ -42,7 +46,6 @@ export default function PaymentPage() {
       <Toaster position="top-center" />
 
       <div className="mx-auto w-full max-w-screen-xl px-3 py-10">
-        {/* Page heading */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold leading-tight text-text-primary">
             Upgrade to Premium
@@ -52,11 +55,8 @@ export default function PaymentPage() {
           </p>
         </div>
 
-        {/* Main grid */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Left col — 2/3 */}
           <div className="flex flex-col gap-4 lg:col-span-2">
-            {/* What's included */}
             <div className="rounded-xl border bg-surface p-6">
               <h2 className="text-xl font-semibold text-text-primary">
                 What's included
@@ -71,7 +71,6 @@ export default function PaymentPage() {
               </ul>
             </div>
 
-            {/* After payment */}
             <div className="rounded-xl border bg-surface p-6">
               <h2 className="text-xl font-semibold text-text-primary">
                 What happens after payment
@@ -89,7 +88,6 @@ export default function PaymentPage() {
             </div>
           </div>
 
-          {/* Right col — 1/3 sticky payment card */}
           <div className="flex flex-col gap-4">
             <div className="sticky top-20 rounded-xl border bg-surface p-6">
               <div className="flex items-center gap-3">

@@ -3,7 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FileText, Bookmark, Star, Crown, PlusCircle } from "lucide-react";
-import { getMyPrompts, getBookmarks, getMyReviews } from "@/lib/api";
+import {
+  getMyPrompts,
+  getBookmarks,
+  getMyReviews,
+  getMyProfile,
+} from "@/lib/api";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
@@ -39,29 +44,41 @@ export default function UserHome({ user }) {
   const [promptCount, setPromptCount] = useState(0);
   const [savedCount, setSavedCount] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
+  const [isPremium, setIsPremium] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([getMyPrompts(), getBookmarks(), getMyReviews()])
-      .then(([promptsData, bookmarksData, reviewsData]) => {
+    Promise.all([
+      getMyPrompts(),
+      getBookmarks(),
+      getMyReviews(),
+      getMyProfile(),
+    ])
+      .then(([promptsData, bookmarksData, reviewsData, profileData]) => {
         setPromptCount(promptsData.prompts?.length || 0);
         setSavedCount(bookmarksData.bookmarks?.length || 0);
         setReviewCount(reviewsData.reviews?.length || 0);
+        setIsPremium(profileData.user?.isPremium || false);
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
   }, []);
 
-  const maxPrompts = user?.isPremium ? "∞" : "3";
+  const maxPrompts = isPremium ? "∞" : "3";
 
   const stats = [
     {
       label: "Total Prompts",
-      value: isLoading ? "…" : `${promptCount} / ${maxPrompts}`,
+      value: isLoading
+        ? "…"
+        : isPremium
+          ? `${promptCount} (Unlimited)`
+          : `${promptCount} / 3`,
     },
+    ,
     { label: "Saved Prompts", value: isLoading ? "…" : savedCount },
     { label: "Reviews Given", value: isLoading ? "…" : reviewCount },
-    { label: "Plan", value: user?.isPremium ? "Premium" : "Free" },
+    { label: "Plan", value: isLoading ? "…" : isPremium ? "Premium" : "Free" },
   ];
 
   return (
@@ -75,7 +92,6 @@ export default function UserHome({ user }) {
         </p>
       </div>
 
-      {/* Stat cards */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {stats.map((stat) => (
           <div
@@ -90,8 +106,7 @@ export default function UserHome({ user }) {
         ))}
       </div>
 
-      {/* Upgrade banner */}
-      {!user?.isPremium && (
+      {!isPremium && !isLoading && (
         <div className="mt-6 flex flex-col gap-3 rounded-xl border border-brand bg-brand-light px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <Crown className="h-5 w-5 shrink-0 text-brand" />
@@ -116,7 +131,6 @@ export default function UserHome({ user }) {
         </div>
       )}
 
-      {/* Quick links */}
       <h2 className="mb-4 mt-10 text-xl font-semibold text-text-primary">
         Quick Actions
       </h2>
