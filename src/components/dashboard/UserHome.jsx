@@ -1,12 +1,9 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  LayoutDashboard,
-  FileText,
-  Bookmark,
-  Star,
-  Crown,
-  PlusCircle,
-} from "lucide-react";
+import { FileText, Bookmark, Star, Crown, PlusCircle } from "lucide-react";
+import { getMyPrompts, getBookmarks, getMyReviews } from "@/lib/api";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
@@ -39,11 +36,32 @@ const QUICK_LINKS = [
 ];
 
 export default function UserHome({ user }) {
+  const [promptCount, setPromptCount] = useState(0);
+  const [savedCount, setSavedCount] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([getMyPrompts(), getBookmarks(), getMyReviews()])
+      .then(([promptsData, bookmarksData, reviewsData]) => {
+        setPromptCount(promptsData.prompts?.length || 0);
+        setSavedCount(bookmarksData.bookmarks?.length || 0);
+        setReviewCount(reviewsData.reviews?.length || 0);
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const maxPrompts = user?.isPremium ? "∞" : "3";
+
   const stats = [
-    { label: "Total Prompts", value: "0 / 3" },
-    { label: "Saved Prompts", value: "0" },
-    { label: "Reviews Given", value: "0" },
-    { label: "Plan", value: "Free" },
+    {
+      label: "Total Prompts",
+      value: isLoading ? "…" : `${promptCount} / ${maxPrompts}`,
+    },
+    { label: "Saved Prompts", value: isLoading ? "…" : savedCount },
+    { label: "Reviews Given", value: isLoading ? "…" : reviewCount },
+    { label: "Plan", value: user?.isPremium ? "Premium" : "Free" },
   ];
 
   return (
@@ -89,7 +107,7 @@ export default function UserHome({ user }) {
           <Link
             href="/payment"
             className={
-              "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-base font-semibold text-on-brand transition-all duration-200 hover:bg-brand-hover active:scale-[0.98] " +
+              "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] " +
               focusRing
             }
           >
@@ -108,7 +126,7 @@ export default function UserHome({ user }) {
             key={href}
             href={href}
             className={
-              "flex items-center gap-4 rounded-xl border bg-surface px-5 py-4 transition-colors duration-150 hover:bg-surface-hover " +
+              "flex items-center gap-4 rounded-xl border bg-surface px-5 py-4 transition-colors hover:bg-surface-hover " +
               focusRing
             }
           >
