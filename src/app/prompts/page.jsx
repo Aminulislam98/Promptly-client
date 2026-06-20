@@ -1,6 +1,7 @@
 "use client";
+
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -48,6 +49,17 @@ const DIFFICULTY_COLORS = {
   Intermediate: "text-warning",
   Pro: "text-error",
 };
+
+const POPULAR_TAGS = [
+  "ChatGPT",
+  "Marketing",
+  "Coding",
+  "Claude",
+  "Writing",
+  "Midjourney",
+  "Business",
+  "Productivity",
+];
 
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -191,34 +203,34 @@ function SuggestionCard({ prompt, isLoggedIn, onClose }) {
     <Link
       href={href}
       onClick={onClose}
-      className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10 hover:border-white/20"
+      className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:bg-surface-hover hover:border-brand"
     >
-      <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-white/10">
+      <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-brand-light">
         {prompt.thumbnail ? (
           <Image
             src={prompt.thumbnail}
             alt={prompt.title}
             fill
             className="object-cover"
-            sizes="80px"
+            sizes="64px"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <span className="text-xl font-bold text-white/30">
+            <span className="text-lg font-bold text-brand opacity-30">
               {prompt.title?.charAt(0)}
             </span>
           </div>
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-base font-semibold text-white group-hover:text-brand-light">
+        <p className="truncate text-base font-semibold text-text-primary group-hover:text-brand">
           {prompt.title}
         </p>
-        <div className="mt-1 flex items-center gap-2">
-          <span className="rounded-full bg-brand/30 px-2 py-0.5 text-xs font-medium text-brand-light">
+        <div className="mt-0.5 flex items-center gap-2">
+          <span className="rounded-full bg-brand-light px-2 py-0.5 text-xs font-medium text-brand">
             {prompt.category}
           </span>
-          <span className="text-xs text-white/50">{prompt.aiTool}</span>
+          <span className="text-xs text-text-secondary">{prompt.aiTool}</span>
           {prompt.visibility === "Private" && (
             <span className="flex items-center gap-0.5 text-xs font-medium text-warning">
               <Lock className="h-3 w-3" /> Premium
@@ -226,21 +238,20 @@ function SuggestionCard({ prompt, isLoggedIn, onClose }) {
           )}
         </div>
       </div>
-      <div className="flex items-center gap-1 shrink-0 text-xs text-white/40">
+      <div className="flex items-center gap-1 shrink-0 text-xs text-text-muted">
         <Copy className="h-3 w-3" /> {prompt.copyCount}
       </div>
     </Link>
   );
 }
 
-function SearchOverlay({ onClose, isLoggedIn }) {
+function SearchOverlay({ onClose, isLoggedIn, onUrlUpdate }) {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const inputRef = useRef(null);
   const debouncedQuery = useDebounce(query, 300);
 
-  // Lock body scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -258,7 +269,7 @@ function SearchOverlay({ onClose, isLoggedIn }) {
       return;
     }
     setIsSearching(true);
-    getPrompts({ search: debouncedQuery.trim(), limit: 8, page: 1 })
+    getPrompts({ search: debouncedQuery.trim(), limit: 6, page: 1 })
       .then((data) => setSuggestions(data.prompts || []))
       .catch(() => setSuggestions([]))
       .finally(() => setIsSearching(false));
@@ -272,75 +283,69 @@ function SearchOverlay({ onClose, isLoggedIn }) {
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
+  const handleQueryChange = (val) => {
+    setQuery(val);
+    onUrlUpdate("search", val);
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Full blur backdrop */}
-      <div
-        className="absolute inset-0 bg-text-primary/60 backdrop-blur-md"
-        onClick={onClose}
-      />
+      {/* Fully solid white backdrop */}
+      <div className="absolute inset-0 bg-surface" onClick={onClose} />
 
-      {/* Panel — fixed at top, no white bg, only glass */}
+      {/* Flat container with shadow removed */}
       <div
-        className="relative z-10 flex flex-col"
-        style={{ maxHeight: "85vh" }}
+        className="relative z-10 flex flex-col border-b bg-surface"
+        style={{ maxHeight: "80vh" }}
       >
-        {/* Search bar */}
-        <div className="border-b border-white/10 bg-white/5 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
-            <Search className="h-5 w-5 shrink-0 text-white/60" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search prompts, tags, AI tools..."
-              className="flex-1 bg-transparent text-base text-white placeholder:text-white/40 outline-none"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                className="text-white/40 hover:text-white/80"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            )}
+        <div className="mx-auto flex w-full max-w-[1600px] items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
+          <Search className="h-5 w-5 shrink-0 text-brand" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => handleQueryChange(e.target.value)}
+            placeholder="Search prompts, tags, AI tools..."
+            className="flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted outline-none"
+          />
+          {query && (
             <button
               type="button"
-              onClick={onClose}
-              className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-base font-medium text-white/70 hover:bg-white/20 transition-colors"
+              onClick={() => handleQueryChange("")}
+              className="text-text-secondary hover:text-text-primary"
             >
-              Esc
+              <X className="h-5 w-5" />
             </button>
-          </div>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className={
+              "rounded-lg border px-3 py-1.5 text-base font-medium text-text-secondary hover:bg-surface-hover transition-colors " +
+              focusRing
+            }
+          >
+            Esc
+          </button>
         </div>
 
-        {/* Results — scrollable */}
-        <div className="overflow-y-auto">
-          <div className="mx-auto max-w-[1600px] px-4 pb-6 pt-4 sm:px-6 lg:px-8">
-            {/* Popular tags when empty */}
+        <div className="overflow-y-auto border-t">
+          <div className="mx-auto w-full max-w-[1600px] px-4 pb-5 pt-4 sm:px-6 lg:px-8">
             {!query.trim() && !isSearching && (
               <div>
-                <p className="mb-3 text-base font-medium text-white/50">
+                <p className="mb-3 text-base font-medium text-text-secondary">
                   Popular searches
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {[
-                    "ChatGPT",
-                    "Marketing",
-                    "Coding",
-                    "Claude",
-                    "Writing",
-                    "Midjourney",
-                    "Business",
-                    "Productivity",
-                  ].map((tag) => (
+                  {POPULAR_TAGS.map((tag) => (
                     <button
                       key={tag}
                       type="button"
-                      onClick={() => setQuery(tag)}
-                      className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-base font-medium text-white/70 hover:bg-white/20 hover:text-white transition-colors"
+                      onClick={() => handleQueryChange(tag)}
+                      className={
+                        "rounded-full border bg-surface-hover px-3 py-1 text-base font-medium text-text-secondary hover:border-brand hover:text-brand transition-colors " +
+                        focusRing
+                      }
                     >
                       {tag}
                     </button>
@@ -349,45 +354,42 @@ function SearchOverlay({ onClose, isLoggedIn }) {
               </div>
             )}
 
-            {/* Loading skeletons */}
             {isSearching && (
               <div className="flex flex-col gap-2">
-                {[1, 2, 3, 4].map((i) => (
+                {[1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 animate-pulse"
+                    className="flex items-center gap-3 rounded-xl border bg-surface p-3 animate-pulse"
                   >
-                    <div className="h-14 w-20 rounded-lg bg-white/10 shrink-0" />
+                    <div className="h-12 w-16 rounded-lg bg-surface-hover shrink-0" />
                     <div className="flex flex-col gap-2 flex-1">
-                      <div className="h-4 w-3/4 rounded bg-white/10" />
-                      <div className="h-3 w-1/2 rounded bg-white/10" />
+                      <div className="h-4 w-3/4 rounded bg-surface-hover" />
+                      <div className="h-3 w-1/2 rounded bg-surface-hover" />
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* No results */}
             {!isSearching && query.trim() && suggestions.length === 0 && (
-              <div className="flex flex-col items-center py-12 text-center">
-                <Search className="h-10 w-10 text-white/30" />
-                <p className="mt-3 text-base font-semibold text-white/70">
+              <div className="flex flex-col items-center py-10 text-center">
+                <Search className="h-8 w-8 text-text-secondary" />
+                <p className="mt-2 text-base font-semibold text-text-primary">
                   No results for "{query}"
                 </p>
-                <p className="text-base text-white/40">
+                <p className="text-base text-text-secondary">
                   Try different keywords
                 </p>
               </div>
             )}
 
-            {/* Results */}
             {!isSearching && suggestions.length > 0 && (
               <div>
-                <p className="mb-3 text-base font-medium text-white/50">
+                <p className="mb-3 text-base font-medium text-text-secondary">
                   {suggestions.length} result
                   {suggestions.length !== 1 ? "s" : ""} found
                 </p>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {suggestions.map((prompt) => (
                     <SuggestionCard
                       key={prompt._id}
@@ -397,6 +399,17 @@ function SearchOverlay({ onClose, isLoggedIn }) {
                     />
                   ))}
                 </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className={
+                    "mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl border text-base font-medium text-text-secondary hover:bg-surface-hover hover:text-brand transition-colors w-full " +
+                    focusRing
+                  }
+                >
+                  See all results for "{query}"{" "}
+                  <ArrowRight className="h-4 w-4" />
+                </button>
               </div>
             )}
           </div>
@@ -407,12 +420,18 @@ function SearchOverlay({ onClose, isLoggedIn }) {
 }
 
 export default function AllPromptsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
   const [mounted, setMounted] = useState(false);
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All");
-  const [aiTool, setAiTool] = useState("All");
-  const [difficulty, setDifficulty] = useState("All");
-  const [sort, setSort] = useState("latest");
+
+  const search = searchParams.get("search") || "";
+  const category = searchParams.get("category") || "All";
+  const aiTool = searchParams.get("aiTool") || "All";
+  const difficulty = searchParams.get("difficulty") || "All";
+  const sort = searchParams.get("sort") || "latest";
+
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [searchOverlayOpen, setSearchOverlayOpen] = useState(false);
   const [prompts, setPrompts] = useState([]);
@@ -424,15 +443,27 @@ export default function AllPromptsPage() {
   useEffect(() => setMounted(true), []);
   const isLoggedIn = mounted && !!session?.user;
 
-  const debouncedSearch = useDebounce(search, 300);
+  const updateURL = useCallback(
+    (key, value) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (!value || value === "All" || (key === "sort" && value === "latest")) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, router, pathname],
+  );
 
-  const fetchPrompts = useCallback(() => {
+  useEffect(() => {
     setIsLoading(true);
     const params = { page: 1, limit: LIMIT, sort };
-    if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+    if (search.trim()) params.search = search.trim();
     if (category !== "All") params.category = category;
     if (aiTool !== "All") params.aiTool = aiTool;
     if (difficulty !== "All") params.difficulty = difficulty;
+
     getPrompts(params)
       .then((data) => {
         setPrompts(data.prompts || []);
@@ -440,18 +471,10 @@ export default function AllPromptsPage() {
       })
       .catch(() => setPrompts([]))
       .finally(() => setIsLoading(false));
-  }, [debouncedSearch, category, aiTool, difficulty, sort]);
-
-  useEffect(() => {
-    fetchPrompts();
-  }, [fetchPrompts]);
+  }, [search, category, aiTool, difficulty, sort]);
 
   const clearFilters = () => {
-    setSearch("");
-    setCategory("All");
-    setAiTool("All");
-    setDifficulty("All");
-    setSort("latest");
+    router.replace(pathname, { scroll: false });
   };
 
   const hasActiveFilters =
@@ -463,22 +486,44 @@ export default function AllPromptsPage() {
         label="Category"
         options={CATEGORIES}
         value={category}
-        onChange={setCategory}
+        onChange={(v) => updateURL("category", v)}
       />
       <div className="h-px bg-border" />
       <FilterSection
         label="AI Tool"
         options={AI_TOOLS}
         value={aiTool}
-        onChange={setAiTool}
+        onChange={(v) => updateURL("aiTool", v)}
       />
       <div className="h-px bg-border" />
       <FilterSection
         label="Difficulty"
         options={DIFFICULTIES}
         value={difficulty}
-        onChange={setDifficulty}
+        onChange={(v) => updateURL("difficulty", v)}
       />
+      <div className="h-px bg-border" />
+      <div className="flex flex-col gap-1">
+        <p className="text-base font-semibold text-text-primary">Sort By</p>
+        <div className="flex flex-col gap-0.5">
+          {SORT_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => updateURL("sort", opt.value)}
+              className={
+                "flex h-8 items-center rounded-lg px-3 text-base font-medium transition-colors text-left " +
+                focusRing +
+                (sort === opt.value
+                  ? " bg-brand-light text-brand"
+                  : " text-text-secondary hover:bg-surface-hover hover:text-text-primary")
+              }
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
       {hasActiveFilters && (
         <>
           <div className="h-px bg-border" />
@@ -490,7 +535,7 @@ export default function AllPromptsPage() {
               focusRing
             }
           >
-            <X className="h-4 w-4" /> Clear
+            <X className="h-4 w-4" /> Clear all
           </button>
         </>
       )}
@@ -503,6 +548,7 @@ export default function AllPromptsPage() {
         <SearchOverlay
           onClose={() => setSearchOverlayOpen(false)}
           isLoggedIn={isLoggedIn}
+          onUrlUpdate={updateURL}
         />
       )}
 
@@ -517,57 +563,108 @@ export default function AllPromptsPage() {
         </div>
 
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <button
-            type="button"
+          <div
             onClick={() => setSearchOverlayOpen(true)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ")
+                setSearchOverlayOpen(true);
+            }}
             className={
-              "flex flex-1 items-center gap-2 rounded-lg border bg-surface px-3 py-2.5 text-base text-text-muted hover:border-brand transition-colors text-left " +
+              "flex flex-1 items-center gap-2 rounded-lg border bg-surface px-3 py-2.5 text-base text-text-muted hover:border-brand transition-colors text-left cursor-pointer " +
               focusRing
             }
           >
             <Search className="h-4 w-4 shrink-0 text-text-secondary" />
-            <span className="flex-1">{search || "Search prompts..."}</span>
+            <span className="flex-1 truncate">
+              {search || "Search prompts..."}
+            </span>
             {search && (
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSearch("");
+                  updateURL("search", "");
                 }}
-                className="text-text-secondary hover:text-text-primary"
+                className="text-text-secondary hover:text-text-primary shrink-0 relative z-10"
               >
                 <X className="h-4 w-4" />
               </button>
             )}
-          </button>
+          </div>
 
-          <div className="flex items-center gap-2">
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className={
-                "rounded-lg border bg-surface px-3 text-base text-text-primary outline-none h-10 cursor-pointer " +
-                focusRing
-              }
-            >
-              {SORT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+          <button
+            type="button"
+            onClick={() => setMobileFiltersOpen((v) => !v)}
+            className={
+              "inline-flex h-10 items-center gap-2 rounded-lg border bg-surface px-3 text-base font-medium text-text-primary hover:bg-surface-hover lg:hidden " +
+              focusRing
+            }
+          >
+            <SlidersHorizontal className="h-4 w-4" /> Filters
+          </button>
+        </div>
+
+        {hasActiveFilters && (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            {search && (
+              <span className="flex items-center gap-1 rounded-full bg-brand-light px-3 py-1 text-base font-medium text-brand">
+                "{search}"
+                <button
+                  type="button"
+                  onClick={() => updateURL("search", "")}
+                  className="hover:text-brand-hover"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+            {category !== "All" && (
+              <span className="flex items-center gap-1 rounded-full bg-brand-light px-3 py-1 text-base font-medium text-brand">
+                {category}
+                <button
+                  type="button"
+                  onClick={() => updateURL("category", "All")}
+                  className="hover:text-brand-hover"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+            {aiTool !== "All" && (
+              <span className="flex items-center gap-1 rounded-full bg-brand-light px-3 py-1 text-base font-medium text-brand">
+                {aiTool}
+                <button
+                  type="button"
+                  onClick={() => updateURL("aiTool", "All")}
+                  className="hover:text-brand-hover"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+            {difficulty !== "All" && (
+              <span className="flex items-center gap-1 rounded-full bg-brand-light px-3 py-1 text-base font-medium text-brand">
+                {difficulty}
+                <button
+                  type="button"
+                  onClick={() => updateURL("difficulty", "All")}
+                  className="hover:text-brand-hover"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
             <button
               type="button"
-              onClick={() => setMobileFiltersOpen((v) => !v)}
-              className={
-                "inline-flex h-10 items-center gap-2 rounded-lg border bg-surface px-3 text-base font-medium text-text-primary hover:bg-surface-hover lg:hidden " +
-                focusRing
-              }
+              onClick={clearFilters}
+              className="text-base font-medium text-error hover:underline"
             >
-              <SlidersHorizontal className="h-4 w-4" /> Filters
+              Clear all
             </button>
           </div>
-        </div>
+        )}
 
         {mobileFiltersOpen && (
           <div className="mb-5 rounded-xl border bg-surface p-4 lg:hidden">
@@ -591,7 +688,7 @@ export default function AllPromptsPage() {
         )}
 
         <div className="flex gap-5">
-          <aside className="hidden w-40 shrink-0 lg:block">
+          <aside className="hidden w-44 shrink-0 lg:block">
             <div className="sticky top-20 rounded-xl border bg-surface p-3">
               <Filters />
             </div>

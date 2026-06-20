@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Search, ArrowRight } from "lucide-react";
+import Image from "next/image";
+import { Search, ArrowRight, X, Copy, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { authClient } from "@/lib/auth-client";
+import { getPrompts } from "@/lib/api";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
@@ -33,7 +35,6 @@ const fadeUp = {
   }),
 };
 
-// 6 icons only — 3 left, 3 right — properly centered with content
 const AI_ICONS = [
   {
     label: "ChatGPT",
@@ -129,26 +130,244 @@ const AI_ICONS = [
   },
 ];
 
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
+function SuggestionCard({ prompt, isLoggedIn, onClose }) {
+  const href = isLoggedIn
+    ? `/prompts/${prompt._id}`
+    : `/login?redirect=/prompts/${prompt._id}`;
+  return (
+    <Link
+      href={href}
+      onClick={onClose}
+      className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:bg-surface-hover hover:border-brand"
+    >
+      <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-brand-light">
+        {prompt.thumbnail ? (
+          <Image
+            src={prompt.thumbnail}
+            alt={prompt.title}
+            fill
+            className="object-cover"
+            sizes="64px"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <span className="text-lg font-bold text-brand opacity-30">
+              {prompt.title?.charAt(0)}
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-base font-semibold text-text-primary group-hover:text-brand">
+          {prompt.title}
+        </p>
+        <div className="mt-0.5 flex items-center gap-2">
+          <span className="rounded-full bg-brand-light px-2 py-0.5 text-xs font-medium text-brand">
+            {prompt.category}
+          </span>
+          <span className="text-xs text-text-secondary">{prompt.aiTool}</span>
+          {prompt.visibility === "Private" && (
+            <span className="flex items-center gap-0.5 text-xs font-medium text-warning">
+              <Lock className="h-3 w-3" /> Premium
+            </span>
+          )}
+        </div>
+      </div>
+      <span className="flex items-center gap-1 shrink-0 text-xs text-text-muted">
+        <Copy className="h-3 w-3" /> {prompt.copyCount}
+      </span>
+    </Link>
+  );
+}
+
+function SearchOverlay({ onClose, isLoggedIn }) {
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const inputRef = useRef(null);
+  const debouncedQuery = useDebounce(query, 300);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (!debouncedQuery.trim()) {
+      setSuggestions([]);
+      return;
+    }
+    setIsSearching(true);
+    getPrompts({ search: debouncedQuery.trim(), limit: 6, page: 1 })
+      .then((data) => setSuggestions(data.prompts || []))
+      .catch(() => setSuggestions([]))
+      .finally(() => setIsSearching(false));
+  }, [debouncedQuery]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      <div className="absolute inset-0 bg-surface" onClick={onClose} />
+
+      <div
+        className="relative z-10 flex flex-col border-b bg-surface"
+        style={{ maxHeight: "80vh" }}
+      >
+        <div className="mx-auto flex w-full max-w-[1600px] items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
+          <Search className="h-5 w-5 shrink-0 text-brand" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search prompts, tags, AI tools..."
+            className="flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted outline-none"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className="text-text-secondary hover:text-text-primary"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className={
+              "rounded-lg border px-3 py-1.5 text-base font-medium text-text-secondary hover:bg-surface-hover transition-colors " +
+              focusRing
+            }
+          >
+            Esc
+          </button>
+        </div>
+
+        <div className="overflow-y-auto border-t">
+          <div className="mx-auto w-full max-w-[1600px] px-4 pb-5 pt-4 sm:px-6 lg:px-8">
+            {!query.trim() && !isSearching && (
+              <div>
+                <p className="mb-3 text-base font-medium text-text-secondary">
+                  Popular searches
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {TRENDING_TAGS.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setQuery(tag)}
+                      className={
+                        "rounded-full border bg-surface-hover px-3 py-1 text-base font-medium text-text-secondary hover:border-brand hover:text-brand transition-colors " +
+                        focusRing
+                      }
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {isSearching && (
+              <div className="flex flex-col gap-2">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 rounded-xl border bg-surface p-3 animate-pulse"
+                  >
+                    <div className="h-12 w-16 rounded-lg bg-surface-hover shrink-0" />
+                    <div className="flex flex-col gap-2 flex-1">
+                      <div className="h-4 w-3/4 rounded bg-surface-hover" />
+                      <div className="h-3 w-1/2 rounded bg-surface-hover" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!isSearching && query.trim() && suggestions.length === 0 && (
+              <div className="flex flex-col items-center py-10 text-center">
+                <Search className="h-8 w-8 text-text-secondary" />
+                <p className="mt-2 text-base font-semibold text-text-primary">
+                  No results for "{query}"
+                </p>
+                <p className="text-base text-text-secondary">
+                  Try different keywords
+                </p>
+              </div>
+            )}
+
+            {!isSearching && suggestions.length > 0 && (
+              <div>
+                <p className="mb-3 text-base font-medium text-text-secondary">
+                  {suggestions.length} result
+                  {suggestions.length !== 1 ? "s" : ""} found
+                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {suggestions.map((prompt) => (
+                    <SuggestionCard
+                      key={prompt._id}
+                      prompt={prompt}
+                      isLoggedIn={isLoggedIn}
+                      onClose={onClose}
+                    />
+                  ))}
+                </div>
+                <Link
+                  href={`/prompts?search=${encodeURIComponent(query)}`}
+                  onClick={onClose}
+                  className={
+                    "mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl border text-base font-medium text-text-secondary hover:bg-surface-hover hover:text-brand transition-colors " +
+                    focusRing
+                  }
+                >
+                  See all results for "{query}"{" "}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function HeroBanner() {
-  const [search, setSearch] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [searchOverlayOpen, setSearchOverlayOpen] = useState(false);
   const { data: session } = authClient.useSession();
 
   useEffect(() => setMounted(true), []);
   const isLoggedIn = mounted && !!session?.user;
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (search.trim()) {
-      window.location.href = `/prompts?search=${encodeURIComponent(search.trim())}`;
-    }
-  };
-
   if (!mounted) return null;
 
   return (
-    <section className="relative w-full overflow-hidden bg-surface">
-      {/* Dot grid */}
+    <section className="relative w-full overflow-hidden border-b bg-surface">
       <div
         className="absolute inset-0 opacity-20"
         style={{
@@ -157,10 +376,15 @@ export function HeroBanner() {
           backgroundSize: "36px 36px",
         }}
       />
-      {/* Center glow */}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full bg-brand/5 blur-3xl pointer-events-none" />
 
-      {/* Floating icons — desktop only */}
+      {searchOverlayOpen && (
+        <SearchOverlay
+          onClose={() => setSearchOverlayOpen(false)}
+          isLoggedIn={isLoggedIn}
+        />
+      )}
+
       <div className="absolute inset-0 hidden xl:block">
         {AI_ICONS.map((tool, i) => (
           <motion.div
@@ -188,7 +412,6 @@ export function HeroBanner() {
         ))}
       </div>
 
-      {/* Main content — perfectly centered */}
       <div className="relative flex min-h-[600px] items-center justify-center px-4 py-20 lg:min-h-[680px]">
         <div className="flex max-w-3xl flex-col items-center text-center">
           <motion.p
@@ -227,35 +450,31 @@ export function HeroBanner() {
             Gemini, Claude, Midjourney, and more.
           </motion.p>
 
-          {/* Search */}
-          <motion.form
+          <motion.div
             custom={3}
             initial="hidden"
             animate="visible"
             variants={fadeUp}
-            onSubmit={handleSearch}
-            className="mt-10 flex w-full max-w-xl items-center gap-3 rounded-full border bg-surface px-5 py-3 shadow-sm transition-all focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10"
+            className="mt-10 w-full max-w-xl"
           >
-            <Search className="h-5 w-5 shrink-0 text-text-muted" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search prompts, tags, AI tools..."
-              className="flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted outline-none"
-            />
             <button
-              type="submit"
+              type="button"
+              onClick={() => setSearchOverlayOpen(true)}
               className={
-                "shrink-0 rounded-full bg-brand px-5 py-2 text-base font-semibold text-on-brand transition-colors hover:bg-brand-hover " +
+                "flex w-full items-center gap-3 rounded-full border bg-surface px-5 py-3 shadow-sm text-base text-text-muted hover:border-brand transition-colors " +
                 focusRing
               }
             >
-              Search
+              <Search className="h-5 w-5 shrink-0 text-text-muted" />
+              <span className="flex-1 text-left">
+                Search prompts, tags, AI tools...
+              </span>
+              <span className="rounded-full bg-brand px-4 py-1.5 text-base font-semibold text-on-brand">
+                Search
+              </span>
             </button>
-          </motion.form>
+          </motion.div>
 
-          {/* Trending tags */}
           <motion.div
             custom={4}
             initial="hidden"
@@ -280,7 +499,6 @@ export function HeroBanner() {
             ))}
           </motion.div>
 
-          {/* CTA */}
           <motion.div
             custom={5}
             initial="hidden"
@@ -310,7 +528,6 @@ export function HeroBanner() {
             )}
           </motion.div>
 
-          {/* Mobile icons strip */}
           <motion.div
             custom={6}
             initial="hidden"
@@ -338,3 +555,6 @@ export function HeroBanner() {
     </section>
   );
 }
+
+// Safer Fallback Export Setup
+export default HeroBanner;
