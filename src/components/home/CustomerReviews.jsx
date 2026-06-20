@@ -1,9 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Star, MessageSquare } from "lucide-react";
+import { Star } from "lucide-react";
 
-// Replace with real API call later
 const REVIEWS = [
   {
     _id: "1",
@@ -12,7 +11,7 @@ const REVIEWS = [
     rating: 5,
     comment:
       "Promptly saved me hours every single week. The quality of prompts here is genuinely unmatched compared to anything else I have tried.",
-    date: "2026-06-01",
+    date: "Jun 2026",
   },
   {
     _id: "2",
@@ -21,7 +20,7 @@ const REVIEWS = [
     rating: 5,
     comment:
       "Finally a platform where I can find prompts that actually work straight out of the box. No more trial and error. Highly recommend.",
-    date: "2026-06-05",
+    date: "Jun 2026",
   },
   {
     _id: "3",
@@ -30,7 +29,7 @@ const REVIEWS = [
     rating: 4,
     comment:
       "Great collection across all the major AI tools. The Midjourney and Claude prompts are especially impressive. Will be back for more.",
-    date: "2026-06-10",
+    date: "Jun 2026",
   },
   {
     _id: "4",
@@ -39,7 +38,7 @@ const REVIEWS = [
     rating: 5,
     comment:
       "The marketing prompts alone are worth it. I used three of them in a single campaign and the results spoke for themselves.",
-    date: "2026-06-12",
+    date: "Jun 2026",
   },
   {
     _id: "5",
@@ -48,7 +47,7 @@ const REVIEWS = [
     rating: 5,
     comment:
       "I was sceptical at first but after using a few prompts my writing output doubled. The community here really knows what they are doing.",
-    date: "2026-06-14",
+    date: "Jun 2026",
   },
   {
     _id: "6",
@@ -57,22 +56,25 @@ const REVIEWS = [
     rating: 4,
     comment:
       "Solid platform with a clean interface. The business plan prompts saved us a tonne of time in our early planning stages.",
-    date: "2026-06-16",
+    date: "Jun 2026",
   },
 ];
 
 function Stars({ rating }) {
   return (
-    <div className="flex items-center gap-1" aria-label={`${rating} out of 5`}>
+    <div
+      className="flex items-center gap-0.5"
+      aria-label={`${rating} out of 5`}
+    >
       {[1, 2, 3, 4, 5].map((s) => (
         <Star
           key={s}
-          // Swapped out black/gray for premium vibrant rating gold
-          className={`h-5 w-5 ${
-            s <= rating
-              ? "text-amber-500 fill-amber-500"
-              : "text-text-primary/20 fill-transparent"
-          }`}
+          className={
+            "h-4 w-4 " +
+            (s <= rating
+              ? "fill-warning text-warning"
+              : "fill-border text-border")
+          }
           aria-hidden="true"
         />
       ))}
@@ -82,77 +84,68 @@ function Stars({ rating }) {
 
 const containerVariants = {
   hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.03 },
-  },
+  visible: { transition: { staggerChildren: 0.07 } },
 };
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 15 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: "easeOut" },
-  },
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
 };
 
 export function CustomerReviews() {
   return (
-    <section className="w-full bg-page-bg py-12">
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        {/* Large Typography Header Block */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10 pb-4 border-b-2 border-border">
+    <section className="w-full border-b bg-page-bg py-16">
+      <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-10">
           <div>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-text-primary px-3 py-1 text-xs font-extrabold uppercase tracking-widest text-surface shadow-sm">
-              <MessageSquare className="h-3.5 w-3.5" /> Reviews
-            </div>
-            <h2 className="mt-4 text-2xl font-black tracking-tight text-text-primary sm:text-3xl max-w-2xl">
+            <span className="inline-flex items-center rounded-full bg-brand px-3 py-1 text-base font-semibold text-on-brand">
+              Reviews
+            </span>
+            <h2 className="mt-4 text-2xl font-bold leading-tight text-text-primary sm:text-3xl">
               What people are saying
             </h2>
           </div>
-          <p className="text-sm font-bold text-text-primary sm:text-base max-w-md sm:text-right">
+          <p className="max-w-sm text-base leading-relaxed text-text-secondary sm:text-right">
             Real feedback from real users across the Promptly community.
           </p>
         </div>
 
-        {/* High-Contrast Full Screen Responsive Grid */}
+        {/* Cards */}
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           variants={containerVariants}
-          className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
         >
           {REVIEWS.map((review) => (
             <motion.article
               key={review._id}
               variants={cardVariants}
-              className="group flex flex-col justify-between rounded-2xl bg-surface p-6 border-2 border-border transition-colors duration-200 hover:border-text-primary"
+              className="group flex flex-col rounded-xl border bg-surface p-6 transition-colors hover:border-brand"
             >
-              <div>
-                {/* Premium Golden Stars */}
+              {/* Stars + date */}
+              <div className="flex items-center justify-between">
                 <Stars rating={review.rating} />
-
-                {/* Scaled & Legible Comment Body */}
-                <p className="mt-5 text-base font-bold leading-relaxed text-text-primary sm:text-lg">
-                  &ldquo;{review.comment}&rdquo;
-                </p>
+                <span className="text-base text-text-muted">{review.date}</span>
               </div>
 
-              {/* Stack-Safe Footer Info Container */}
-              <div className="mt-8 pt-4 border-t-2 border-border flex items-center gap-4">
-                {/* Monochromatic Geometric Avatar */}
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-text-primary text-base font-black text-surface tracking-wide transition-transform duration-300 group-hover:scale-105">
+              {/* Comment */}
+              <p className="mt-4 flex-1 text-base leading-relaxed text-text-secondary">
+                &ldquo;{review.comment}&rdquo;
+              </p>
+
+              {/* Author */}
+              <div className="mt-6 flex items-center gap-3 border-t pt-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-base font-bold text-on-brand transition-transform group-hover:scale-105">
                   {review.name.charAt(0)}
                 </div>
-
                 <div className="min-w-0">
-                  <p className="text-base font-black text-text-primary tracking-tight truncate">
+                  <p className="text-base font-semibold text-text-primary truncate">
                     {review.name}
                   </p>
-                  <p className="text-xs font-black text-brand uppercase tracking-wider mt-0.5">
-                    {review.role}
-                  </p>
+                  <p className="text-base text-text-secondary">{review.role}</p>
                 </div>
               </div>
             </motion.article>

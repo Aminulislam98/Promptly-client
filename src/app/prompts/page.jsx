@@ -1,6 +1,6 @@
 "use client";
-
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -49,18 +49,23 @@ const DIFFICULTY_COLORS = {
   Pro: "text-error",
 };
 
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 function SkeletonCard() {
   return (
     <div className="flex flex-col rounded-xl border bg-surface animate-pulse overflow-hidden">
-      <div className="h-32 w-full bg-surface-hover" />
+      <div className="aspect-[4/3] w-full bg-surface-hover" />
       <div className="flex flex-col gap-2 p-4">
-        <div className="flex items-center justify-between">
-          <div className="h-3 w-16 rounded bg-surface-hover" />
-          <div className="h-3 w-3 rounded bg-surface-hover" />
-        </div>
+        <div className="h-3 w-16 rounded bg-surface-hover" />
         <div className="h-4 w-full rounded bg-surface-hover" />
         <div className="h-4 w-3/4 rounded bg-surface-hover" />
-        <div className="h-3 w-1/2 rounded bg-surface-hover" />
         <div className="mt-1 h-8 w-full rounded-lg bg-surface-hover" />
       </div>
     </div>
@@ -78,7 +83,7 @@ function FilterSection({ label, options, value, onChange }) {
             type="button"
             onClick={() => onChange(opt)}
             className={
-              "flex h-8 items-center rounded-lg px-3 text-base font-medium transition-colors duration-150 text-left " +
+              "flex h-8 items-center rounded-lg px-3 text-base font-medium transition-colors text-left " +
               focusRing +
               (value === opt
                 ? " bg-brand-light text-brand"
@@ -96,19 +101,18 @@ function FilterSection({ label, options, value, onChange }) {
 function PromptCard({ prompt, isLoggedIn }) {
   return (
     <article className="group flex flex-col rounded-xl border bg-surface overflow-hidden transition-colors hover:bg-surface-hover">
-      {/* Thumbnail */}
-      <div className="relative h-32 w-full overflow-hidden bg-brand-light shrink-0">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-brand-light shrink-0">
         {prompt.thumbnail ? (
           <Image
             src={prompt.thumbnail}
             alt={prompt.title}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <span className="text-4xl font-bold text-brand opacity-20">
+            <span className="text-5xl font-bold text-brand opacity-20">
               {prompt.title?.charAt(0).toUpperCase()}
             </span>
           </div>
@@ -119,36 +123,27 @@ function PromptCard({ prompt, isLoggedIn }) {
           </div>
         )}
       </div>
-
-      {/* Content */}
       <div className="flex flex-1 flex-col p-4">
-        {/* Top row */}
         <div className="flex items-start justify-between gap-2">
           <span className="text-base text-text-secondary truncate">
             @ {prompt.creatorName}
           </span>
           <ArrowRight className="h-4 w-4 shrink-0 text-text-secondary group-hover:text-brand transition-colors" />
         </div>
-
-        {/* Title */}
         <h2 className="mt-2 text-base font-bold leading-snug text-text-primary line-clamp-2">
           {prompt.title}
         </h2>
-
-        {/* Tags */}
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <span className="flex items-center gap-1 rounded-full border-l-2 border-brand pl-2 pr-2 py-0.5 text-base font-medium text-text-secondary bg-page-bg">
+          <span className="rounded-full bg-brand-light px-2.5 py-0.5 text-base font-medium text-brand">
             {prompt.category}
           </span>
           {prompt.aiTool && (
-            <span className="rounded-full border-l-2 border-border pl-2 pr-2 py-0.5 text-base text-text-secondary bg-page-bg">
+            <span className="rounded-full bg-surface-hover px-2.5 py-0.5 text-base text-text-secondary">
               {prompt.aiTool}
             </span>
           )}
         </div>
-
-        {/* Bottom */}
-        <div className="mt-auto border-t pt-3 mt-3 flex items-center justify-between">
+        <div className="mt-auto pt-3 flex items-center justify-between">
           <div className="flex items-center gap-3 text-base text-text-secondary">
             <span className="flex items-center gap-1">
               <Copy className="h-3.5 w-3.5" /> {prompt.copyCount}
@@ -165,7 +160,7 @@ function PromptCard({ prompt, isLoggedIn }) {
             <Link
               href={`/prompts/${prompt._id}`}
               className={
-                "inline-flex h-8 items-center justify-center gap-1 rounded-lg bg-brand px-3 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] " +
+                "inline-flex h-8 items-center justify-center gap-1 rounded-lg bg-brand px-3 text-base font-semibold text-on-brand hover:bg-brand-hover active:scale-[0.98] " +
                 focusRing
               }
             >
@@ -175,7 +170,7 @@ function PromptCard({ prompt, isLoggedIn }) {
             <Link
               href={`/login?redirect=/prompts/${prompt._id}`}
               className={
-                "inline-flex h-8 items-center justify-center rounded-lg border px-3 text-base font-medium text-text-primary transition-colors hover:bg-surface-hover " +
+                "inline-flex h-8 items-center justify-center rounded-lg border px-3 text-base font-medium text-text-primary hover:bg-surface-hover " +
                 focusRing
               }
             >
@@ -188,6 +183,229 @@ function PromptCard({ prompt, isLoggedIn }) {
   );
 }
 
+function SuggestionCard({ prompt, isLoggedIn, onClose }) {
+  const href = isLoggedIn
+    ? `/prompts/${prompt._id}`
+    : `/login?redirect=/prompts/${prompt._id}`;
+  return (
+    <Link
+      href={href}
+      onClick={onClose}
+      className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10 hover:border-white/20"
+    >
+      <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-white/10">
+        {prompt.thumbnail ? (
+          <Image
+            src={prompt.thumbnail}
+            alt={prompt.title}
+            fill
+            className="object-cover"
+            sizes="80px"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <span className="text-xl font-bold text-white/30">
+              {prompt.title?.charAt(0)}
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-base font-semibold text-white group-hover:text-brand-light">
+          {prompt.title}
+        </p>
+        <div className="mt-1 flex items-center gap-2">
+          <span className="rounded-full bg-brand/30 px-2 py-0.5 text-xs font-medium text-brand-light">
+            {prompt.category}
+          </span>
+          <span className="text-xs text-white/50">{prompt.aiTool}</span>
+          {prompt.visibility === "Private" && (
+            <span className="flex items-center gap-0.5 text-xs font-medium text-warning">
+              <Lock className="h-3 w-3" /> Premium
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-1 shrink-0 text-xs text-white/40">
+        <Copy className="h-3 w-3" /> {prompt.copyCount}
+      </div>
+    </Link>
+  );
+}
+
+function SearchOverlay({ onClose, isLoggedIn }) {
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const inputRef = useRef(null);
+  const debouncedQuery = useDebounce(query, 300);
+
+  // Lock body scroll
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (!debouncedQuery.trim()) {
+      setSuggestions([]);
+      return;
+    }
+    setIsSearching(true);
+    getPrompts({ search: debouncedQuery.trim(), limit: 8, page: 1 })
+      .then((data) => setSuggestions(data.prompts || []))
+      .catch(() => setSuggestions([]))
+      .finally(() => setIsSearching(false));
+  }, [debouncedQuery]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      {/* Full blur backdrop */}
+      <div
+        className="absolute inset-0 bg-text-primary/60 backdrop-blur-md"
+        onClick={onClose}
+      />
+
+      {/* Panel — fixed at top, no white bg, only glass */}
+      <div
+        className="relative z-10 flex flex-col"
+        style={{ maxHeight: "85vh" }}
+      >
+        {/* Search bar */}
+        <div className="border-b border-white/10 bg-white/5 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
+            <Search className="h-5 w-5 shrink-0 text-white/60" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search prompts, tags, AI tools..."
+              className="flex-1 bg-transparent text-base text-white placeholder:text-white/40 outline-none"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="text-white/40 hover:text-white/80"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-base font-medium text-white/70 hover:bg-white/20 transition-colors"
+            >
+              Esc
+            </button>
+          </div>
+        </div>
+
+        {/* Results — scrollable */}
+        <div className="overflow-y-auto">
+          <div className="mx-auto max-w-[1600px] px-4 pb-6 pt-4 sm:px-6 lg:px-8">
+            {/* Popular tags when empty */}
+            {!query.trim() && !isSearching && (
+              <div>
+                <p className="mb-3 text-base font-medium text-white/50">
+                  Popular searches
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "ChatGPT",
+                    "Marketing",
+                    "Coding",
+                    "Claude",
+                    "Writing",
+                    "Midjourney",
+                    "Business",
+                    "Productivity",
+                  ].map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setQuery(tag)}
+                      className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-base font-medium text-white/70 hover:bg-white/20 hover:text-white transition-colors"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Loading skeletons */}
+            {isSearching && (
+              <div className="flex flex-col gap-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 animate-pulse"
+                  >
+                    <div className="h-14 w-20 rounded-lg bg-white/10 shrink-0" />
+                    <div className="flex flex-col gap-2 flex-1">
+                      <div className="h-4 w-3/4 rounded bg-white/10" />
+                      <div className="h-3 w-1/2 rounded bg-white/10" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* No results */}
+            {!isSearching && query.trim() && suggestions.length === 0 && (
+              <div className="flex flex-col items-center py-12 text-center">
+                <Search className="h-10 w-10 text-white/30" />
+                <p className="mt-3 text-base font-semibold text-white/70">
+                  No results for "{query}"
+                </p>
+                <p className="text-base text-white/40">
+                  Try different keywords
+                </p>
+              </div>
+            )}
+
+            {/* Results */}
+            {!isSearching && suggestions.length > 0 && (
+              <div>
+                <p className="mb-3 text-base font-medium text-white/50">
+                  {suggestions.length} result
+                  {suggestions.length !== 1 ? "s" : ""} found
+                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {suggestions.map((prompt) => (
+                    <SuggestionCard
+                      key={prompt._id}
+                      prompt={prompt}
+                      isLoggedIn={isLoggedIn}
+                      onClose={onClose}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AllPromptsPage() {
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState("");
@@ -196,21 +414,22 @@ export default function AllPromptsPage() {
   const [difficulty, setDifficulty] = useState("All");
   const [sort, setSort] = useState("latest");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [searchOverlayOpen, setSearchOverlayOpen] = useState(false);
   const [prompts, setPrompts] = useState([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Set a large limit to show all prompts at once without pagination controls
   const LIMIT = 1000;
 
   const { data: session } = authClient.useSession();
   useEffect(() => setMounted(true), []);
   const isLoggedIn = mounted && !!session?.user;
 
+  const debouncedSearch = useDebounce(search, 300);
+
   const fetchPrompts = useCallback(() => {
     setIsLoading(true);
     const params = { page: 1, limit: LIMIT, sort };
-    if (search.trim()) params.search = search.trim();
+    if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
     if (category !== "All") params.category = category;
     if (aiTool !== "All") params.aiTool = aiTool;
     if (difficulty !== "All") params.difficulty = difficulty;
@@ -221,11 +440,10 @@ export default function AllPromptsPage() {
       })
       .catch(() => setPrompts([]))
       .finally(() => setIsLoading(false));
-  }, [search, category, aiTool, difficulty, sort]);
+  }, [debouncedSearch, category, aiTool, difficulty, sort]);
 
   useEffect(() => {
-    const timer = setTimeout(fetchPrompts, 300);
-    return () => clearTimeout(timer);
+    fetchPrompts();
   }, [fetchPrompts]);
 
   const clearFilters = () => {
@@ -245,21 +463,21 @@ export default function AllPromptsPage() {
         label="Category"
         options={CATEGORIES}
         value={category}
-        onChange={(v) => setCategory(v)}
+        onChange={setCategory}
       />
       <div className="h-px bg-border" />
       <FilterSection
         label="AI Tool"
         options={AI_TOOLS}
         value={aiTool}
-        onChange={(v) => setAiTool(v)}
+        onChange={setAiTool}
       />
       <div className="h-px bg-border" />
       <FilterSection
         label="Difficulty"
         options={DIFFICULTIES}
         value={difficulty}
-        onChange={(v) => setDifficulty(v)}
+        onChange={setDifficulty}
       />
       {hasActiveFilters && (
         <>
@@ -281,6 +499,13 @@ export default function AllPromptsPage() {
 
   return (
     <main className="min-h-screen bg-page-bg">
+      {searchOverlayOpen && (
+        <SearchOverlay
+          onClose={() => setSearchOverlayOpen(false)}
+          isLoggedIn={isLoggedIn}
+        />
+      )}
+
       <div className="w-full px-3 py-6">
         <div className="mb-5">
           <h1 className="text-3xl font-bold leading-tight text-text-primary">
@@ -292,25 +517,30 @@ export default function AllPromptsPage() {
         </div>
 
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="flex flex-1 items-center gap-2 rounded-lg border bg-surface px-3">
+          <button
+            type="button"
+            onClick={() => setSearchOverlayOpen(true)}
+            className={
+              "flex flex-1 items-center gap-2 rounded-lg border bg-surface px-3 py-2.5 text-base text-text-muted hover:border-brand transition-colors text-left " +
+              focusRing
+            }
+          >
             <Search className="h-4 w-4 shrink-0 text-text-secondary" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search prompts..."
-              className="flex-1 bg-transparent py-2.5 text-base text-text-primary placeholder:text-text-muted outline-none"
-            />
+            <span className="flex-1">{search || "Search prompts..."}</span>
             {search && (
               <button
                 type="button"
-                onClick={() => setSearch("")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSearch("");
+                }}
                 className="text-text-secondary hover:text-text-primary"
               >
                 <X className="h-4 w-4" />
               </button>
             )}
-          </div>
+          </button>
+
           <div className="flex items-center gap-2">
             <select
               value={sort}
@@ -375,8 +605,8 @@ export default function AllPromptsPage() {
             )}
 
             {isLoading ? (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                {Array.from({ length: 9 }).map((_, i) => (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                {Array.from({ length: 10 }).map((_, i) => (
                   <SkeletonCard key={i} />
                 ))}
               </div>
@@ -401,7 +631,7 @@ export default function AllPromptsPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {prompts.map((prompt) => (
                   <PromptCard
                     key={prompt._id}

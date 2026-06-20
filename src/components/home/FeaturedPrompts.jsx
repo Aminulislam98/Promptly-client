@@ -28,8 +28,8 @@ const fadeUp = {
 
 function SkeletonCard() {
   return (
-    <div className="flex flex-col bg-surface animate-pulse">
-      <div className="aspect-video w-full bg-surface-hover" />
+    <div className="flex flex-col rounded-xl border bg-surface animate-pulse overflow-hidden">
+      <div className="aspect-[4/3] w-full bg-surface-hover" />
       <div className="flex flex-col gap-2 p-5">
         <div className="flex justify-between">
           <div className="h-4 w-20 rounded bg-surface-hover" />
@@ -37,7 +37,7 @@ function SkeletonCard() {
         </div>
         <div className="h-5 w-3/4 rounded bg-surface-hover" />
         <div className="h-4 w-1/2 rounded bg-surface-hover" />
-        <div className="mt-2 h-10 w-full rounded-md bg-surface-hover" />
+        <div className="mt-2 h-10 w-full rounded-lg bg-surface-hover" />
       </div>
     </div>
   );
@@ -60,22 +60,14 @@ export function FeaturedPrompts() {
 
   const isLoggedIn = mounted && !!session?.user;
 
-  // No prompts and not loading — show nothing
   if (!isLoading && prompts.length === 0) return null;
 
   return (
-    <section className="w-full border-b bg-page-bg py-16">
-      <div className="mx-auto w-full max-w-screen-xl px-3">
+    <section className="w-full bg-surface py-16">
+      <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+        {/* Header */}
         <div className="flex items-end justify-between">
           <div>
-            <motion.p
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-sm font-semibold uppercase tracking-widest text-brand"
-            >
-              Trending Now
-            </motion.p>
             <motion.h2
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -96,116 +88,116 @@ export function FeaturedPrompts() {
             View all <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-      </div>
 
-      {/* Full width grid */}
-      <div className="mt-8 grid grid-cols-1 gap-px border-y bg-border sm:grid-cols-2 lg:grid-cols-3">
-        {isLoading
-          ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-          : prompts.map((prompt, i) => (
-              <motion.article
-                key={prompt._id}
-                custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                className="flex flex-col bg-surface"
-              >
-                {/* Thumbnail */}
-                <div className="relative aspect-video w-full overflow-hidden bg-surface-hover">
-                  {prompt.thumbnail ? (
-                    <Image
-                      src={prompt.thumbnail}
-                      alt={prompt.title}
-                      fill
-                      className="object-cover transition-transform duration-300 hover:scale-105"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-brand-light">
-                      <span className="text-3xl font-bold text-brand">
-                        {prompt.title?.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                  {/* Premium badge */}
-                  {prompt.visibility === "Private" && (
-                    <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-warning/90 px-2 py-1 text-base font-medium text-on-brand backdrop-blur-sm">
-                      <Lock className="h-3 w-3" /> Premium
-                    </div>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="flex flex-1 flex-col p-5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-base font-medium text-brand">
-                      {prompt.category}
-                    </span>
-                    <span
-                      className={
-                        "text-base font-medium " +
-                        (DIFFICULTY_STYLES[prompt.difficulty] ||
-                          "text-text-secondary")
-                      }
-                    >
-                      {prompt.difficulty}
-                    </span>
-                  </div>
-                  <h3 className="mt-2 text-lg font-semibold leading-snug text-text-primary line-clamp-2">
-                    {prompt.title}
-                  </h3>
-                  <div className="mt-2 flex items-center gap-3 text-base text-text-secondary">
-                    <span className="rounded-md border px-2 py-0.5">
-                      {prompt.aiTool}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Copy className="h-3.5 w-3.5" /> {prompt.copyCount}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-base text-text-secondary">
-                    by {prompt.creatorName}
-                  </p>
-
-                  <div className="mt-auto border-t pt-4 mt-4">
-                    {isLoggedIn ? (
-                      <Link
-                        href={`/prompts/${prompt._id}`}
-                        className={
-                          "flex h-10 w-full items-center justify-center gap-2 rounded-md bg-brand text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] " +
-                          focusRing
-                        }
-                      >
-                        View Details <ArrowRight className="h-4 w-4" />
-                      </Link>
+        {/* Grid — with padding, cards with rounded corners */}
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {isLoading
+            ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
+            : prompts.map((prompt, i) => (
+                <motion.article
+                  key={prompt._id}
+                  custom={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={fadeUp}
+                  className="group flex flex-col rounded-xl border bg-surface overflow-hidden transition-colors hover:bg-surface-hover"
+                >
+                  {/* Thumbnail */}
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-brand-light shrink-0">
+                    {prompt.thumbnail ? (
+                      <Image
+                        src={prompt.thumbnail}
+                        alt={prompt.title}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
                     ) : (
-                      <Link
-                        href={`/login?redirect=/prompts/${prompt._id}`}
-                        className={
-                          "flex h-10 w-full items-center justify-center rounded-md border text-base font-medium text-text-primary transition-colors hover:bg-surface-hover " +
-                          focusRing
-                        }
-                      >
-                        Login to View
-                      </Link>
+                      <div className="flex h-full w-full items-center justify-center">
+                        <span className="text-4xl font-bold text-brand opacity-20">
+                          {prompt.title?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    {prompt.visibility === "Private" && (
+                      <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-warning px-2 py-1 text-base font-semibold text-on-brand">
+                        <Lock className="h-3 w-3" /> Premium
+                      </div>
                     )}
                   </div>
-                </div>
-              </motion.article>
-            ))}
-      </div>
 
-      <div className="mt-6 px-3 sm:hidden">
-        <Link
-          href="/prompts"
-          className={
-            "flex h-11 w-full items-center justify-center gap-2 rounded-md border text-base font-semibold text-text-primary transition-colors hover:bg-surface-hover " +
-            focusRing
-          }
-        >
-          View all prompts <ArrowRight className="h-4 w-4" />
-        </Link>
+                  {/* Content */}
+                  <div className="flex flex-1 flex-col p-5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-medium text-brand">
+                        {prompt.category}
+                      </span>
+                      <span
+                        className={
+                          "text-base font-medium " +
+                          (DIFFICULTY_STYLES[prompt.difficulty] ||
+                            "text-text-secondary")
+                        }
+                      >
+                        {prompt.difficulty}
+                      </span>
+                    </div>
+                    <h3 className="mt-2 min-h-[3rem] text-lg font-semibold leading-snug text-text-primary line-clamp-2">
+                      {prompt.title}
+                    </h3>
+                    <div className="mt-2 flex items-center gap-3 text-base text-text-secondary">
+                      <span className="rounded-md border px-2 py-0.5">
+                        {prompt.aiTool}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Copy className="h-3.5 w-3.5" /> {prompt.copyCount}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-base text-text-secondary">
+                      by {prompt.creatorName}
+                    </p>
+
+                    <div className="mt-4">
+                      {isLoggedIn ? (
+                        <Link
+                          href={`/prompts/${prompt._id}`}
+                          className={
+                            "flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-brand text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] " +
+                            focusRing
+                          }
+                        >
+                          View Details <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      ) : (
+                        <Link
+                          href={`/login?redirect=/prompts/${prompt._id}`}
+                          className={
+                            "flex h-10 w-full items-center justify-center rounded-lg border text-base font-medium text-text-primary transition-colors hover:bg-surface-hover " +
+                            focusRing
+                          }
+                        >
+                          Login to View
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </motion.article>
+              ))}
+        </div>
+
+        {/* Mobile view all */}
+        <div className="mt-6 sm:hidden">
+          <Link
+            href="/prompts"
+            className={
+              "flex h-11 w-full items-center justify-center gap-2 rounded-lg border text-base font-semibold text-text-primary transition-colors hover:bg-surface-hover " +
+              focusRing
+            }
+          >
+            View all prompts <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
     </section>
   );
