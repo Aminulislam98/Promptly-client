@@ -42,7 +42,6 @@ const primaryBlock =
 
 function getDashboardPath(role) {
   if (role === "admin") return "/admin";
-  if (role === "creator") return "/creator";
   return "/dashboard";
 }
 

@@ -1,9 +1,12 @@
 "use client";
 
-import { Copy, Bookmark, FileText, TrendingUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { FileText, Copy, Bookmark, PlusCircle } from "lucide-react";
+import { getCreatorAnalytics } from "@/lib/api";
 import {
-  AreaChart,
-  Area,
+  LineChart,
+  Line,
   BarChart,
   Bar,
   XAxis,
@@ -13,178 +16,205 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// Placeholder — replace with real API
-const COPY_DATA = [
-  { month: "Jan", copies: 12 },
-  { month: "Feb", copies: 28 },
-  { month: "Mar", copies: 19 },
-  { month: "Apr", copies: 45 },
-  { month: "May", copies: 38 },
-  { month: "Jun", copies: 62 },
-];
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
 
-const GROWTH_DATA = [
-  { month: "Jan", prompts: 1 },
-  { month: "Feb", prompts: 2 },
-  { month: "Mar", prompts: 3 },
-  { month: "Apr", prompts: 4 },
-  { month: "May", prompts: 5 },
-  { month: "Jun", prompts: 7 },
+const QUICK_LINKS = [
+  {
+    href: "/dashboard/add-prompt",
+    icon: PlusCircle,
+    label: "Add Prompt",
+    desc: "Create and publish a new prompt",
+  },
+  {
+    href: "/dashboard/my-prompts",
+    icon: FileText,
+    label: "My Prompts",
+    desc: "Manage your published prompts",
+  },
 ];
-
-const STAT_CARDS = [
-  { label: "Total Prompts", value: "7", icon: FileText },
-  { label: "Total Copies", value: "204", icon: Copy },
-  { label: "Total Bookmarks", value: "38", icon: Bookmark },
-  { label: "Growth", value: "+18%", icon: TrendingUp },
-];
-
-function CustomTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-lg border bg-surface px-3 py-2 text-base">
-      <p className="font-medium text-text-primary">{label}</p>
-      <p className="text-text-secondary">
-        {payload[0].name}:{" "}
-        <span className="font-semibold text-brand">{payload[0].value}</span>
-      </p>
-    </div>
-  );
-}
 
 export default function CreatorHome({ user }) {
+  const [analytics, setAnalytics] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    getCreatorAnalytics()
+      .then((data) => setAnalytics(data))
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const STAT_CARDS = [
+    {
+      icon: FileText,
+      label: "Total Prompts",
+      value: analytics?.totalPrompts ?? 0,
+    },
+    { icon: Copy, label: "Total Copies", value: analytics?.totalCopies ?? 0 },
+    {
+      icon: Bookmark,
+      label: "Total Bookmarks",
+      value: analytics?.totalBookmarks ?? 0,
+    },
+  ];
+
   return (
     <section>
       <div className="mb-8">
         <h1 className="text-3xl font-bold leading-tight text-text-primary">
-          Creator Home
+          Welcome back, {user?.name?.split(" ")[0] ?? "Creator"}
         </h1>
         <p className="mt-1 text-base text-text-secondary">
-          Track your prompt performance and growth.
+          Here is your creator analytics overview.
         </p>
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {STAT_CARDS.map(({ label, value, icon: Icon }) => (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {STAT_CARDS.map((stat) => (
           <div
-            key={label}
-            className="flex flex-col gap-3 rounded-xl border bg-surface px-5 py-5"
+            key={stat.label}
+            className="rounded-xl border bg-surface px-5 py-4"
           >
-            <div className="flex items-center justify-between">
-              <p className="text-base text-text-secondary">{label}</p>
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand-light">
-                <Icon className="h-5 w-5 text-brand" />
-              </span>
+            <div className="flex items-center gap-3">
+              <stat.icon className="h-5 w-5 text-brand" />
+              <p className="text-base text-text-secondary">{stat.label}</p>
             </div>
-            <p className="text-3xl font-bold text-text-primary">{value}</p>
+            {isLoading ? (
+              <div className="mt-2 h-8 w-16 animate-pulse rounded bg-surface-hover" />
+            ) : (
+              <p className="mt-2 text-3xl font-bold text-text-primary">
+                {stat.value}
+              </p>
+            )}
           </div>
         ))}
       </div>
 
       {/* Charts */}
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Area chart — copies */}
-        <div className="rounded-xl border bg-surface px-5 py-5">
-          <h2 className="mb-1 text-xl font-semibold text-text-primary">
-            Total Copies
-          </h2>
-          <p className="mb-6 text-base text-text-secondary">
-            Copies per month across all prompts.
-          </p>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart
-              data={COPY_DATA}
-              margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
-            >
-              <defs>
-                <linearGradient id="copyGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="var(--border)"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 13, fill: "var(--text-secondary)" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 13, fill: "var(--text-secondary)" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                content={<CustomTooltip />}
-                cursor={{ stroke: "var(--border)" }}
-              />
-              <Area
-                type="monotone"
-                dataKey="copies"
-                name="Copies"
-                stroke="#2563eb"
-                strokeWidth={2}
-                fill="url(#copyGradient)"
-                dot={false}
-                activeDot={{
-                  r: 5,
-                  fill: "#2563eb",
-                  stroke: "var(--surface)",
-                  strokeWidth: 2,
-                }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+      {isLoading ? (
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="h-64 animate-pulse rounded-xl bg-surface-hover" />
+          <div className="h-64 animate-pulse rounded-xl bg-surface-hover" />
         </div>
+      ) : analytics?.chartData?.length > 0 ? (
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Copies chart */}
+          <div className="rounded-xl border bg-surface p-6">
+            <h2 className="mb-4 text-lg font-semibold text-text-primary">
+              Total Copies (Last 6 Months)
+            </h2>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={analytics.chartData}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--color-border)"
+                />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 12, fill: "var(--color-text-secondary)" }}
+                />
+                <YAxis
+                  tick={{ fontSize: 12, fill: "var(--color-text-secondary)" }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "var(--color-surface)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: "8px",
+                  }}
+                  labelStyle={{ color: "var(--color-text-primary)" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="copies"
+                  stroke="#1d4ed8"
+                  strokeWidth={2}
+                  dot={{ fill: "#1d4ed8" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
 
-        {/* Bar chart — growth */}
-        <div className="rounded-xl border bg-surface px-5 py-5">
-          <h2 className="mb-1 text-xl font-semibold text-text-primary">
-            Prompt Growth
-          </h2>
-          <p className="mb-6 text-base text-text-secondary">
-            Total prompts published each month.
-          </p>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart
-              data={GROWTH_DATA}
-              margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="var(--border)"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 13, fill: "var(--text-secondary)" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 13, fill: "var(--text-secondary)" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                content={<CustomTooltip />}
-                cursor={{ fill: "var(--surface-hover)" }}
-              />
-              <Bar
-                dataKey="prompts"
-                name="Prompts"
-                fill="#2563eb"
-                radius={[6, 6, 0, 0]}
-                maxBarSize={40}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+          {/* Prompt growth chart */}
+          <div className="rounded-xl border bg-surface p-6">
+            <h2 className="mb-4 text-lg font-semibold text-text-primary">
+              Prompt Growth (Last 6 Months)
+            </h2>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={analytics.chartData}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--color-border)"
+                />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 12, fill: "var(--color-text-secondary)" }}
+                />
+                <YAxis
+                  tick={{ fontSize: 12, fill: "var(--color-text-secondary)" }}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "var(--color-surface)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: "8px",
+                  }}
+                  labelStyle={{ color: "var(--color-text-primary)" }}
+                />
+                <Bar dataKey="prompts" fill="#1d4ed8" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
+      ) : (
+        <div className="mt-6 flex flex-col items-center justify-center rounded-xl border bg-surface py-12 text-center">
+          <FileText className="h-10 w-10 text-text-secondary" />
+          <p className="mt-4 text-base font-semibold text-text-primary">
+            No data yet
+          </p>
+          <p className="mt-1 text-base text-text-secondary">
+            Add prompts to see your analytics.
+          </p>
+          <Link
+            href="/dashboard/add-prompt"
+            className={
+              "mt-4 inline-flex h-10 items-center gap-2 rounded-lg bg-brand px-5 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover " +
+              focusRing
+            }
+          >
+            <PlusCircle className="h-4 w-4" /> Add Your First Prompt
+          </Link>
+        </div>
+      )}
+
+      {/* Quick links */}
+      <h2 className="mb-4 mt-10 text-xl font-semibold text-text-primary">
+        Quick Actions
+      </h2>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {QUICK_LINKS.map(({ href, icon: Icon, label, desc }) => (
+          <Link
+            key={href}
+            href={href}
+            className={
+              "flex items-center gap-4 rounded-xl border bg-surface px-5 py-4 transition-colors hover:bg-surface-hover " +
+              focusRing
+            }
+          >
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-light">
+              <Icon className="h-5 w-5 text-brand" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-base font-semibold text-text-primary">
+                {label}
+              </p>
+              <p className="truncate text-base text-text-secondary">{desc}</p>
+            </div>
+          </Link>
+        ))}
       </div>
     </section>
   );

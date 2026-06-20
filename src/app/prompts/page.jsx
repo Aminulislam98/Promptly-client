@@ -372,7 +372,7 @@ export default function AllPromptsPage() {
                           </Link>
                         ) : (
                           <Link
-                            href="/login"
+                            href={`/login?redirect=/prompts/${prompt._id}`}
                             className={
                               "flex h-10 w-full items-center justify-center rounded-md border text-base font-medium text-text-primary transition-colors hover:bg-surface-hover " +
                               focusRing

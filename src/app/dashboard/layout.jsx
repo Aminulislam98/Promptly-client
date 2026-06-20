@@ -102,15 +102,10 @@ export default function DashboardLayout({ children }) {
       router.replace("/admin");
       return;
     }
-    if (session.user.role === "creator") {
-      router.replace("/creator");
-    }
   }, [session, isPending, router]);
 
-  // Show nothing while loading or redirecting
   if (isPending || !session?.user) return null;
-  if (session.user.role === "admin" || session.user.role === "creator")
-    return null;
+  if (session.user.role === "admin") return null;
 
   return (
     <div className="flex min-h-screen bg-page-bg">

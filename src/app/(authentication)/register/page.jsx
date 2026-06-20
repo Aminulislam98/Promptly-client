@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
@@ -36,6 +37,9 @@ function GoogleIcon() {
 }
 
 export default function SignupPage() {
+  const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -50,6 +54,15 @@ export default function SignupPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Already logged in → redirect
+  useEffect(() => {
+    if (!isPending && session?.user) {
+      router.replace("/dashboard");
+    }
+  }, [session, isPending, router]);
+
+  if (isPending || session?.user) return null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -80,7 +93,6 @@ export default function SignupPage() {
     }
 
     setErrors(newErrors);
-
     if (!valid) {
       const firstError = Object.values(newErrors).find((e) => e !== "");
       toast.error(firstError);
@@ -89,7 +101,7 @@ export default function SignupPage() {
 
     setIsLoading(true);
     try {
-      const { data, error } = await authClient.signUp.email({
+      const { error } = await authClient.signUp.email({
         name: formData.name,
         email: formData.email,
         password: formData.password,
@@ -100,10 +112,10 @@ export default function SignupPage() {
         toast.error(error.message || "Registration failed. Please try again.");
       } else {
         toast.success("Account created successfully!");
+        router.replace("/dashboard");
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong. Please try again.");
-      console.error("Registration error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -216,7 +228,7 @@ export default function SignupPage() {
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 className={
-                  "absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1 text-text-secondary transition-colors duration-150 hover:text-text-primary " +
+                  "absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1 text-text-secondary transition-colors hover:text-text-primary " +
                   focusRing
                 }
               >
@@ -238,7 +250,7 @@ export default function SignupPage() {
             type="submit"
             disabled={isLoading}
             className={
-              "mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand text-base font-semibold text-on-brand transition-all duration-200 hover:bg-brand-hover active:scale-[0.98] disabled:opacity-60 " +
+              "mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] disabled:opacity-60 " +
               focusRing
             }
           >
@@ -255,12 +267,11 @@ export default function SignupPage() {
             type="button"
             onClick={handleGoogleLogin}
             className={
-              "flex h-12 w-full items-center justify-center gap-3 rounded-full border bg-surface text-base font-medium text-text-primary transition-colors duration-150 hover:bg-surface-hover active:scale-[0.98] " +
+              "flex h-12 w-full items-center justify-center gap-3 rounded-full border bg-surface text-base font-medium text-text-primary transition-colors hover:bg-surface-hover active:scale-[0.98] " +
               focusRing
             }
           >
-            <GoogleIcon />
-            Continue with Google
+            <GoogleIcon /> Continue with Google
           </button>
         </form>
 

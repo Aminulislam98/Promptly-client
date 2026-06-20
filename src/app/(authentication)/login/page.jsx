@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
@@ -36,10 +37,25 @@ function GoogleIcon() {
 }
 
 export default function SignInPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
+
+  const { data: session, isPending } = authClient.useSession();
+
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Already logged in → redirect
+  useEffect(() => {
+    if (!isPending && session?.user) {
+      router.replace(redirectTo);
+    }
+  }, [session, isPending, router, redirectTo]);
+
+  if (isPending || session?.user) return null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -65,7 +81,6 @@ export default function SignInPage() {
     }
 
     setErrors(newErrors);
-
     if (!valid) {
       const firstError = Object.values(newErrors).find((e) => e !== "");
       toast.error(firstError);
@@ -74,20 +89,20 @@ export default function SignInPage() {
 
     setIsLoading(true);
     try {
-      const { data, error } = await authClient.signIn.email({
+      const { error } = await authClient.signIn.email({
         email: formData.email,
         password: formData.password,
         rememberMe: true,
-        callbackURL: "/dashboard",
+        callbackURL: redirectTo,
       });
       if (error) {
         toast.error(error.message || "Sign in failed. Please try again.");
       } else {
         toast.success("Signed in successfully!");
+        router.replace(redirectTo);
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong. Please try again.");
-      console.error("Authentication error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +111,7 @@ export default function SignInPage() {
   const handleGoogleLogin = async () => {
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/dashboard",
+      callbackURL: redirectTo,
     });
   };
 
@@ -159,7 +174,7 @@ export default function SignInPage() {
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 className={
-                  "absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1 text-text-secondary transition-colors duration-150 hover:text-text-primary " +
+                  "absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1 text-text-secondary transition-colors hover:text-text-primary " +
                   focusRing
                 }
               >
@@ -193,7 +208,7 @@ export default function SignInPage() {
             type="submit"
             disabled={isLoading}
             className={
-              "mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand text-base font-semibold text-on-brand transition-all duration-200 hover:bg-brand-hover active:scale-[0.98] disabled:opacity-60 " +
+              "mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] disabled:opacity-60 " +
               focusRing
             }
           >
@@ -210,12 +225,11 @@ export default function SignInPage() {
             type="button"
             onClick={handleGoogleLogin}
             className={
-              "flex h-12 w-full items-center justify-center gap-3 rounded-full border bg-surface text-base font-medium text-text-primary transition-colors duration-150 hover:bg-surface-hover active:scale-[0.98] " +
+              "flex h-12 w-full items-center justify-center gap-3 rounded-full border bg-surface text-base font-medium text-text-primary transition-colors hover:bg-surface-hover active:scale-[0.98] " +
               focusRing
             }
           >
-            <GoogleIcon />
-            Continue with Google
+            <GoogleIcon /> Continue with Google
           </button>
         </form>
 
