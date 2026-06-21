@@ -12,9 +12,10 @@ import {
   X,
   Lock,
   Bookmark,
+  BadgeCheck,
 } from "lucide-react";
 import { getPrompts, toggleBookmark, getBookmarks } from "@/lib/api";
-import { CreatorAvatar } from "@/components/ui/CreatorAvatar";
+import { CreatorAvatar, useCreatorInfo } from "@/components/ui/CreatorAvatar";
 import { authClient } from "@/lib/auth-client";
 import { formatCount, isNew, categoryColor } from "@/lib/utils";
 
@@ -191,6 +192,8 @@ function BookmarkBtn({ promptId, initialSaved, isLoggedIn }) {
 }
 
 function PromptCard({ prompt, isLoggedIn, initialSaved }) {
+  const creatorInfo = useCreatorInfo(prompt.creatorName);
+
   return (
     <article className="group flex flex-col rounded-xl border bg-surface transition-colors hover:bg-surface-hover">
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-brand-light shrink-0">
@@ -222,14 +225,18 @@ function PromptCard({ prompt, isLoggedIn, initialSaved }) {
         <BookmarkBtn promptId={prompt._id} initialSaved={initialSaved} isLoggedIn={isLoggedIn} />
       </div>
       <div className="flex flex-1 flex-col p-4">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <CreatorAvatar name={prompt.creatorName} size="sm" />
-            <span className="truncate text-base font-medium text-text-secondary">
-              {prompt.creatorName}
-            </span>
-          </div>
-          <ArrowRight className="h-4 w-4 shrink-0 text-text-secondary group-hover:text-brand transition-colors" />
+        <div className="flex items-center gap-2 min-w-0">
+          <CreatorAvatar name={prompt.creatorName} size="sm" />
+          <span className="truncate text-base font-medium text-text-secondary">
+            {prompt.creatorName}
+          </span>
+          {creatorInfo.isVerified && (
+            <BadgeCheck
+              className="h-4 w-4 shrink-0 text-brand"
+              aria-label="Verified creator"
+              title="Verified Promptly member"
+            />
+          )}
         </div>
         <h2 className="mt-2 text-base font-bold leading-snug text-text-primary line-clamp-2">
           {prompt.title}

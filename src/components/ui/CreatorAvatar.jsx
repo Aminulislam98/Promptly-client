@@ -32,6 +32,29 @@ const focusRing =
 const TOOLTIP_W = 224;
 const EDGE_MARGIN = 12;
 
+// Shared hook — any component can call this and get the same cached result
+export function useCreatorInfo(name) {
+  const [info, setInfo] = useState(
+    infoCache.has(name) ? infoCache.get(name) : { image: null, isVerified: false }
+  );
+  useEffect(() => {
+    if (!name) return;
+    if (infoCache.has(name)) {
+      setInfo(infoCache.get(name));
+      return;
+    }
+    fetch(`/api/creator-info/${encodeURIComponent(name)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const i = { image: d.image || null, isVerified: !!d.isVerified };
+        infoCache.set(name, i);
+        setInfo(i);
+      })
+      .catch(() => {});
+  }, [name]);
+  return info;
+}
+
 export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
   const [open, setOpen] = useState(false);
   const [stats, setStats] = useState(null);
@@ -40,9 +63,13 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
   const [side, setSide] = useState("center");
   const timerRef = useRef(null);
   const wrapperRef = useRef(null);
+  const closeTimer = useRef(null);
 
   // ALL hooks must come before any conditional return
-  useEffect(() => () => clearTimeout(timerRef.current), []);
+  useEffect(() => () => {
+    clearTimeout(timerRef.current);
+    clearTimeout(closeTimer.current);
+  }, []);
 
   // Fetch creator info (image + verified) eagerly so avatar photo loads fast
   useEffect(() => {
@@ -87,8 +114,8 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
   };
 
   const onEnter = () => {
+    clearTimeout(closeTimer.current);
     timerRef.current = setTimeout(() => {
-      // Detect available viewport space and pick the best side
       if (wrapperRef.current) {
         const rect = wrapperRef.current.getBoundingClientRect();
         const vw = window.innerWidth;
@@ -97,23 +124,29 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
         const spaceLeft = rect.right - EDGE_MARGIN;
 
         if (spaceRight >= TOOLTIP_W) {
-          setSide("left");   // plenty of room to the right → anchor left
+          setSide("left");
         } else if (spaceLeft >= TOOLTIP_W) {
-          setSide("right");  // plenty of room to the left → anchor right
+          setSide("right");
         } else if (avatarCenter >= vw / 2) {
-          setSide("right");  // closer to right half → anchor right
+          setSide("right");
         } else {
-          setSide("left");   // closer to left half → anchor left
+          setSide("left");
         }
       }
       setOpen(true);
       fetchStats();
-    }, 380);
+    }, 300);
   };
 
+  // Delay close so user can move mouse from avatar into the tooltip
   const onLeave = () => {
     clearTimeout(timerRef.current);
-    setOpen(false);
+    closeTimer.current = setTimeout(() => setOpen(false), 150);
+  };
+
+  const onTooltipEnter = () => clearTimeout(closeTimer.current);
+  const onTooltipLeave = () => {
+    closeTimer.current = setTimeout(() => setOpen(false), 100);
   };
 
   // Build tooltip and caret class strings based on detected side
@@ -167,6 +200,8 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
       {/* Hover card — flips left/right based on available viewport space */}
       {open && (
         <div
+          onMouseEnter={onTooltipEnter}
+          onMouseLeave={onTooltipLeave}
           className={
             "absolute bottom-full z-50 mb-3 w-56 overflow-hidden rounded-xl border border-border bg-surface shadow-lg " +
             tooltipPos
