@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { TrendingUp, Copy, Lock, ArrowRight } from "lucide-react";
-import { CreatorAvatar } from "@/components/ui/CreatorAvatar";
+import { CreatorAvatar, avatarBg } from "@/components/ui/CreatorAvatar";
 import { motion } from "framer-motion";
 import { getPrompts } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
@@ -139,8 +139,14 @@ export function TrendingPrompts() {
                         <div className="mt-1 flex flex-wrap items-center gap-2">
                           {prompt.creatorName && (
                             <span className="flex items-center gap-1.5">
-                              <CreatorAvatar name={prompt.creatorName} size="sm" stopPropagation />
-                              <span className="text-base text-text-secondary truncate max-w-24">
+                              {/* Non-link avatar — card itself is already a Link */}
+                              <span className={
+                                "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-base font-bold text-on-brand " +
+                                avatarBg(prompt.creatorName)
+                              }>
+                                {prompt.creatorName.charAt(0).toUpperCase()}
+                              </span>
+                              <span className="truncate text-base text-text-secondary">
                                 {prompt.creatorName}
                               </span>
                             </span>

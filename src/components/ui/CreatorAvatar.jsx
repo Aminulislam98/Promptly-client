@@ -10,7 +10,7 @@ const cache = new Map();
 
 // Deterministic color from name — uses only design-token bg classes
 const PALETTE = ["bg-brand", "bg-success", "bg-error"];
-function avatarBg(name = "") {
+export function avatarBg(name = "") {
   const n = name.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   return PALETTE[n % PALETTE.length];
 }
@@ -28,6 +28,9 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
   const [open, setOpen] = useState(false);
   const [stats, setStats] = useState(null);
   const timerRef = useRef(null);
+
+  // ALL hooks must come before any conditional return
+  useEffect(() => () => clearTimeout(timerRef.current), []);
 
   if (!name) return null;
 
@@ -65,8 +68,6 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
     clearTimeout(timerRef.current);
     setOpen(false);
   };
-
-  useEffect(() => () => clearTimeout(timerRef.current), []);
 
   return (
     <div
