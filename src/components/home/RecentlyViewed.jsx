@@ -32,8 +32,8 @@ export function RecentlyViewed() {
   if (!session?.user || items.length === 0) return null;
 
   return (
-    <section className="w-full border-b bg-page-bg py-10 sm:py-12 lg:py-16">
-      <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
+    <section className="w-full border-b bg-page-bg py-6 sm:py-8">
+      <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
