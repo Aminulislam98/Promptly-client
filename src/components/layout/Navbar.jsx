@@ -230,8 +230,8 @@ export function Navbar({ name = "Promptly" }) {
                   <span className="text-text-primary">Prompt</span>
                   <span className="text-brand">ly</span>
                 </span>
-                <span className="mt-0.5 text-sm font-medium tracking-wide text-text-muted">
-                  find your prompt
+                <span className="mt-0.5 whitespace-nowrap text-sm font-medium tracking-wide text-text-muted">
+                  Prompt smarter.
                 </span>
               </span>
             </Link>
