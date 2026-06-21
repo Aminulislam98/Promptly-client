@@ -11,6 +11,7 @@ import {
   getReviews,
   getBookmarks,
   getPrompts,
+  getMyPrompts,
   incrementCopyCount,
   toggleBookmark,
   addReview,
@@ -173,6 +174,7 @@ export default function PromptDetailsPage({ params }) {
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [isOwnPrompt, setIsOwnPrompt] = useState(false);
   const copyingRef = useRef(false);
   const { data: session, isPending: sessionPending } = authClient.useSession();
 
@@ -190,10 +192,17 @@ export default function PromptDetailsPage({ params }) {
     // On reload, TokenSync needs a moment to write the fresh session token
     // to localStorage — fetching before that causes a 401.
     if (!id || sessionPending || !session?.user) return;
-    Promise.all([getPromptById(id), getReviews(id), getBookmarks()])
-      .then(([promptData, reviewData, bookmarksData]) => {
+    Promise.all([getPromptById(id), getReviews(id), getBookmarks(), getMyPrompts()])
+      .then(([promptData, reviewData, bookmarksData, myPromptsData]) => {
         const p = promptData.prompt;
         setPrompt(p);
+
+        // Determine ownership using the user's actual prompt list — reliable even
+        // when two accounts share the same display name.
+        const myIds = new Set(
+          (myPromptsData?.prompts || []).map((mp) => String(mp._id))
+        );
+        setIsOwnPrompt(myIds.has(String(id)));
         setCopyCount(p?.copyCount || 0);
         setReviews(reviewData.reviews || []);
         const bookmarkedIds = (bookmarksData?.bookmarks || []).map(
@@ -650,8 +659,10 @@ export default function PromptDetailsPage({ params }) {
                       />
                       {bookmarked ? "Remove Bookmark" : "Bookmark"}
                     </button>
-                    {/* Hide report button for the prompt's own creator */}
-                    {user?.name !== prompt?.creatorName && (
+                    {/* Show Report only if this prompt does NOT belong to the logged-in user.
+                        isOwnPrompt is set by cross-checking against the user's own prompt list
+                        from the backend — immune to display-name collisions across accounts. */}
+                    {!isOwnPrompt && (
                       <button
                         type="button"
                         onClick={() => setShowReport(true)}
