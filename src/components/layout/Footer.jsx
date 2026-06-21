@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Command, CheckCircle } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { usePathname } from "next/navigation";
 
 // --- Icons defined inside the file ---
 function XIcon({ className }) {
@@ -78,6 +79,10 @@ export function Footer({ name = "Promptly" }) {
   const year = new Date().getFullYear();
   const { data: session } = authClient.useSession();
   const isPremium = session?.user?.isPremium === true;
+  const pathname = usePathname();
+
+  // Admin control panel has its own layout — footer would be hidden behind the fixed sidebar
+  if (pathname?.startsWith("/admin")) return null;
 
   const COLUMNS = [
     {
