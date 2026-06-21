@@ -24,7 +24,6 @@ import {
   getMyProfile,
   getMyPrompts,
   getMyReviews,
-  getMyReceivedReports,
 } from "@/lib/api";
 import { useState, useEffect, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
@@ -267,7 +266,6 @@ export default function ProfilePage() {
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   // local isVerified tracks claimed state before session refreshes
   const [localVerified, setLocalVerified] = useState(false);
-  const [reportCount, setReportCount] = useState(0);
 
   useEffect(() => {
     if (user) {
@@ -277,11 +275,6 @@ export default function ProfilePage() {
 
       getMyProfile()
         .then((data) => setProfileData(data.user))
-        .catch(() => {});
-
-      // Fetch count of reports received on user's prompts (admin-reviewed only)
-      getMyReceivedReports()
-        .then((data) => setReportCount(data.total || 0))
         .catch(() => {});
     }
   }, [user]);
@@ -488,7 +481,7 @@ export default function ProfilePage() {
       <div
         className={
           "mt-4 flex flex-col gap-4 rounded-xl border px-6 py-5 sm:flex-row sm:items-center sm:justify-between " +
-          (reportCount > 0
+          (warningCount > 0
             ? "border-warning/40 bg-warning/5"
             : "border bg-surface")
         }
@@ -497,13 +490,13 @@ export default function ProfilePage() {
           <div
             className={
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-full " +
-              (reportCount > 0 ? "bg-warning/15" : "bg-surface-hover")
+              (warningCount > 0 ? "bg-warning/15" : "bg-surface-hover")
             }
           >
             <Flag
               className={
                 "h-5 w-5 " +
-                (reportCount > 0 ? "text-warning" : "text-text-secondary")
+                (warningCount > 0 ? "text-warning" : "text-text-secondary")
               }
             />
           </div>
@@ -511,15 +504,15 @@ export default function ProfilePage() {
             <p
               className={
                 "text-base font-bold " +
-                (reportCount > 0 ? "text-warning" : "text-text-primary")
+                (warningCount > 0 ? "text-warning" : "text-text-primary")
               }
             >
-              {reportCount > 0
-                ? `${reportCount} report${reportCount !== 1 ? "s" : ""} on your prompts`
+              {warningCount > 0
+                ? `${warningCount} report${warningCount !== 1 ? "s" : ""} on your prompts`
                 : "Reports on your prompts"}
             </p>
             <p className="mt-0.5 text-base text-text-secondary">
-              {reportCount > 0
+              {warningCount > 0
                 ? "Someone has reported one or more of your prompts. Tap to see the reasons."
                 : "No reports on any of your prompts. Keep it up!"}
             </p>
@@ -529,14 +522,14 @@ export default function ProfilePage() {
           href="/dashboard/my-reports"
           className={
             "inline-flex h-10 shrink-0 items-center gap-2 rounded-lg px-5 text-base font-semibold transition-all active:scale-[0.98] " +
-            (reportCount > 0
+            (warningCount > 0
               ? "bg-warning text-white hover:opacity-90 "
               : "border text-text-secondary hover:bg-surface-hover ") +
             focusRing
           }
         >
           <Flag className="h-4 w-4" />
-          {reportCount > 0 ? "See Reports" : "View Reports"}
+          {warningCount > 0 ? "See Reports" : "View Reports"}
         </Link>
       </div>
 
