@@ -173,16 +173,16 @@ export default function PromptDetailsPage({ params }) {
   const [reviewText, setReviewText] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const copyingRef = useRef(false);
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending: sessionPending } = authClient.useSession();
 
   useEffect(() => setMounted(true), []);
 
-  // Private route — redirect to login if not logged in
+  // Private route — redirect to login only after session has finished loading
   useEffect(() => {
-    if (mounted && !session?.user) {
+    if (mounted && !sessionPending && !session?.user) {
       router.replace("/login");
     }
-  }, [mounted, session, router]);
+  }, [mounted, sessionPending, session, router]);
 
   useEffect(() => {
     if (!id) return;
@@ -318,8 +318,8 @@ export default function PromptDetailsPage({ params }) {
     }
   };
 
-  // Show nothing while checking auth
-  if (!mounted || !session?.user) return null;
+  // Show nothing while checking auth (avoids flash of content or premature redirect)
+  if (!mounted || sessionPending || !session?.user) return null;
 
   if (isLoading) {
     return (

@@ -64,9 +64,13 @@ export default function ProfilePage() {
   const warningCount = profileData?.warnings?.length || 0;
   const isSuspended = profileData?.isSuspended || false;
 
+  // Use fresh role from MongoDB (profileData) — Better Auth session can be stale
+  // after an admin changes the role. Fall back to session while profileData loads.
+  const currentRole = profileData?.role || user?.role || "user";
+
   const INFO_ROWS = [
     { icon: Mail, label: "Email", value: user?.email },
-    { icon: Shield, label: "Role", value: user?.role || "user" },
+    { icon: Shield, label: "Role", value: currentRole },
     {
       icon: BadgeCheck,
       label: "Subscription",
@@ -153,7 +157,7 @@ export default function ProfilePage() {
             </h2>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1 rounded-full bg-brand-light px-3 py-1 text-base font-medium text-brand">
-                <Shield className="h-4 w-4" /> {user?.role ?? "user"}
+                <Shield className="h-4 w-4" /> {currentRole}
               </span>
               {profileData?.isPremium ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-3 py-1 text-base font-medium text-success">
@@ -217,7 +221,7 @@ export default function ProfilePage() {
       )}
 
       {/* Become a creator */}
-      {user?.role === "user" && !isSuspended && (
+      {currentRole === "user" && !isSuspended && (
         <div className="mt-4 flex flex-col gap-4 rounded-xl border px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-base font-semibold text-text-primary">
