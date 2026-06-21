@@ -11,11 +11,12 @@ import {
   SlidersHorizontal,
   X,
   Lock,
+  Bookmark,
 } from "lucide-react";
-import { getPrompts } from "@/lib/api";
+import { getPrompts, toggleBookmark } from "@/lib/api";
 import { CreatorAvatar } from "@/components/ui/CreatorAvatar";
 import { authClient } from "@/lib/auth-client";
-import { formatCount, isNew } from "@/lib/utils";
+import { formatCount, isNew, categoryColor } from "@/lib/utils";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
@@ -145,6 +146,44 @@ function StarRating({ rating, count }) {
   );
 }
 
+function BookmarkBtn({ promptId, isLoggedIn }) {
+  const [saved, setSaved] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const handle = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isLoggedIn) {
+      window.location.href = `/login?redirect=/prompts/${promptId}`;
+      return;
+    }
+    setBusy(true);
+    try {
+      await toggleBookmark(promptId);
+      setSaved((v) => !v);
+    } catch {
+      /* silent */
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handle}
+      disabled={busy}
+      aria-label={saved ? "Remove bookmark" : "Save prompt"}
+      className={
+        "absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full border bg-surface/90 backdrop-blur-sm shadow-sm transition-all duration-150 hover:scale-110 active:scale-95 disabled:opacity-60 " +
+        (saved ? "border-brand text-brand" : "border-border text-text-secondary hover:border-brand hover:text-brand")
+      }
+    >
+      <Bookmark className={"h-4 w-4 " + (saved ? "fill-brand" : "")} />
+    </button>
+  );
+}
+
 function PromptCard({ prompt, isLoggedIn }) {
   return (
     <article className="group flex flex-col rounded-xl border bg-surface transition-colors hover:bg-surface-hover">
@@ -170,10 +209,11 @@ function PromptCard({ prompt, isLoggedIn }) {
           </div>
         )}
         {prompt.visibility === "Private" && (
-          <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-warning px-2 py-0.5 text-base font-semibold text-on-brand">
+          <div className="absolute left-2 bottom-2 flex items-center gap-1 rounded-full bg-warning px-2 py-0.5 text-sm font-semibold text-on-brand">
             <Lock className="h-3 w-3" /> Premium
           </div>
         )}
+        <BookmarkBtn promptId={prompt._id} isLoggedIn={isLoggedIn} />
       </div>
       <div className="flex flex-1 flex-col p-4">
         <div className="flex items-center justify-between gap-2">
@@ -189,7 +229,7 @@ function PromptCard({ prompt, isLoggedIn }) {
           {prompt.title}
         </h2>
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <span className="rounded-full bg-brand-light px-2.5 py-0.5 text-base font-medium text-brand">
+          <span className={"rounded-full border px-2.5 py-0.5 text-sm font-semibold " + categoryColor(prompt.category)}>
             {prompt.category}
           </span>
           {prompt.aiTool && (

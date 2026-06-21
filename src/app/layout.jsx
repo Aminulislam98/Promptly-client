@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { TokenSync } from "@/components/providers/TokenSync";
 
 const geistSans = Geist({
@@ -49,8 +50,9 @@ export default function RootLayout({ children }) {
         <TokenSync />
         <Navbar />
         <Toaster position="top-center" />
-        <main className="pt-16">{children}</main>
+        <main className="pt-16 pb-14 lg:pb-0">{children}</main>
         <Footer />
+        <MobileBottomNav />
       </body>
     </html>
   );

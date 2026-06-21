@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Copy, ArrowRight, Lock } from "lucide-react";
+import { Copy, ArrowRight, Lock, Bookmark } from "lucide-react";
 import { CreatorAvatar } from "@/components/ui/CreatorAvatar";
 import { motion } from "framer-motion";
 import { authClient } from "@/lib/auth-client";
-import { getFeaturedPrompts } from "@/lib/api";
-import { formatCount, isNew } from "@/lib/utils";
+import { getFeaturedPrompts, toggleBookmark } from "@/lib/api";
+import { formatCount, isNew, categoryColor } from "@/lib/utils";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
@@ -27,6 +27,44 @@ const fadeUp = {
     transition: { duration: 0.4, delay: i * 0.08 },
   }),
 };
+
+function BookmarkBtn({ promptId, isLoggedIn }) {
+  const [saved, setSaved] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const handle = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isLoggedIn) {
+      window.location.href = `/login?redirect=/prompts/${promptId}`;
+      return;
+    }
+    setBusy(true);
+    try {
+      await toggleBookmark(promptId);
+      setSaved((v) => !v);
+    } catch {
+      /* silent */
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handle}
+      disabled={busy}
+      aria-label={saved ? "Remove bookmark" : "Save prompt"}
+      className={
+        "absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full border bg-surface/90 backdrop-blur-sm shadow-sm transition-all duration-150 hover:scale-110 active:scale-95 disabled:opacity-60 " +
+        (saved ? "border-brand text-brand" : "border-border text-text-secondary hover:border-brand hover:text-brand")
+      }
+    >
+      <Bookmark className={"h-4 w-4 " + (saved ? "fill-brand" : "")} />
+    </button>
+  );
+}
 
 function SkeletonCard() {
   return (
@@ -128,16 +166,18 @@ export function FeaturedPrompts() {
                       </div>
                     )}
                     {prompt.visibility === "Private" && (
-                      <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-warning px-2 py-1 text-base font-semibold text-on-brand">
+                      <div className="absolute left-3 bottom-3 flex items-center gap-1 rounded-full bg-warning px-2 py-1 text-sm font-semibold text-on-brand">
                         <Lock className="h-3 w-3" /> Premium
                       </div>
                     )}
+                    {/* Quick bookmark */}
+                    <BookmarkBtn promptId={prompt._id} isLoggedIn={isLoggedIn} />
                   </div>
 
                   {/* Content */}
                   <div className="flex flex-1 flex-col p-5">
                     <div className="flex items-center justify-between">
-                      <span className="text-base font-medium text-brand">
+                      <span className={"rounded-full border px-2.5 py-0.5 text-sm font-semibold " + categoryColor(prompt.category)}>
                         {prompt.category}
                       </span>
                       <span
