@@ -143,7 +143,7 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-surface px-4 pb-16 pt-24">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-surface px-4 py-8">
       <Toaster position="top-center" />
       <div className="w-full max-w-md">
         <div className="mb-8">
@@ -301,6 +301,6 @@ export default function SignupPage() {
           </Link>
         </p>
       </div>
-    </main>
+    </div>
   );
 }

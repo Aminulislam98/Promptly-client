@@ -10,6 +10,7 @@ import {
   getPromptById,
   getReviews,
   getBookmarks,
+  getPrompts,
   incrementCopyCount,
   toggleBookmark,
   addReview,
@@ -162,6 +163,7 @@ export default function PromptDetailsPage({ params }) {
   const [mounted, setMounted] = useState(false);
   const [prompt, setPrompt] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [related, setRelated] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [copyCount, setCopyCount] = useState(0);
@@ -186,16 +188,49 @@ export default function PromptDetailsPage({ params }) {
     if (!id) return;
     Promise.all([getPromptById(id), getReviews(id), getBookmarks()])
       .then(([promptData, reviewData, bookmarksData]) => {
-        setPrompt(promptData.prompt);
-        setCopyCount(promptData.prompt?.copyCount || 0);
+        const p = promptData.prompt;
+        setPrompt(p);
+        setCopyCount(p?.copyCount || 0);
         setReviews(reviewData.reviews || []);
         const bookmarkedIds = (bookmarksData?.bookmarks || []).map(
           (b) => b._id || b.promptId || b
         );
         setBookmarked(bookmarkedIds.includes(id));
-        // Set browser tab title to the actual prompt name
-        if (promptData.prompt?.title) {
-          document.title = `${promptData.prompt.title} | Promptly`;
+
+        // Set browser tab title
+        if (p?.title) {
+          document.title = `${p.title} | Promptly`;
+        }
+
+        // Save to recently viewed in localStorage (max 10, newest first)
+        if (p) {
+          try {
+            const entry = {
+              _id: id,
+              title: p.title,
+              category: p.category,
+              aiTool: p.aiTool,
+              difficulty: p.difficulty,
+              visibility: p.visibility,
+              copyCount: p.copyCount || 0,
+              viewedAt: Date.now(),
+            };
+            const raw = localStorage.getItem("recently_viewed");
+            const prev = raw ? JSON.parse(raw) : [];
+            const filtered = prev.filter((x) => x._id !== id);
+            const next = [entry, ...filtered].slice(0, 10);
+            localStorage.setItem("recently_viewed", JSON.stringify(next));
+          } catch {}
+        }
+
+        // Fetch related prompts (same category, exclude current)
+        if (p?.category) {
+          getPrompts({ category: p.category, limit: 5 })
+            .then((data) => {
+              const others = (data.prompts || []).filter((r) => r._id !== id && String(r._id) !== id);
+              setRelated(others.slice(0, 4));
+            })
+            .catch(() => {});
         }
       })
       .catch(() => toast.error("Failed to load prompt"))
@@ -648,6 +683,58 @@ export default function PromptDetailsPage({ params }) {
             </div>
           </aside>
         </div>
+
+        {/* Related Prompts */}
+        {related.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-xl font-semibold text-text-primary">
+              Related Prompts
+            </h2>
+            <p className="mt-1 text-base text-text-secondary">
+              More prompts in the{" "}
+              <span className="font-medium text-text-primary">
+                {prompt.category}
+              </span>{" "}
+              category
+            </p>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {related.map((r) => (
+                <Link
+                  key={r._id}
+                  href={`/prompts/${r._id}`}
+                  className={
+                    "group flex flex-col rounded-xl border bg-surface p-4 transition-colors hover:border-brand " +
+                    focusRing
+                  }
+                >
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-md bg-brand-light px-2 py-0.5 text-base font-medium text-brand">
+                      {r.aiTool}
+                    </span>
+                    <span
+                      className={
+                        "rounded-md px-2 py-0.5 text-base font-medium " +
+                        (DIFFICULTY_STYLES[r.difficulty] || "")
+                      }
+                    >
+                      {r.difficulty}
+                    </span>
+                  </div>
+                  <p className="mt-3 line-clamp-2 text-base font-semibold leading-snug text-text-primary group-hover:text-brand">
+                    {r.title}
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-base leading-relaxed text-text-secondary">
+                    {r.description}
+                  </p>
+                  <div className="mt-auto flex items-center gap-1 pt-3 text-base text-text-secondary">
+                    <Copy className="h-3.5 w-3.5" />
+                    {r.copyCount || 0} copies
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {showReport && (

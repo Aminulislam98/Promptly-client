@@ -11,11 +11,13 @@ import { CustomerReviews } from "@/components/home/CustomerReviews";
 import { FeaturedPrompts } from "@/components/home/FeaturedPrompts";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { BrowseByTool } from "@/components/home/BrowseByTool";
+import { RecentlyViewed } from "@/components/home/RecentlyViewed";
 
 export default function HomePage() {
   return (
     <>
       <HeroBanner />
+      <RecentlyViewed />
       <FeaturedPrompts />
       <HowItWorks />
       <WhyChooseUs />

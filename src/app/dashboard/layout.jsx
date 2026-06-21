@@ -29,9 +29,9 @@ const USER_LINKS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/add-prompt", label: "Add Prompt", icon: PlusCircle },
   { href: "/dashboard/my-prompts", label: "My Prompts", icon: FileText },
-  { href: "/dashboard/saved", label: "Saved Prompts", icon: Bookmark },
-  { href: "/dashboard/reviews", label: "My Reviews", icon: Star },
+  { href: "/dashboard/saved", label: "Saved", icon: Bookmark },
   { href: "/dashboard/profile", label: "Profile", icon: User },
+  { href: "/dashboard/reviews", label: "My Reviews", icon: Star },
 ];
 
 function SidebarLink({ link, expanded }) {
