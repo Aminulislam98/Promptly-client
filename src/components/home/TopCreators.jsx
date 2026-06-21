@@ -108,7 +108,7 @@ export function TopCreators() {
                 const rank = RANK_STYLES[i] || RANK_STYLES[2];
                 return (
                   <motion.div
-                    key={creator._id}
+                    key={creator.name}
                     custom={i}
                     initial="hidden"
                     whileInView="visible"

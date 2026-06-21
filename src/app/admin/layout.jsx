@@ -18,6 +18,15 @@ import { authClient } from "@/lib/auth-client";
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
 
+const ADMIN_PAGE_TITLES = {
+  "/admin": "Admin Analytics | Promptly",
+  "/admin/users": "Manage Users | Promptly",
+  "/admin/prompts": "Manage Prompts | Promptly",
+  "/admin/payments": "All Payments | Promptly",
+  "/admin/reported": "Reported Prompts | Promptly",
+  "/admin/creator-requests": "Creator Requests | Promptly",
+};
+
 const ADMIN_LINKS = [
   { href: "/admin", label: "Analytics", icon: BarChart2, exact: true },
   { href: "/admin/users", label: "All Users", icon: Users },
@@ -100,6 +109,11 @@ export default function AdminLayout({ children }) {
   const [expanded, setExpanded] = useState(false);
   const { data: session, isPending } = authClient.useSession();
   const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    document.title = ADMIN_PAGE_TITLES[pathname] || "Admin | Promptly";
+  }, [pathname]);
 
   useEffect(() => {
     if (isPending) return;

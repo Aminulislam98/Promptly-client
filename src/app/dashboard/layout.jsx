@@ -16,6 +16,15 @@ import { authClient } from "@/lib/auth-client";
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
 
+const PAGE_TITLES = {
+  "/dashboard": "Dashboard | Promptly",
+  "/dashboard/add-prompt": "Add Prompt | Promptly",
+  "/dashboard/my-prompts": "My Prompts | Promptly",
+  "/dashboard/saved": "Saved Prompts | Promptly",
+  "/dashboard/reviews": "My Reviews | Promptly",
+  "/dashboard/profile": "Profile | Promptly",
+};
+
 const USER_LINKS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/add-prompt", label: "Add Prompt", icon: PlusCircle },
@@ -91,6 +100,20 @@ export default function DashboardLayout({ children }) {
   const [expanded, setExpanded] = useState(false);
   const { data: session, isPending } = authClient.useSession();
   const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // Find the most specific matching title
+    const exactMatch = PAGE_TITLES[pathname];
+    if (exactMatch) {
+      document.title = exactMatch;
+      return;
+    }
+    // For dynamic routes like /dashboard/my-prompts/[id]/edit
+    if (pathname.includes("/edit")) document.title = "Edit Prompt | Promptly";
+    else if (pathname.includes("/analytics")) document.title = "Prompt Analytics | Promptly";
+    else document.title = "Dashboard | Promptly";
+  }, [pathname]);
 
   useEffect(() => {
     if (isPending) return;

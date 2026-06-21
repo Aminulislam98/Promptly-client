@@ -193,9 +193,17 @@ export default function PromptDetailsPage({ params }) {
           (b) => b._id || b.promptId || b
         );
         setBookmarked(bookmarkedIds.includes(id));
+        // Set browser tab title to the actual prompt name
+        if (promptData.prompt?.title) {
+          document.title = `${promptData.prompt.title} | Promptly`;
+        }
       })
       .catch(() => toast.error("Failed to load prompt"))
       .finally(() => setIsLoading(false));
+
+    return () => {
+      document.title = "Promptly — AI Prompt Marketplace";
+    };
   }, [id]);
 
   const user = mounted ? session?.user : null;

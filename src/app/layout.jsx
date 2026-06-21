@@ -16,8 +16,27 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Promptly",
-  description: "A simple and fast AI prompt generator",
+  title: {
+    default: "Promptly — AI Prompt Marketplace",
+    template: "%s | Promptly",
+  },
+  description:
+    "Discover, share and copy AI prompts for ChatGPT, Claude, Midjourney, Gemini and more. Browse thousands of community-curated prompts or unlock premium ones with a one-time $5 payment.",
+  keywords: ["AI prompts", "ChatGPT prompts", "Claude prompts", "Midjourney prompts", "prompt marketplace"],
+  icons: {
+    icon: "/favicon.svg",
+  },
+  openGraph: {
+    title: "Promptly — AI Prompt Marketplace",
+    description: "Discover and share the best AI prompts for ChatGPT, Claude, Midjourney and more.",
+    type: "website",
+    siteName: "Promptly",
+  },
+  twitter: {
+    card: "summary",
+    title: "Promptly — AI Prompt Marketplace",
+    description: "Discover and share the best AI prompts for ChatGPT, Claude, Midjourney and more.",
+  },
 };
 
 export default function RootLayout({ children }) {
