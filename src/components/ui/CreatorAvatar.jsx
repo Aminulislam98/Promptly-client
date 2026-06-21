@@ -138,7 +138,7 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
       {open && (
         <div
           className={
-            "absolute bottom-full z-50 mb-3 w-56 rounded-xl border border-border bg-surface shadow-lg " +
+            "absolute bottom-full z-50 mb-3 w-56 overflow-hidden rounded-xl border border-border bg-surface shadow-lg " +
             tooltipPos
           }
         >
@@ -150,55 +150,49 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
             }
           />
 
-          <div className="p-4">
+          <div className="p-3">
             {/* Creator row */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <div
                 className={
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-bold text-on-brand " +
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-bold text-on-brand " +
                   bg
                 }
               >
                 {initial}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1 overflow-hidden">
                 <p className="truncate text-base font-semibold text-text-primary">
                   {name}
                 </p>
-                <p className="text-base text-text-secondary">Prompt Creator</p>
+                <p className="truncate text-sm text-text-secondary">Prompt Creator</p>
               </div>
             </div>
 
-            {/* Stats */}
-            <div className="mt-3 flex items-center gap-4 rounded-lg bg-page-bg px-3 py-2.5">
+            {/* Stats — bordered split layout so text stays contained */}
+            <div className="mt-3 flex overflow-hidden rounded-lg border border-border">
               {stats ? (
                 <>
-                  <div className="flex flex-1 items-center gap-2">
-                    <FileText className="h-4 w-4 shrink-0 text-brand" />
-                    <div>
-                      <p className="text-base font-bold leading-none text-text-primary">
-                        {formatCount(stats.count)}
-                      </p>
-                      <p className="mt-0.5 text-base text-text-secondary">
-                        Prompts
-                      </p>
-                    </div>
+                  <div className="flex flex-1 flex-col items-center py-2.5">
+                    <p className="text-base font-bold leading-none text-text-primary">
+                      {formatCount(stats.count)}
+                    </p>
+                    <p className="mt-1 flex items-center gap-1 text-sm text-text-muted">
+                      <FileText className="h-3 w-3 shrink-0" /> Prompts
+                    </p>
                   </div>
-                  <div className="h-8 w-px bg-border" />
-                  <div className="flex flex-1 items-center gap-2">
-                    <Copy className="h-4 w-4 shrink-0 text-brand" />
-                    <div>
-                      <p className="text-base font-bold leading-none text-text-primary">
-                        {formatCount(stats.totalCopies)}
-                      </p>
-                      <p className="mt-0.5 text-base text-text-secondary">
-                        Total copies
-                      </p>
-                    </div>
+                  <div className="w-px bg-border" />
+                  <div className="flex flex-1 flex-col items-center py-2.5">
+                    <p className="text-base font-bold leading-none text-text-primary">
+                      {formatCount(stats.totalCopies)}
+                    </p>
+                    <p className="mt-1 flex items-center gap-1 text-sm text-text-muted">
+                      <Copy className="h-3 w-3 shrink-0" /> Copies
+                    </p>
                   </div>
                 </>
               ) : (
-                <div className="h-10 w-full animate-pulse rounded-lg bg-surface-hover" />
+                <div className="h-14 w-full animate-pulse bg-surface-hover" />
               )}
             </div>
 
@@ -206,7 +200,7 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
             <Link
               href={href}
               className={
-                "mt-3 flex h-9 w-full items-center justify-center rounded-lg bg-brand text-base font-semibold text-on-brand transition-colors hover:bg-brand-hover active:scale-[0.98] " +
+                "mt-3 flex h-8 w-full items-center justify-center rounded-lg bg-brand text-sm font-semibold text-on-brand transition-colors hover:bg-brand-hover active:scale-[0.98] " +
                 focusRing
               }
             >

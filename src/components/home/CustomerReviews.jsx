@@ -94,10 +94,10 @@ const cardVariants = {
 
 export function CustomerReviews() {
   return (
-    <section className="w-full border-b bg-page-bg py-16">
+    <section className="w-full border-t bg-surface py-12 lg:py-16">
       <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-10">
+        <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <span className="inline-flex items-center rounded-full bg-brand px-3 py-1 text-base font-semibold text-on-brand">
               Reviews

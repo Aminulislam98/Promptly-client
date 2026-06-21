@@ -56,7 +56,7 @@ export function TrendingPrompts() {
   if (!isLoading && prompts.length === 0) return null;
 
   return (
-    <section className="w-full border-b bg-page-bg py-10 sm:py-12 lg:py-16">
+    <section className="w-full border-t bg-surface-hover py-12 lg:py-16">
       <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-end justify-between">

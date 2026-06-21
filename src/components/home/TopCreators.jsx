@@ -66,7 +66,7 @@ export function TopCreators() {
   if (!isLoading && creators.length === 0) return null;
 
   return (
-    <section className="w-full border-b bg-page-bg py-16">
+    <section className="w-full border-t bg-surface-hover py-12 lg:py-16">
       <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-end justify-between">
@@ -167,7 +167,7 @@ export function TopCreators() {
 
                     {/* Stats */}
                     <div className="mt-4 flex gap-3">
-                      <div className="flex flex-1 flex-col items-center rounded-lg bg-page-bg py-2.5">
+                      <div className="flex flex-1 flex-col items-center rounded-lg bg-surface py-2.5">
                         <span className="text-lg font-bold text-text-primary">
                           {formatCount(creator.totalPrompts)}
                         </span>
@@ -175,7 +175,7 @@ export function TopCreators() {
                           <FileText className="h-3 w-3" /> Prompts
                         </span>
                       </div>
-                      <div className="flex flex-1 flex-col items-center rounded-lg bg-page-bg py-2.5">
+                      <div className="flex flex-1 flex-col items-center rounded-lg bg-surface py-2.5">
                         <span className="text-lg font-bold text-text-primary">
                           {formatCount(creator.totalCopies)}
                         </span>

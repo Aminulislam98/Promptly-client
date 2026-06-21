@@ -74,7 +74,7 @@ function useDebounce(value, delay) {
 
 function SkeletonCard() {
   return (
-    <div className="flex flex-col rounded-xl border bg-surface animate-pulse overflow-hidden">
+    <div className="flex flex-col rounded-xl border bg-surface animate-pulse">
       <div className="aspect-[4/3] w-full bg-surface-hover" />
       <div className="flex flex-col gap-2 p-4">
         <div className="h-3 w-16 rounded bg-surface-hover" />

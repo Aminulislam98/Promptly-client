@@ -30,7 +30,7 @@ const fadeUp = {
 
 function SkeletonCard() {
   return (
-    <div className="flex flex-col rounded-xl border bg-surface animate-pulse overflow-hidden">
+    <div className="flex flex-col rounded-xl border bg-surface animate-pulse">
       <div className="aspect-[4/3] w-full bg-surface-hover" />
       <div className="flex flex-col gap-2 p-5">
         <div className="flex justify-between">
@@ -65,7 +65,7 @@ export function FeaturedPrompts() {
   if (!isLoading && prompts.length === 0) return null;
 
   return (
-    <section className="w-full bg-surface py-16">
+    <section className="w-full border-t bg-surface py-12 lg:py-16">
       <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-end justify-between">
@@ -92,7 +92,7 @@ export function FeaturedPrompts() {
         </div>
 
         {/* Grid — with padding, cards with rounded corners */}
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {isLoading
             ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
             : prompts.map((prompt, i) => (

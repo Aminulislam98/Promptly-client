@@ -51,7 +51,7 @@ const TOOLS = [
 
 export function BrowseByTool() {
   return (
-    <section className="w-full border-b bg-surface py-16 sm:py-20">
+    <section className="w-full border-t bg-surface py-12 lg:py-16">
       <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <motion.div
           initial="hidden"
@@ -59,7 +59,7 @@ export function BrowseByTool() {
           viewport={{ once: true, margin: "-80px" }}
           variants={fadeUp}
           custom={0}
-          className="mb-12 text-center"
+          className="mb-10 text-center"
         >
           <p className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-light px-4 py-1.5 text-base font-semibold text-brand">
             Browse by AI Tool

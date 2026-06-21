@@ -21,10 +21,10 @@ export default function HomePage() {
       <RecentlyViewed />
       <FeaturedPrompts />
       <TrendingPrompts />
-      <HowItWorks />
-      <WhyChooseUs />
       <BrowseByTool />
       <TopCreators />
+      <HowItWorks />
+      <WhyChooseUs />
       <CustomerReviews />
     </>
   );
