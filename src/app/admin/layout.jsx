@@ -12,6 +12,7 @@ import {
   BarChart2,
   ShieldCheck,
   UserCheck,
+  User,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
@@ -25,6 +26,7 @@ const ADMIN_PAGE_TITLES = {
   "/admin/payments": "All Payments | Promptly",
   "/admin/reported": "Reported Prompts | Promptly",
   "/admin/creator-requests": "Creator Requests | Promptly",
+  "/admin/profile": "Admin Profile | Promptly",
 };
 
 const ADMIN_LINKS = [
@@ -33,11 +35,8 @@ const ADMIN_LINKS = [
   { href: "/admin/prompts", label: "All Prompts", icon: FileText },
   { href: "/admin/payments", label: "All Payments", icon: CreditCard },
   { href: "/admin/reported", label: "Reported Prompts", icon: Flag },
-  {
-    href: "/admin/creator-requests",
-    label: "Creator Requests",
-    icon: UserCheck,
-  },
+  { href: "/admin/creator-requests", label: "Creator Requests", icon: UserCheck },
+  { href: "/admin/profile", label: "My Profile", icon: User },
 ];
 
 function SidebarLink({ link, expanded }) {
@@ -70,7 +69,7 @@ function SidebarLink({ link, expanded }) {
 
 function BottomTabBar() {
   const pathname = usePathname();
-  const TABS = ADMIN_LINKS.slice(0, 5);
+  const TABS = ADMIN_LINKS.slice(0, 4).concat(ADMIN_LINKS[ADMIN_LINKS.length - 1]);
 
   return (
     <nav
@@ -140,27 +139,33 @@ export default function AdminLayout({ children }) {
           (expanded ? "w-64" : "w-20")
         }
       >
-        {/* Admin badge */}
-        <div
+        {/* Admin identity */}
+        <Link
+          href="/admin/profile"
           className={
-            "flex items-center gap-2 border-b px-4 py-4 " +
+            "flex items-center gap-3 border-b px-4 py-4 transition-colors hover:bg-surface-hover " +
             (expanded ? "justify-start" : "justify-center")
           }
         >
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand">
-            <ShieldCheck className="h-4 w-4 text-on-brand" />
-          </span>
+          <div className="relative shrink-0">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand text-base font-bold text-on-brand">
+              {session?.user?.name ? session.user.name[0].toUpperCase() : "A"}
+            </span>
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-surface bg-brand">
+              <ShieldCheck className="h-2.5 w-2.5 text-on-brand" />
+            </span>
+          </div>
           {expanded && (
             <div className="min-w-0">
               <p className="truncate text-base font-bold text-text-primary">
-                Admin
+                {session?.user?.name || "Admin"}
               </p>
-              <p className="truncate text-xs text-text-secondary">
-                Control Panel
+              <p className="truncate text-sm text-text-muted">
+                Super Admin
               </p>
             </div>
           )}
-        </div>
+        </Link>
 
         {/* Nav links */}
         <nav
