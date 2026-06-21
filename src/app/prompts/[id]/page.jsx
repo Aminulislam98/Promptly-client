@@ -3,7 +3,7 @@
 import { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy, Bookmark, Flag, ArrowLeft, Check, Lock } from "lucide-react";
+import { Copy, Bookmark, Flag, ArrowLeft, Check, Lock, Share2, Twitter } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -166,6 +166,7 @@ export default function PromptDetailsPage({ params }) {
   const [related, setRelated] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [copyCount, setCopyCount] = useState(0);
   const [bookmarked, setBookmarked] = useState(false);
   const [showReport, setShowReport] = useState(false);
@@ -271,6 +272,29 @@ export default function PromptDetailsPage({ params }) {
       toast.error("Failed to copy");
       copyingRef.current = false;
     }
+  };
+
+  const handleShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+      toast.success("Link copied to clipboard!");
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  };
+
+  const handleShareTwitter = () => {
+    const text = encodeURIComponent(
+      `Check out this prompt: ${prompt.title} on Promptly`,
+    );
+    const url = encodeURIComponent(window.location.href);
+    window.open(
+      `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
   const handleBookmark = async () => {
@@ -637,6 +661,32 @@ export default function PromptDetailsPage({ params }) {
                     </button>
                   </>
                 )}
+                {/* Share row — always visible */}
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleShareLink}
+                    className={
+                      "flex flex-1 h-10 items-center justify-center gap-2 rounded-lg border text-base font-medium transition-colors hover:bg-surface-hover " +
+                      (linkCopied ? "border-success text-success" : "text-text-secondary") +
+                      " " + focusRing
+                    }
+                  >
+                    {linkCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+                    {linkCopied ? "Copied!" : "Share"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleShareTwitter}
+                    aria-label="Share on X / Twitter"
+                    className={
+                      "flex h-10 w-10 items-center justify-center rounded-lg border text-base text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary " +
+                      focusRing
+                    }
+                  >
+                    <Twitter className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -644,19 +694,22 @@ export default function PromptDetailsPage({ params }) {
               <h2 className="text-base font-semibold text-text-primary">
                 Creator
               </h2>
-              <div className="mt-3 flex items-center gap-3">
+              <Link
+                href={`/creator/${encodeURIComponent(prompt.creatorName)}`}
+                className={"mt-3 flex items-center gap-3 rounded-lg p-1 transition-colors hover:bg-surface-hover " + focusRing}
+              >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand text-base font-bold text-on-brand">
                   {prompt.creatorName?.charAt(0).toUpperCase() || "?"}
                 </div>
                 <div>
-                  <p className="text-base font-semibold text-text-primary">
+                  <p className="text-base font-semibold text-text-primary hover:text-brand">
                     {prompt.creatorName}
                   </p>
                   <p className="text-base text-text-secondary">
-                    {prompt.creatorEmail}
+                    View all prompts →
                   </p>
                 </div>
-              </div>
+              </Link>
             </div>
 
             <div className="rounded-xl border bg-surface p-5">

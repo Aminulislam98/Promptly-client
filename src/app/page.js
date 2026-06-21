@@ -12,6 +12,7 @@ import { FeaturedPrompts } from "@/components/home/FeaturedPrompts";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { BrowseByTool } from "@/components/home/BrowseByTool";
 import { RecentlyViewed } from "@/components/home/RecentlyViewed";
+import { TrendingPrompts } from "@/components/home/TrendingPrompts";
 
 export default function HomePage() {
   return (
@@ -19,6 +20,7 @@ export default function HomePage() {
       <HeroBanner />
       <RecentlyViewed />
       <FeaturedPrompts />
+      <TrendingPrompts />
       <HowItWorks />
       <WhyChooseUs />
       <BrowseByTool />

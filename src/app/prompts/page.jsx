@@ -110,6 +110,39 @@ function FilterSection({ label, options, value, onChange }) {
   );
 }
 
+function StarRating({ rating, count }) {
+  if (!rating || rating === 0) return null;
+  const full = Math.floor(rating);
+  const half = rating - full >= 0.5;
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex items-center">
+        {[1, 2, 3, 4, 5].map((s) => (
+          <svg
+            key={s}
+            viewBox="0 0 16 16"
+            className={
+              "h-3.5 w-3.5 " +
+              (s <= full
+                ? "fill-warning"
+                : s === full + 1 && half
+                  ? "fill-warning opacity-50"
+                  : "fill-border")
+            }
+            aria-hidden="true"
+          >
+            <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25z" />
+          </svg>
+        ))}
+      </div>
+      <span className="text-base text-text-secondary">
+        {rating.toFixed(1)}
+        {count ? ` (${count})` : ""}
+      </span>
+    </div>
+  );
+}
+
 function PromptCard({ prompt, isLoggedIn }) {
   return (
     <article className="group flex flex-col rounded-xl border bg-surface overflow-hidden transition-colors hover:bg-surface-hover">
@@ -155,6 +188,11 @@ function PromptCard({ prompt, isLoggedIn }) {
             </span>
           )}
         </div>
+        {prompt.avgRating > 0 && (
+          <div className="mt-2">
+            <StarRating rating={prompt.avgRating} count={prompt.reviewCount} />
+          </div>
+        )}
         <div className="mt-auto pt-3 flex items-center justify-between">
           <div className="flex items-center gap-3 text-base text-text-secondary">
             <span className="flex items-center gap-1">

@@ -9,6 +9,7 @@ import {
   PlusCircle,
   Eye,
   FileText,
+  AlertCircle,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { getMyPrompts, deletePrompt } from "@/lib/api";
@@ -175,6 +176,14 @@ export default function MyPromptsPage() {
                     <p className="text-base text-text-secondary">
                       {prompt.difficulty} · {prompt.visibility}
                     </p>
+                    {prompt.status === "rejected" && prompt.rejectionFeedback && (
+                      <div className="mt-1.5 flex items-start gap-1.5 rounded-lg bg-error/10 px-2 py-1.5">
+                        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-error" />
+                        <p className="text-base text-error line-clamp-2">
+                          {prompt.rejectionFeedback}
+                        </p>
+                      </div>
+                    )}
                   </td>
                   <td className="px-5 py-4 text-text-secondary">
                     {prompt.category}

@@ -91,6 +91,10 @@ export const getCreatorRequestStatus = () =>
 // Top Creators
 export const getTopCreators = () => apiFetch("/api/top-creators");
 
+// Creator public profile
+export const getCreatorPrompts = (name) =>
+  apiFetch(`/api/creators/${encodeURIComponent(name)}/prompts`);
+
 // User
 export const getMyProfile = () => apiFetch("/api/users/me");
 
