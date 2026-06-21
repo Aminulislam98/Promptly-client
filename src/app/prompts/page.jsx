@@ -437,7 +437,9 @@ export default function AllPromptsPage() {
   const [prompts, setPrompts] = useState([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const LIMIT = 1000;
+  const [page, setPage] = useState(1);
+  const LIMIT = 12;
+  const totalPages = Math.ceil(total / LIMIT);
 
   const { data: session } = authClient.useSession();
   useEffect(() => setMounted(true), []);
@@ -456,9 +458,14 @@ export default function AllPromptsPage() {
     [searchParams, router, pathname],
   );
 
+  // Reset to page 1 whenever filters/sort/search change
+  useEffect(() => {
+    setPage(1);
+  }, [search, category, aiTool, difficulty, sort]);
+
   useEffect(() => {
     setIsLoading(true);
-    const params = { page: 1, limit: LIMIT, sort };
+    const params = { page, limit: LIMIT, sort };
     if (search.trim()) params.search = search.trim();
     if (category !== "All") params.category = category;
     if (aiTool !== "All") params.aiTool = aiTool;
@@ -471,7 +478,7 @@ export default function AllPromptsPage() {
       })
       .catch(() => setPrompts([]))
       .finally(() => setIsLoading(false));
-  }, [search, category, aiTool, difficulty, sort]);
+  }, [search, category, aiTool, difficulty, sort, page]);
 
   const clearFilters = () => {
     router.replace(pathname, { scroll: false });
@@ -727,6 +734,43 @@ export default function AllPromptsPage() {
                     isLoggedIn={isLoggedIn}
                   />
                 ))}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && !isLoading && (
+              <div className="mt-6 flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  disabled={page === 1}
+                  onClick={() => {
+                    setPage((p) => Math.max(1, p - 1));
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className={
+                    "inline-flex h-10 items-center justify-center rounded-lg border px-4 text-base font-medium text-text-primary transition-colors hover:bg-surface-hover disabled:opacity-40 " +
+                    focusRing
+                  }
+                >
+                  Previous
+                </button>
+                <span className="text-base text-text-secondary">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={page === totalPages}
+                  onClick={() => {
+                    setPage((p) => Math.min(totalPages, p + 1));
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className={
+                    "inline-flex h-10 items-center justify-center rounded-lg border px-4 text-base font-medium text-text-primary transition-colors hover:bg-surface-hover disabled:opacity-40 " +
+                    focusRing
+                  }
+                >
+                  Next
+                </button>
               </div>
             )}
           </div>
