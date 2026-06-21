@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
@@ -38,6 +38,15 @@ function GoogleIcon() {
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
+  const redirectTo = redirectParam || "/dashboard";
+
+  // Forward the same redirect to the login page so it survives the switch
+  const loginHref = redirectParam
+    ? `/login?redirect=${encodeURIComponent(redirectParam)}`
+    : "/login";
+
   const { data: session, isPending } = authClient.useSession();
 
   const [formData, setFormData] = useState({
@@ -58,9 +67,9 @@ export default function SignupPage() {
   // Already logged in → redirect
   useEffect(() => {
     if (!isPending && session?.user) {
-      router.replace("/dashboard");
+      router.replace(redirectTo);
     }
-  }, [session, isPending, router]);
+  }, [session, isPending, router, redirectTo]);
 
   if (isPending || session?.user) return null;
 
@@ -112,7 +121,7 @@ export default function SignupPage() {
         toast.error(error.message || "Registration failed. Please try again.");
       } else {
         toast.success("Account created successfully!");
-        router.replace("/dashboard");
+        router.replace(redirectTo);
       }
     } catch {
       toast.error("Something went wrong. Please try again.");
@@ -124,7 +133,7 @@ export default function SignupPage() {
   const handleGoogleLogin = async () => {
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/dashboard",
+      callbackURL: redirectTo,
     });
   };
 
@@ -278,7 +287,7 @@ export default function SignupPage() {
         <p className="mt-6 text-center text-base text-text-secondary">
           Already have an account?{" "}
           <Link
-            href="/login"
+            href={loginHref}
             className={
               "font-bold text-text-primary hover:underline rounded " + focusRing
             }

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, X } from "lucide-react";
+import Image from "next/image";
+import { Upload, X, Loader2 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
 import { addPrompt } from "@/lib/api";
@@ -50,8 +51,9 @@ export default function AddPromptPage() {
     difficulty: "",
     visibility: "Public",
   });
-  const [thumbnail, setThumbnail] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -61,16 +63,68 @@ export default function AddPromptPage() {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const handleThumbnail = (e) => {
+  const uploadThumbnail = async (file) => {
+    if (!process.env.NEXT_PUBLIC_IMGBB_KEY) {
+      throw new Error("Image upload is not configured (missing imgbb key)");
+    }
+
+    // imgbb is most reliable when the image is sent as base64 (no data-URL prefix)
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(",")[1]);
+      reader.onerror = () => reject(new Error("Could not read the image file"));
+      reader.readAsDataURL(file);
+    });
+
+    const body = new FormData();
+    body.append("image", base64);
+
+    const res = await fetch(
+      `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_KEY}`,
+      { method: "POST", body },
+    );
+    const json = await res.json();
+
+    if (!res.ok || !json.success) {
+      throw new Error(json?.error?.message || "Image upload failed");
+    }
+    return json.data.url;
+  };
+
+  const handleThumbnail = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setThumbnail(file);
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be 2MB or smaller");
+      return;
+    }
+
     setPreview(URL.createObjectURL(file));
+    setThumbnailUrl("");
+    setIsUploading(true);
+
+    try {
+      const url = await uploadThumbnail(file);
+      setThumbnailUrl(url);
+      toast.success("Thumbnail uploaded");
+    } catch (err) {
+      toast.error(err.message || "Thumbnail upload failed");
+      setPreview(null);
+    } finally {
+      setIsUploading(false);
+      // allow re-selecting the same file again
+      e.target.value = "";
+    }
   };
 
   const removeThumbnail = () => {
-    setThumbnail(null);
     setPreview(null);
+    setThumbnailUrl("");
   };
 
   const validate = () => {
@@ -86,17 +140,6 @@ export default function AddPromptPage() {
     return newErrors;
   };
 
-  const uploadThumbnail = async (file) => {
-    const data = new FormData();
-    data.append("image", file);
-    const res = await fetch(
-      `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_KEY}`,
-      { method: "POST", body: data },
-    );
-    const json = await res.json();
-    return json.data?.url || "";
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
@@ -105,14 +148,13 @@ export default function AddPromptPage() {
       toast.error("Please fill in all required fields");
       return;
     }
+    if (isUploading) {
+      toast.error("Please wait for the thumbnail to finish uploading");
+      return;
+    }
 
     setIsLoading(true);
     try {
-      let thumbnailUrl = "";
-      if (thumbnail) {
-        thumbnailUrl = await uploadThumbnail(thumbnail);
-      }
-
       const payload = {
         title: formData.title,
         description: formData.description,
@@ -352,11 +394,20 @@ export default function AddPromptPage() {
           </h2>
           {preview ? (
             <div className="relative w-fit">
-              <img
-                src={preview}
-                alt="Thumbnail preview"
-                className="h-40 w-64 rounded-lg object-cover"
-              />
+              <div className="relative h-40 w-64 overflow-hidden rounded-lg">
+                <Image
+                  src={preview}
+                  alt="Thumbnail preview"
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
+                {isUploading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-text-primary/40">
+                    <Loader2 className="h-6 w-6 animate-spin text-on-brand" />
+                  </div>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={removeThumbnail}
@@ -410,7 +461,7 @@ export default function AddPromptPage() {
           </button>
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isUploading}
             className={
               "inline-flex h-11 items-center justify-center rounded-lg bg-brand px-6 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] disabled:opacity-60 " +
               focusRing

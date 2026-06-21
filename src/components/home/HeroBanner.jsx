@@ -275,17 +275,17 @@ function SearchOverlay({ onClose, isLoggedIn }) {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {TRENDING_TAGS.map((tag) => (
-                    <button
+                    <Link
                       key={tag}
-                      type="button"
-                      onClick={() => setQuery(tag)}
+                      href={`/prompts?search=${encodeURIComponent(tag)}`}
+                      onClick={onClose}
                       className={
                         "rounded-full border bg-surface-hover px-3 py-1 text-base font-medium text-text-secondary hover:border-brand hover:text-brand transition-colors " +
                         focusRing
                       }
                     >
                       {tag}
-                    </button>
+                    </Link>
                   ))}
                 </div>
               </div>

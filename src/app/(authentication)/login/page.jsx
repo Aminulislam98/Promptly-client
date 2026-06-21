@@ -39,7 +39,13 @@ function GoogleIcon() {
 export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/dashboard";
+  const redirectParam = searchParams.get("redirect");
+  const redirectTo = redirectParam || "/dashboard";
+
+  // Forward the same redirect to the register page so it survives the switch
+  const registerHref = redirectParam
+    ? `/register?redirect=${encodeURIComponent(redirectParam)}`
+    : "/register";
 
   const { data: session, isPending } = authClient.useSession();
 
@@ -236,7 +242,7 @@ export default function SignInPage() {
         <p className="mt-6 text-center text-base text-text-secondary">
           Don&apos;t have an account?{" "}
           <Link
-            href="/register"
+            href={registerHref}
             className={
               "font-bold text-text-primary hover:underline rounded " + focusRing
             }
