@@ -14,28 +14,16 @@ import {
   LogOut,
   LayoutDashboard,
   UserPlus,
-  Search,
   ChevronRight,
   ChevronDown,
   User,
-  Copy,
-  ArrowRight,
+  Sparkles,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { getPrompts } from "@/lib/api";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/prompts", label: "All Prompts" },
-];
-
-const POPULAR_TAGS = [
-  "ChatGPT",
-  "Claude",
-  "Midjourney",
-  "Marketing",
-  "Coding",
-  "Writing",
 ];
 
 const focusRing =
@@ -43,226 +31,6 @@ const focusRing =
 
 function getDashboardPath(role) {
   return role === "admin" ? "/admin" : "/dashboard";
-}
-
-function useDebounce(value, delay) {
-  const [dv, setDv] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setDv(value), delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return dv;
-}
-
-// ─────────────────────────────────────────────────────────────
-// Search Modal
-// ─────────────────────────────────────────────────────────────
-function SearchModal({ onClose }) {
-  const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const inputRef = useRef(null);
-  const dq = useDebounce(query, 280);
-
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
-  }, []);
-
-  useEffect(() => { inputRef.current?.focus(); }, []);
-
-  useEffect(() => {
-    const h = (e) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [onClose]);
-
-  useEffect(() => {
-    if (!dq.trim()) { setResults([]); return; }
-    setLoading(true);
-    getPrompts({ search: dq.trim(), limit: 6, page: 1 })
-      .then((d) => setResults(d.prompts || []))
-      .catch(() => setResults([]))
-      .finally(() => setLoading(false));
-  }, [dq]);
-
-  const go = (href) => { router.push(href); onClose(); };
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center px-4 pt-16 sm:pt-24">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      {/* Panel */}
-      <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl">
-        {/* Input row */}
-        <div className="flex items-center gap-3 border-b px-4 py-3">
-          <Search className="h-5 w-5 shrink-0 text-text-secondary" />
-          <input
-            ref={inputRef}
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search prompts, categories, AI tools…"
-            className="min-w-0 flex-1 bg-transparent text-base text-text-primary placeholder:text-text-muted outline-none"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              className="shrink-0 text-text-secondary hover:text-text-primary"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onClose}
-            className={
-              "shrink-0 rounded-lg border px-2 py-1 text-sm font-medium text-text-secondary hover:bg-surface-hover " +
-              focusRing
-            }
-          >
-            Esc
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="max-h-96 overflow-y-auto p-3">
-          {/* No query → popular tags */}
-          {!query.trim() && (
-            <div>
-              <p className="px-2 pb-2 text-sm font-medium text-text-muted">
-                Popular searches
-              </p>
-              <div className="flex flex-wrap gap-2 px-2">
-                {POPULAR_TAGS.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => setQuery(tag)}
-                    className={
-                      "rounded-full border bg-surface-hover px-3 py-1 text-base font-medium text-text-secondary transition-colors hover:border-brand hover:text-brand " +
-                      focusRing
-                    }
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => go("/prompts")}
-                className={
-                  "mt-4 flex w-full items-center justify-center gap-2 rounded-xl border py-3 text-base font-medium text-text-secondary transition-colors hover:bg-surface-hover hover:text-brand " +
-                  focusRing
-                }
-              >
-                Browse all prompts <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-
-          {/* Loading skeletons */}
-          {loading && (
-            <div className="flex flex-col gap-2">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="flex animate-pulse items-center gap-3 rounded-xl border p-3"
-                >
-                  <div className="h-12 w-16 shrink-0 rounded-lg bg-surface-hover" />
-                  <div className="flex flex-1 flex-col gap-2">
-                    <div className="h-4 w-3/4 rounded bg-surface-hover" />
-                    <div className="h-3 w-1/2 rounded bg-surface-hover" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Results */}
-          {!loading && results.length > 0 && (
-            <div className="flex flex-col gap-1">
-              <p className="px-2 pb-1 text-sm font-medium text-text-muted">
-                {results.length} result{results.length !== 1 ? "s" : ""} found
-              </p>
-              {results.map((p) => (
-                <button
-                  key={p._id}
-                  type="button"
-                  onClick={() => go(`/prompts/${p._id}`)}
-                  className={
-                    "group flex w-full items-center gap-3 rounded-xl border border-transparent p-3 text-left transition-colors hover:border-border hover:bg-surface-hover " +
-                    focusRing
-                  }
-                >
-                  <div className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-brand-light">
-                    <span className="text-xl font-bold text-brand opacity-30">
-                      {p.title?.charAt(0)}
-                    </span>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-base font-semibold text-text-primary group-hover:text-brand">
-                      {p.title}
-                    </p>
-                    <div className="mt-0.5 flex items-center gap-2">
-                      <span className="rounded-full bg-brand-light px-2 py-0.5 text-sm font-medium text-brand">
-                        {p.category}
-                      </span>
-                      <span className="text-sm text-text-secondary">
-                        {p.aiTool}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1 text-sm text-text-muted">
-                    <Copy className="h-3 w-3" /> {p.copyCount}
-                  </div>
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => go(`/prompts?search=${encodeURIComponent(query)}`)}
-                className={
-                  "mt-1 flex w-full items-center justify-center gap-2 rounded-xl border py-3 text-base font-medium text-text-secondary transition-colors hover:bg-surface-hover hover:text-brand " +
-                  focusRing
-                }
-              >
-                See all results for &ldquo;{query}&rdquo;{" "}
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-
-          {/* Empty state */}
-          {!loading && query.trim() && results.length === 0 && (
-            <div className="flex flex-col items-center py-10 text-center">
-              <Search className="mb-3 h-8 w-8 text-text-secondary" />
-              <p className="text-base font-semibold text-text-primary">
-                No results for &ldquo;{query}&rdquo;
-              </p>
-              <p className="mt-1 text-sm text-text-secondary">
-                Try different keywords or browse all prompts
-              </p>
-              <button
-                type="button"
-                onClick={() => go("/prompts")}
-                className={
-                  "mt-4 inline-flex h-9 items-center gap-2 rounded-lg bg-brand px-4 text-base font-semibold text-on-brand hover:bg-brand-hover " +
-                  focusRing
-                }
-              >
-                Browse all prompts
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -328,7 +96,6 @@ export function Navbar({ name = "Promptly" }) {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -340,27 +107,11 @@ export function Navbar({ name = "Promptly" }) {
   const user = session?.user;
   const dashboardPath = getDashboardPath(user?.role);
 
-  const isMac =
-    typeof navigator !== "undefined" &&
-    /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-
   // Scroll shadow
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 6);
     window.addEventListener("scroll", h, { passive: true });
     return () => window.removeEventListener("scroll", h);
-  }, []);
-
-  // ⌘K / Ctrl+K
-  useEffect(() => {
-    const h = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        setSearchOpen(true);
-      }
-    };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
   }, []);
 
   // Close profile dropdown on outside click
@@ -379,9 +130,7 @@ export function Navbar({ name = "Promptly" }) {
     const stored = localStorage.getItem("theme");
     const initial =
       stored ||
-      (window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light");
+      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     setTheme(initial);
     document.documentElement.classList.toggle("dark", initial === "dark");
   }, []);
@@ -408,25 +157,16 @@ export function Navbar({ name = "Promptly" }) {
   const isActive = (href) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
-  // User avatar (image or initials)
+  // Avatar: image or initials
   const AvatarCircle = ({ size = "sm" }) => {
     const dim = size === "lg" ? "h-10 w-10" : "h-9 w-9";
     const initials = user?.name
-      ? user.name
-          .split(" ")
-          .map((n) => n[0])
-          .join("")
-          .slice(0, 2)
-          .toUpperCase()
+      ? user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
       : "U";
 
     if (user?.image) {
       return (
-        <span
-          className={
-            "relative block shrink-0 overflow-hidden rounded-full " + dim
-          }
-        >
+        <span className={"relative block shrink-0 overflow-hidden rounded-full " + dim}>
           <Image
             src={user.image}
             alt={user.name || "Profile"}
@@ -451,8 +191,6 @@ export function Navbar({ name = "Promptly" }) {
 
   return (
     <>
-      {/* Modals mounted at root level */}
-      {searchOpen && <SearchModal onClose={() => setSearchOpen(false)} />}
       {logoutOpen && (
         <LogoutModal
           onCancel={() => setLogoutOpen(false)}
@@ -467,68 +205,72 @@ export function Navbar({ name = "Promptly" }) {
           (scrolled ? "shadow-sm" : "shadow-none")
         }
       >
-        <div className="mx-auto flex h-16 w-full max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        {/* ── Three-column grid so nav is truly centred ── */}
+        <div className="mx-auto grid h-16 w-full max-w-[1600px] grid-cols-3 items-center px-4 sm:px-6 lg:px-8">
 
-          {/* ── Logo ── */}
-          <Link
-            href="/"
-            aria-label={`${name} home`}
-            className={"flex shrink-0 items-center gap-2 rounded-lg " + focusRing}
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand">
-              <Command className="h-5 w-5 text-on-brand" strokeWidth={2.5} />
-            </span>
-            <span className="text-xl font-black tracking-tight">
-              <span className="text-text-primary">Prompt</span>
-              <span className="text-brand">ly</span>
-            </span>
-          </Link>
+          {/* ── Col 1 — Logo ── */}
+          <div className="flex items-center">
+            <Link
+              href="/"
+              aria-label={`${name} home`}
+              className={"flex items-center gap-2.5 rounded-lg " + focusRing}
+            >
+              {/* Icon mark */}
+              <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand">
+                <Command className="h-5 w-5 text-on-brand" strokeWidth={2.5} />
+                {/* Tiny sparkle accent */}
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-warning">
+                  <Sparkles className="h-2.5 w-2.5 text-white" strokeWidth={2.5} />
+                </span>
+              </span>
 
-          {/* ── Desktop Nav — YouTube-style underline active ── */}
+              {/* Wordmark + tagline */}
+              <span className="flex flex-col leading-none">
+                <span className="text-xl font-black tracking-tight">
+                  <span className="text-text-primary">Prompt</span>
+                  <span className="text-brand">ly</span>
+                </span>
+                <span className="mt-0.5 text-sm font-medium tracking-wide text-text-muted">
+                  find your prompt
+                </span>
+              </span>
+            </Link>
+          </div>
+
+          {/* ── Col 2 — Centered nav links (desktop) ── */}
           <nav
-            className="hidden items-center self-stretch lg:flex"
+            className="hidden items-center justify-center gap-1 lg:flex"
             aria-label="Primary"
           >
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={
-                  "relative flex h-full items-center px-5 text-base font-medium transition-colors duration-150 " +
-                  focusRing +
-                  (isActive(link.href)
-                    ? " text-brand"
-                    : " text-text-secondary hover:text-text-primary")
-                }
-              >
-                {link.label}
-                {/* Active underline indicator */}
-                {isActive(link.href) && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full bg-brand" />
-                )}
-              </Link>
-            ))}
+            {NAV_LINKS.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={
+                    "relative inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-base font-medium transition-all duration-150 " +
+                    focusRing +
+                    (active
+                      ? " bg-brand text-on-brand font-semibold shadow-sm"
+                      : " text-text-secondary hover:bg-surface-hover hover:text-text-primary")
+                  }
+                >
+                  {link.label}
+                  {/* Tiny pulse dot on active */}
+                  {active && (
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-on-brand opacity-50" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-on-brand opacity-75" />
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
           </nav>
 
-          {/* ── Desktop Right Actions ── */}
-          <div className="hidden shrink-0 items-center gap-2 lg:flex">
-
-            {/* Search pill */}
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              aria-label="Search prompts"
-              className={
-                "flex h-9 items-center gap-2 rounded-full border bg-surface-hover pl-3 pr-2 text-base text-text-muted transition-all duration-150 hover:border-brand hover:text-text-primary " +
-                focusRing
-              }
-            >
-              <Search className="h-4 w-4 shrink-0" />
-              <span className="hidden text-base xl:inline">Search prompts…</span>
-              <kbd className="ml-1 flex items-center rounded-md border border-border bg-surface px-1.5 py-0.5 text-sm font-medium text-text-secondary">
-                {isMac ? "⌘K" : "Ctrl K"}
-              </kbd>
-            </button>
+          {/* ── Col 3 — Right actions ── */}
+          <div className="hidden shrink-0 items-center justify-end gap-2 lg:flex">
 
             {/* Theme */}
             <button
@@ -540,16 +282,12 @@ export function Navbar({ name = "Promptly" }) {
                 focusRing
               }
             >
-              {theme === "dark" ? (
-                <Moon className="h-4 w-4" />
-              ) : (
-                <Sun className="h-4 w-4" />
-              )}
+              {theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
             </button>
 
             <span className="h-5 w-px bg-border" aria-hidden="true" />
 
-            {/* Skeleton */}
+            {/* Auth skeleton */}
             {isPending && (
               <span className="h-9 w-28 animate-pulse rounded-full bg-surface-hover" />
             )}
@@ -582,19 +320,15 @@ export function Navbar({ name = "Promptly" }) {
                 {/* Dropdown */}
                 {profileOpen && (
                   <div className="absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-xl border border-border bg-surface shadow-lg">
-                    {/* User header */}
                     <div className="flex items-center gap-3 border-b px-4 py-3">
                       <AvatarCircle size="lg" />
                       <div className="min-w-0">
                         <p className="truncate text-base font-semibold text-text-primary">
                           {user.name}
                         </p>
-                        <p className="truncate text-sm text-text-muted">
-                          {user.email}
-                        </p>
+                        <p className="truncate text-sm text-text-muted">{user.email}</p>
                       </div>
                     </div>
-                    {/* Menu items */}
                     <div className="p-1.5">
                       <Link
                         href="/dashboard/profile"
@@ -621,10 +355,7 @@ export function Navbar({ name = "Promptly" }) {
                       <div className="my-1 h-px bg-border" />
                       <button
                         type="button"
-                        onClick={() => {
-                          setProfileOpen(false);
-                          setLogoutOpen(true);
-                        }}
+                        onClick={() => { setProfileOpen(false); setLogoutOpen(true); }}
                         className={
                           "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-base font-medium text-error transition-colors hover:bg-error/10 " +
                           focusRing
@@ -664,19 +395,8 @@ export function Navbar({ name = "Promptly" }) {
             )}
           </div>
 
-          {/* ── Mobile Controls ── */}
-          <div className="flex items-center gap-1 lg:hidden">
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              aria-label="Search"
-              className={
-                "flex h-10 w-10 items-center justify-center rounded-full border bg-surface-hover text-text-secondary transition-colors hover:border-brand hover:text-text-primary " +
-                focusRing
-              }
-            >
-              <Search className="h-4 w-4" />
-            </button>
+          {/* ── Mobile Controls (replaces col 2+3) ── */}
+          <div className="col-span-2 flex items-center justify-end gap-1 lg:hidden">
             <button
               type="button"
               onClick={toggleTheme}
@@ -686,11 +406,7 @@ export function Navbar({ name = "Promptly" }) {
                 focusRing
               }
             >
-              {theme === "dark" ? (
-                <Moon className="h-4 w-4" />
-              ) : (
-                <Sun className="h-4 w-4" />
-              )}
+              {theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
             </button>
             <button
               type="button"
@@ -709,43 +425,40 @@ export function Navbar({ name = "Promptly" }) {
 
         {/* ── Mobile Drawer ── */}
         {menuOpen && (
-          <nav
-            className="border-t bg-surface lg:hidden"
-            aria-label="Mobile navigation"
-          >
+          <nav className="border-t bg-surface lg:hidden" aria-label="Mobile navigation">
             <div className="mx-auto max-w-[1600px] space-y-1 px-4 py-3">
-              {/* Nav links */}
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMenuOpen(false)}
-                  className={
-                    "flex min-h-[48px] items-center rounded-xl px-4 text-base font-medium transition-colors " +
-                    focusRing +
-                    (isActive(link.href)
-                      ? " bg-brand-light font-semibold text-brand"
-                      : " text-text-secondary hover:bg-surface-hover hover:text-text-primary")
-                  }
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {NAV_LINKS.map((link) => {
+                const active = isActive(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    className={
+                      "flex min-h-[48px] items-center gap-2 rounded-xl px-4 text-base font-medium transition-colors " +
+                      focusRing +
+                      (active
+                        ? " bg-brand font-semibold text-on-brand"
+                        : " text-text-secondary hover:bg-surface-hover hover:text-text-primary")
+                    }
+                  >
+                    {link.label}
+                    {active && (
+                      <span className="ml-auto flex h-2 w-2 rounded-full bg-on-brand opacity-75" />
+                    )}
+                  </Link>
+                );
+              })}
 
               <div className="my-2 h-px bg-border" />
 
-              {/* Logged-in user card */}
               {!isPending && user && (
                 <>
                   <div className="flex items-center gap-3 rounded-xl bg-surface-hover px-4 py-3">
                     <AvatarCircle size="lg" />
                     <div className="min-w-0">
-                      <p className="truncate text-base font-semibold text-text-primary">
-                        {user.name}
-                      </p>
-                      <p className="truncate text-sm text-text-muted">
-                        {user.email}
-                      </p>
+                      <p className="truncate text-base font-semibold text-text-primary">{user.name}</p>
+                      <p className="truncate text-sm text-text-muted">{user.email}</p>
                     </div>
                   </div>
                   <Link
@@ -784,7 +497,6 @@ export function Navbar({ name = "Promptly" }) {
                 </>
               )}
 
-              {/* Logged-out auth */}
               {!isPending && !user && (
                 <>
                   <Link
