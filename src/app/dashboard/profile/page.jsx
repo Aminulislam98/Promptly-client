@@ -24,6 +24,8 @@ import {
   getMyProfile,
   getMyPrompts,
   getMyReviews,
+  submitAppeal,
+  getMyAppeal,
 } from "@/lib/api";
 import { useState, useEffect, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
@@ -266,6 +268,9 @@ export default function ProfilePage() {
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   // local isVerified tracks claimed state before session refreshes
   const [localVerified, setLocalVerified] = useState(false);
+  const [appealText, setAppealText] = useState("");
+  const [submittingAppeal, setSubmittingAppeal] = useState(false);
+  const [existingAppeal, setExistingAppeal] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -276,8 +281,30 @@ export default function ProfilePage() {
       getMyProfile()
         .then((data) => setProfileData(data.user))
         .catch(() => {});
+
+      getMyAppeal()
+        .then((data) => setExistingAppeal(data.appeal))
+        .catch(() => {});
     }
   }, [user]);
+
+  const handleSubmitAppeal = async () => {
+    if (!appealText.trim() || appealText.trim().length < 10) {
+      toast.error("Please write at least 10 characters.");
+      return;
+    }
+    setSubmittingAppeal(true);
+    try {
+      await submitAppeal(appealText.trim());
+      toast.success("Appeal submitted! Admin will review it shortly.");
+      setExistingAppeal({ status: "pending", message: appealText.trim() });
+      setAppealText("");
+    } catch (err) {
+      toast.error(err.message || "Failed to submit appeal");
+    } finally {
+      setSubmittingAppeal(false);
+    }
+  };
 
   const handleApply = async () => {
     setApplying(true);
@@ -349,20 +376,83 @@ export default function ProfilePage() {
         </p>
       </div>
 
-      {/* Suspension banner */}
+      {/* Suspension banner + appeal section */}
       {isSuspended && (
-        <div className="mb-6 flex items-start gap-3 rounded-xl border border-error bg-error/10 px-5 py-4">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-error" />
-          <div>
-            <p className="text-base font-semibold text-error">Your account is suspended</p>
-            <p className="mt-1 text-base text-text-secondary">
-              You have received 3 or more warnings and can no longer add prompts. Contact{" "}
-              <a href="mailto:support@promptly.ai" className="text-brand hover:underline">
-                support@promptly.ai
-              </a>{" "}
-              to appeal.
-            </p>
+        <div className="mb-6 flex flex-col gap-4">
+          {/* Banner */}
+          <div className="flex items-start gap-3 rounded-xl border border-error bg-error/10 px-5 py-4">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-error" />
+            <div>
+              <p className="text-base font-semibold text-error">Your account is suspended</p>
+              <p className="mt-1 text-base text-text-secondary">
+                You have received 3 or more warnings and can no longer add prompts.
+                Submit an appeal below to request reinstatement.
+              </p>
+            </div>
           </div>
+
+          {/* Appeal section */}
+          {existingAppeal ? (
+            <div className={
+              "flex items-start gap-3 rounded-xl border px-5 py-4 " +
+              (existingAppeal.status === "approved"
+                ? "border-success/40 bg-success/5"
+                : "border-brand/20 bg-brand-light")
+            }>
+              {existingAppeal.status === "approved" ? (
+                <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-success" />
+              ) : (
+                <Loader2 className="mt-0.5 h-5 w-5 shrink-0 animate-spin text-brand" />
+              )}
+              <div>
+                <p className={
+                  "text-base font-semibold " +
+                  (existingAppeal.status === "approved" ? "text-success" : "text-text-primary")
+                }>
+                  {existingAppeal.status === "approved"
+                    ? "Appeal approved — your account has been reinstated."
+                    : "Appeal submitted — pending admin review."}
+                </p>
+                <p className="mt-0.5 text-base text-text-secondary line-clamp-2">
+                  {existingAppeal.message}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border bg-surface px-5 py-5">
+              <p className="text-base font-semibold text-text-primary">Submit an Appeal</p>
+              <p className="mt-0.5 text-base text-text-secondary">
+                Explain why you believe your suspension should be lifted. Be specific.
+              </p>
+              <textarea
+                value={appealText}
+                onChange={(e) => setAppealText(e.target.value)}
+                rows={4}
+                placeholder="Describe your situation and why you believe this was a mistake..."
+                className={
+                  "mt-4 w-full rounded-lg border bg-surface-hover px-3 py-3 text-base text-text-primary placeholder:text-text-muted outline-none focus:ring-2 focus:ring-brand resize-none " +
+                  focusRing
+                }
+              />
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-base text-text-muted">
+                  {appealText.length} characters
+                </span>
+                <button
+                  type="button"
+                  onClick={handleSubmitAppeal}
+                  disabled={submittingAppeal || appealText.trim().length < 10}
+                  className={
+                    "inline-flex h-10 items-center gap-2 rounded-lg bg-brand px-5 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] disabled:opacity-50 " +
+                    focusRing
+                  }
+                >
+                  {submittingAppeal && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {submittingAppeal ? "Submitting…" : "Submit Appeal"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

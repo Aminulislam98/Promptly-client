@@ -158,6 +158,43 @@ export const rejectCreatorRequest = (id) =>
 export const getAdminAnalytics = () => apiFetch("/api/admin/analytics");
 export const getCreatorAnalytics = () => apiFetch("/api/creator/analytics");
 
+// Appeals
+export const submitAppeal = (message) =>
+  fetch("/api/appeal", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
+  }).then(async (res) => {
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to submit appeal");
+    return data;
+  });
+
+export const getMyAppeal = () =>
+  fetch("/api/appeal", { credentials: "include" }).then(async (res) => {
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to load appeal");
+    return data;
+  });
+
+export const getAdminAppeals = () =>
+  fetch("/api/admin/appeals", { credentials: "include" }).then(async (res) => {
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to load appeals");
+    return data;
+  });
+
+export const approveAppeal = (id) =>
+  fetch(`/api/admin/appeals/${id}/approve`, {
+    method: "POST",
+    credentials: "include",
+  }).then(async (res) => {
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to approve appeal");
+    return data;
+  });
+
 // My received reports (prompts that were warned by admin)
 export const getMyReceivedReports = () => {
   const token =

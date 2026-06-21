@@ -26,6 +26,7 @@ const ADMIN_PAGE_TITLES = {
   "/admin/payments": "All Payments | Promptly",
   "/admin/reported": "Reported Prompts | Promptly",
   "/admin/creator-requests": "Creator Requests | Promptly",
+  "/admin/appeals": "Suspension Appeals | Promptly",
   "/admin/profile": "Admin Profile | Promptly",
 };
 
@@ -36,6 +37,7 @@ const ADMIN_LINKS = [
   { href: "/admin/payments", label: "All Payments", icon: CreditCard },
   { href: "/admin/reported", label: "Reported Prompts", icon: Flag },
   { href: "/admin/creator-requests", label: "Creator Requests", icon: UserCheck },
+  { href: "/admin/appeals", label: "Appeals", icon: ShieldCheck },
   { href: "/admin/profile", label: "My Profile", icon: User },
 ];
 

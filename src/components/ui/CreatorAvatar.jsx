@@ -2,12 +2,15 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { FileText, Copy } from "lucide-react";
+import Image from "next/image";
+import { FileText, Copy, BadgeCheck } from "lucide-react";
 import { getCreatorPrompts } from "@/lib/api";
 import { formatCount } from "@/lib/utils";
 
 // Module-level cache — one fetch per creator name per session
 const cache = new Map();
+// Cache for creator info (image, isVerified)
+const infoCache = new Map();
 
 // Deterministic color from name — uses only design-token bg classes
 const PALETTE = ["bg-brand", "bg-success", "bg-error"];
@@ -32,6 +35,7 @@ const EDGE_MARGIN = 12;
 export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
   const [open, setOpen] = useState(false);
   const [stats, setStats] = useState(null);
+  const [info, setInfo] = useState({ image: null, isVerified: false });
   // "left" = tooltip left-aligns with avatar, "right" = right-aligns, "center" = centered
   const [side, setSide] = useState("center");
   const timerRef = useRef(null);
@@ -39,6 +43,23 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
 
   // ALL hooks must come before any conditional return
   useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  // Fetch creator info (image + verified) eagerly so avatar photo loads fast
+  useEffect(() => {
+    if (!name) return;
+    if (infoCache.has(name)) {
+      setInfo(infoCache.get(name));
+      return;
+    }
+    fetch(`/api/creator-info/${encodeURIComponent(name)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const i = { image: d.image || null, isVerified: !!d.isVerified };
+        infoCache.set(name, i);
+        setInfo(i);
+      })
+      .catch(() => {});
+  }, [name]);
 
   if (!name) return null;
 
@@ -117,21 +138,30 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
     >
-      {/* Avatar circle */}
+      {/* Avatar circle — real photo if available, else initial */}
       <Link
         href={href}
         aria-label={`View ${name}'s profile`}
         onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
         className={
-          "flex shrink-0 items-center justify-center rounded-full font-bold text-on-brand transition-transform hover:scale-110 active:scale-95 " +
-          bg +
-          " " +
+          "relative flex shrink-0 items-center justify-center overflow-hidden rounded-full font-bold text-on-brand transition-transform hover:scale-110 active:scale-95 " +
+          (info.image ? "" : bg + " ") +
           SIZE[size] +
           " " +
           focusRing
         }
       >
-        {initial}
+        {info.image ? (
+          <Image
+            src={info.image}
+            alt={name}
+            fill
+            sizes="44px"
+            className="object-cover"
+          />
+        ) : (
+          initial
+        )}
       </Link>
 
       {/* Hover card — flips left/right based on available viewport space */}
@@ -153,18 +183,23 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
           <div className="p-3">
             {/* Creator row */}
             <div className="flex items-center gap-2">
-              <div
-                className={
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-bold text-on-brand " +
-                  bg
-                }
-              >
-                {initial}
+              <div className={
+                "relative flex h-9 w-9 shrink-0 overflow-hidden rounded-full " +
+                (info.image ? "" : "items-center justify-center text-base font-bold text-on-brand " + bg)
+              }>
+                {info.image ? (
+                  <Image src={info.image} alt={name} fill sizes="36px" className="object-cover" />
+                ) : initial}
               </div>
               <div className="min-w-0 flex-1 overflow-hidden">
-                <p className="truncate text-base font-semibold text-text-primary">
-                  {name}
-                </p>
+                <div className="flex items-center gap-1">
+                  <p className="truncate text-base font-semibold text-text-primary">
+                    {name}
+                  </p>
+                  {info.isVerified && (
+                    <BadgeCheck className="h-4 w-4 shrink-0 text-brand" title="Verified" />
+                  )}
+                </div>
                 <p className="truncate text-sm text-text-secondary">Prompt Creator</p>
               </div>
             </div>

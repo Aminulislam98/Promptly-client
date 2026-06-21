@@ -2,7 +2,8 @@
 
 import { use, useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Copy, Lock, User, FileText } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, Copy, Lock, User, FileText, BadgeCheck } from "lucide-react";
 import { getCreatorPrompts } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 
@@ -28,6 +29,27 @@ function SkeletonCard() {
   );
 }
 
+function CreatorAvatar({ name, image }) {
+  if (image) {
+    return (
+      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
+        <Image
+          src={image}
+          alt={name}
+          fill
+          sizes="80px"
+          className="object-cover"
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-brand text-3xl font-bold text-on-brand">
+      {name?.charAt(0).toUpperCase() || "?"}
+    </div>
+  );
+}
+
 export default function CreatorProfilePage({ params }) {
   const { name } = use(params);
   const creatorName = decodeURIComponent(name);
@@ -36,11 +58,18 @@ export default function CreatorProfilePage({ params }) {
   const isLoggedIn = !!session?.user;
 
   const [prompts, setPrompts] = useState([]);
+  const [creatorInfo, setCreatorInfo] = useState({ image: null, isVerified: false });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getCreatorPrompts(creatorName)
-      .then((data) => setPrompts(data.prompts || []))
+    Promise.all([
+      getCreatorPrompts(creatorName),
+      fetch(`/api/creator-info/${encodeURIComponent(creatorName)}`).then((r) => r.json()),
+    ])
+      .then(([promptsData, info]) => {
+        setPrompts(promptsData.prompts || []);
+        setCreatorInfo({ image: info.image || null, isVerified: !!info.isVerified });
+      })
       .catch(() => setPrompts([]))
       .finally(() => setIsLoading(false));
   }, [creatorName]);
@@ -63,14 +92,32 @@ export default function CreatorProfilePage({ params }) {
 
         {/* Creator header */}
         <div className="mt-6 flex flex-col gap-6 rounded-xl border bg-surface p-6 sm:flex-row sm:items-center">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-brand text-3xl font-bold text-on-brand">
-            {creatorName?.charAt(0).toUpperCase() || "?"}
-          </div>
+          <CreatorAvatar name={creatorName} image={creatorInfo.image} />
+
           <div className="flex-1 min-w-0">
-            <h1 className="text-3xl font-bold leading-tight text-text-primary">
-              {creatorName}
-            </h1>
-            <p className="mt-1 text-base text-text-secondary">Prompt Creator</p>
+            {/* Name + verified badge */}
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-3xl font-bold leading-tight text-text-primary">
+                {creatorName}
+              </h1>
+              {creatorInfo.isVerified && (
+                <BadgeCheck
+                  className="h-7 w-7 text-brand"
+                  aria-label="Verified creator"
+                  title="Verified Promptly member"
+                />
+              )}
+            </div>
+
+            <div className="mt-1 flex items-center gap-2">
+              <p className="text-base text-text-secondary">Prompt Creator</p>
+              {creatorInfo.isVerified && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2.5 py-0.5 text-sm font-semibold text-on-brand">
+                  <BadgeCheck className="h-3.5 w-3.5" /> Verified
+                </span>
+              )}
+            </div>
+
             {!isLoading && (
               <div className="mt-3 flex flex-wrap gap-4">
                 <div className="flex items-center gap-2">
@@ -85,9 +132,7 @@ export default function CreatorProfilePage({ params }) {
                   <span className="text-base font-semibold text-text-primary">
                     {totalCopies}
                   </span>
-                  <span className="text-base text-text-secondary">
-                    Total copies
-                  </span>
+                  <span className="text-base text-text-secondary">Total copies</span>
                 </div>
               </div>
             )}
@@ -97,7 +142,9 @@ export default function CreatorProfilePage({ params }) {
         {/* Prompts grid */}
         <div className="mt-6">
           <h2 className="text-xl font-semibold text-text-primary">
-            {isLoading ? "Loading prompts…" : `${prompts.length} Published Prompt${prompts.length !== 1 ? "s" : ""}`}
+            {isLoading
+              ? "Loading prompts…"
+              : `${prompts.length} Published Prompt${prompts.length !== 1 ? "s" : ""}`}
           </h2>
 
           {isLoading ? (
@@ -131,13 +178,13 @@ export default function CreatorProfilePage({ params }) {
                       focusRing
                     }
                   >
-                    {/* Colour swatch placeholder */}
-                    <div className="flex h-24 w-full items-center justify-center bg-brand-light">
+                    {/* Colour swatch */}
+                    <div className="relative flex h-24 w-full items-center justify-center bg-brand-light">
                       <span className="text-4xl font-bold text-brand opacity-20">
                         {prompt.title?.charAt(0).toUpperCase()}
                       </span>
                       {prompt.visibility === "Private" && (
-                        <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-warning px-2 py-0.5 text-base font-semibold text-on-brand">
+                        <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-warning px-2 py-0.5 text-sm font-semibold text-on-brand">
                           <Lock className="h-3 w-3" /> Premium
                         </span>
                       )}
