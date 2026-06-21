@@ -257,13 +257,6 @@ export function Navbar({ name = "Promptly" }) {
                   }
                 >
                   {link.label}
-                  {/* Tiny pulse dot on active */}
-                  {active && (
-                    <span className="relative flex h-2 w-2">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-on-brand opacity-50" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-on-brand opacity-75" />
-                    </span>
-                  )}
                 </Link>
               );
             })}
@@ -443,9 +436,6 @@ export function Navbar({ name = "Promptly" }) {
                     }
                   >
                     {link.label}
-                    {active && (
-                      <span className="ml-auto flex h-2 w-2 rounded-full bg-on-brand opacity-75" />
-                    )}
                   </Link>
                 );
               })}
