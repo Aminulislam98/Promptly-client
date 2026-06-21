@@ -185,7 +185,10 @@ export default function PromptDetailsPage({ params }) {
   }, [mounted, sessionPending, session, router]);
 
   useEffect(() => {
-    if (!id) return;
+    // Wait until we know the user is authenticated before fetching.
+    // On reload, TokenSync needs a moment to write the fresh session token
+    // to localStorage — fetching before that causes a 401.
+    if (!id || sessionPending || !session?.user) return;
     Promise.all([getPromptById(id), getReviews(id), getBookmarks()])
       .then(([promptData, reviewData, bookmarksData]) => {
         const p = promptData.prompt;
@@ -239,7 +242,7 @@ export default function PromptDetailsPage({ params }) {
     return () => {
       document.title = "Promptly — AI Prompt Marketplace";
     };
-  }, [id]);
+  }, [id, sessionPending, session]);
 
   const user = mounted ? session?.user : null;
   const isPremium = user?.isPremium === true;
