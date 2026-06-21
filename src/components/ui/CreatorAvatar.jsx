@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { FileText, Copy } from "lucide-react";
 import { getCreatorPrompts } from "@/lib/api";
+import { formatCount } from "@/lib/utils";
 
 // Module-level cache — one fetch per creator name per session
 const cache = new Map();
@@ -176,7 +177,7 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
                     <FileText className="h-4 w-4 shrink-0 text-brand" />
                     <div>
                       <p className="text-base font-bold leading-none text-text-primary">
-                        {stats.count}
+                        {formatCount(stats.count)}
                       </p>
                       <p className="mt-0.5 text-base text-text-secondary">
                         Prompts
@@ -188,7 +189,7 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
                     <Copy className="h-4 w-4 shrink-0 text-brand" />
                     <div>
                       <p className="text-base font-bold leading-none text-text-primary">
-                        {stats.totalCopies}
+                        {formatCount(stats.totalCopies)}
                       </p>
                       <p className="mt-0.5 text-base text-text-secondary">
                         Total copies

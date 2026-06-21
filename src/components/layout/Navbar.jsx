@@ -13,6 +13,7 @@ import {
   LogOut,
   LayoutDashboard,
   UserPlus,
+  Search,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
@@ -50,10 +51,24 @@ export function Navbar({ name = "Promptly" }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState(null);
+  const isMac =
+    typeof navigator !== "undefined" && navigator.platform.includes("Mac");
 
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
   const dashboardPath = getDashboardPath(user?.role);
+
+  // ⌘K / Ctrl+K → navigate to /prompts
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        router.push("/prompts");
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [router]);
 
   useEffect(() => {
     const stored = localStorage.getItem("theme");
@@ -202,8 +217,25 @@ export function Navbar({ name = "Promptly" }) {
 
         {/* Desktop actions */}
         <div className="hidden items-center gap-1 lg:flex">
-          <ThemeButton iconClassName="h-4 w-4" />
+          {/* Search shortcut button */}
+          <button
+            type="button"
+            onClick={() => router.push("/prompts")}
+            aria-label="Search prompts"
+            className={
+              "flex h-9 items-center gap-2 rounded-lg border bg-page-bg px-3 text-base text-text-muted transition-colors hover:border-brand hover:text-text-primary " +
+              focusRing
+            }
+          >
+            <Search className="h-4 w-4 shrink-0" />
+            <span className="text-base">Search prompts…</span>
+            <span className="ml-1 flex items-center gap-0.5 rounded border border-border bg-surface px-1.5 py-0.5 text-base font-medium text-text-secondary">
+              {isMac ? "⌘" : "Ctrl"}K
+            </span>
+          </button>
           <span className="mx-2 h-5 w-px bg-border" aria-hidden="true" />
+          <ThemeButton iconClassName="h-4 w-4" />
+          <span className="mx-1 h-5 w-px bg-border" aria-hidden="true" />
           <AuthDesktop />
         </div>
 
@@ -244,6 +276,19 @@ export function Navbar({ name = "Promptly" }) {
               </li>
             ))}
           </ul>
+          <div className="px-3 pb-2">
+            <Link
+              href="/prompts"
+              onClick={() => setOpen(false)}
+              className={
+                "flex min-h-[44px] items-center gap-2 rounded-lg border bg-page-bg px-3 text-base text-text-muted hover:border-brand hover:text-text-primary transition-colors " +
+                focusRing
+              }
+            >
+              <Search className="h-4 w-4 shrink-0" />
+              Search prompts…
+            </Link>
+          </div>
           <div className="flex flex-col gap-2 border-t px-4 py-3">
             <AuthMobile />
           </div>

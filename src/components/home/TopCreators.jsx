@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Copy, FileText, Trophy } from "lucide-react";
 import { getTopCreators } from "@/lib/api";
+import { formatCount } from "@/lib/utils";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -114,7 +116,10 @@ export function TopCreators() {
                     whileInView="visible"
                     viewport={{ once: true }}
                     variants={fadeUp}
-                    className="group flex flex-col rounded-xl border bg-surface p-5 transition-colors hover:border-brand"
+                  >
+                  <Link
+                    href={`/creator/${encodeURIComponent(creator.name)}`}
+                    className="group flex flex-col rounded-xl border bg-surface p-5 transition-colors hover:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                   >
                     {/* Top row — rank + badge */}
                     <div className="flex items-center justify-between">
@@ -164,7 +169,7 @@ export function TopCreators() {
                     <div className="mt-4 flex gap-3">
                       <div className="flex flex-1 flex-col items-center rounded-lg bg-page-bg py-2.5">
                         <span className="text-lg font-bold text-text-primary">
-                          {creator.totalPrompts}
+                          {formatCount(creator.totalPrompts)}
                         </span>
                         <span className="flex items-center gap-1 text-base text-text-secondary">
                           <FileText className="h-3 w-3" /> Prompts
@@ -172,13 +177,14 @@ export function TopCreators() {
                       </div>
                       <div className="flex flex-1 flex-col items-center rounded-lg bg-page-bg py-2.5">
                         <span className="text-lg font-bold text-text-primary">
-                          {creator.totalCopies}
+                          {formatCount(creator.totalCopies)}
                         </span>
                         <span className="flex items-center gap-1 text-base text-text-secondary">
                           <Copy className="h-3 w-3" /> Copies
                         </span>
                       </div>
                     </div>
+                  </Link>
                   </motion.div>
                 );
               })}

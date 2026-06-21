@@ -15,6 +15,7 @@ import {
 import { getPrompts } from "@/lib/api";
 import { CreatorAvatar } from "@/components/ui/CreatorAvatar";
 import { authClient } from "@/lib/auth-client";
+import { formatCount, isNew } from "@/lib/utils";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
@@ -163,6 +164,11 @@ function PromptCard({ prompt, isLoggedIn }) {
             </span>
           </div>
         )}
+        {isNew(prompt.createdAt) && (
+          <div className="absolute left-2 top-2 rounded-full bg-success px-2 py-0.5 text-base font-semibold text-on-brand">
+            New
+          </div>
+        )}
         {prompt.visibility === "Private" && (
           <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-warning px-2 py-0.5 text-base font-semibold text-on-brand">
             <Lock className="h-3 w-3" /> Premium
@@ -200,7 +206,7 @@ function PromptCard({ prompt, isLoggedIn }) {
         <div className="mt-auto pt-3 flex items-center justify-between">
           <div className="flex items-center gap-3 text-base text-text-secondary">
             <span className="flex items-center gap-1">
-              <Copy className="h-3.5 w-3.5" /> {prompt.copyCount}
+              <Copy className="h-3.5 w-3.5" /> {formatCount(prompt.copyCount)}
             </span>
             <span
               className={

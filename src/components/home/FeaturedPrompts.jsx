@@ -8,6 +8,7 @@ import { CreatorAvatar } from "@/components/ui/CreatorAvatar";
 import { motion } from "framer-motion";
 import { authClient } from "@/lib/auth-client";
 import { getFeaturedPrompts } from "@/lib/api";
+import { formatCount, isNew } from "@/lib/utils";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
@@ -121,6 +122,11 @@ export function FeaturedPrompts() {
                         </span>
                       </div>
                     )}
+                    {isNew(prompt.createdAt) && (
+                      <div className="absolute left-3 top-3 rounded-full bg-success px-2 py-0.5 text-base font-semibold text-on-brand">
+                        New
+                      </div>
+                    )}
                     {prompt.visibility === "Private" && (
                       <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-warning px-2 py-1 text-base font-semibold text-on-brand">
                         <Lock className="h-3 w-3" /> Premium
@@ -152,7 +158,7 @@ export function FeaturedPrompts() {
                         {prompt.aiTool}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Copy className="h-3.5 w-3.5" /> {prompt.copyCount}
+                        <Copy className="h-3.5 w-3.5" /> {formatCount(prompt.copyCount)}
                       </span>
                     </div>
                     <div className="mt-2 flex items-center gap-2">

@@ -7,6 +7,7 @@ import { avatarBg } from "@/components/ui/CreatorAvatar";
 import { motion } from "framer-motion";
 import { getPrompts } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
+import { formatCount } from "@/lib/utils";
 
 const DIFFICULTY_STYLES = {
   Beginner: "text-success bg-success/10",
@@ -173,7 +174,7 @@ export function TrendingPrompts() {
                       {/* Copy count */}
                       <div className="flex shrink-0 items-center gap-1 text-base font-semibold text-text-secondary">
                         <Copy className="h-3.5 w-3.5" />
-                        {prompt.copyCount}
+                        {formatCount(prompt.copyCount)}
                       </div>
 
                       <ArrowRight className="h-4 w-4 shrink-0 text-text-secondary opacity-0 transition-opacity group-hover:opacity-100" />
