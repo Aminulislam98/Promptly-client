@@ -24,10 +24,17 @@ const SIZE = {
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1 focus-visible:ring-offset-surface";
 
+// Tooltip width must match w-56 = 224px
+const TOOLTIP_W = 224;
+const EDGE_MARGIN = 12;
+
 export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
   const [open, setOpen] = useState(false);
   const [stats, setStats] = useState(null);
+  // "left" = tooltip left-aligns with avatar, "right" = right-aligns, "center" = centered
+  const [side, setSide] = useState("center");
   const timerRef = useRef(null);
+  const wrapperRef = useRef(null);
 
   // ALL hooks must come before any conditional return
   useEffect(() => () => clearTimeout(timerRef.current), []);
@@ -59,6 +66,24 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
 
   const onEnter = () => {
     timerRef.current = setTimeout(() => {
+      // Detect available viewport space and pick the best side
+      if (wrapperRef.current) {
+        const rect = wrapperRef.current.getBoundingClientRect();
+        const vw = window.innerWidth;
+        const avatarCenter = rect.left + rect.width / 2;
+        const spaceRight = vw - rect.left - EDGE_MARGIN;
+        const spaceLeft = rect.right - EDGE_MARGIN;
+
+        if (spaceRight >= TOOLTIP_W) {
+          setSide("left");   // plenty of room to the right → anchor left
+        } else if (spaceLeft >= TOOLTIP_W) {
+          setSide("right");  // plenty of room to the left → anchor right
+        } else if (avatarCenter >= vw / 2) {
+          setSide("right");  // closer to right half → anchor right
+        } else {
+          setSide("left");   // closer to left half → anchor left
+        }
+      }
       setOpen(true);
       fetchStats();
     }, 380);
@@ -69,8 +94,24 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
     setOpen(false);
   };
 
+  // Build tooltip and caret class strings based on detected side
+  const tooltipPos =
+    side === "left"
+      ? "left-0"
+      : side === "right"
+        ? "right-0"
+        : "left-1/2 -translate-x-1/2";
+
+  const caretPos =
+    side === "left"
+      ? "left-4"
+      : side === "right"
+        ? "right-4"
+        : "left-1/2 -translate-x-1/2";
+
   return (
     <div
+      ref={wrapperRef}
       className="relative"
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
@@ -92,11 +133,21 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
         {initial}
       </Link>
 
-      {/* Hover card — centered above avatar, clamped so it never clips off-screen */}
+      {/* Hover card — flips left/right based on available viewport space */}
       {open && (
-        <div className="absolute bottom-full left-1/2 z-50 mb-3 w-56 -translate-x-1/2 rounded-xl border border-border bg-surface shadow-lg">
+        <div
+          className={
+            "absolute bottom-full z-50 mb-3 w-56 rounded-xl border border-border bg-surface shadow-lg " +
+            tooltipPos
+          }
+        >
           {/* Caret */}
-          <div className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1.5 rotate-45 border-b border-r border-border bg-surface" />
+          <div
+            className={
+              "absolute top-full h-3 w-3 -translate-y-1.5 rotate-45 border-b border-r border-border bg-surface " +
+              caretPos
+            }
+          />
 
           <div className="p-4">
             {/* Creator row */}
@@ -122,9 +173,9 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
               {stats ? (
                 <>
                   <div className="flex flex-1 items-center gap-2">
-                    <FileText className="h-4 w-4 text-brand" />
+                    <FileText className="h-4 w-4 shrink-0 text-brand" />
                     <div>
-                      <p className="text-base font-bold text-text-primary leading-none">
+                      <p className="text-base font-bold leading-none text-text-primary">
                         {stats.count}
                       </p>
                       <p className="mt-0.5 text-base text-text-secondary">
@@ -134,9 +185,9 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
                   </div>
                   <div className="h-8 w-px bg-border" />
                   <div className="flex flex-1 items-center gap-2">
-                    <Copy className="h-4 w-4 text-brand" />
+                    <Copy className="h-4 w-4 shrink-0 text-brand" />
                     <div>
-                      <p className="text-base font-bold text-text-primary leading-none">
+                      <p className="text-base font-bold leading-none text-text-primary">
                         {stats.totalCopies}
                       </p>
                       <p className="mt-0.5 text-base text-text-secondary">
