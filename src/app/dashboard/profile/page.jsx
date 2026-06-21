@@ -15,6 +15,7 @@ import {
   X,
   Loader2,
   ArrowRight,
+  Flag,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -23,6 +24,7 @@ import {
   getMyProfile,
   getMyPrompts,
   getMyReviews,
+  getMyReceivedReports,
 } from "@/lib/api";
 import { useState, useEffect, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
@@ -265,6 +267,7 @@ export default function ProfilePage() {
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   // local isVerified tracks claimed state before session refreshes
   const [localVerified, setLocalVerified] = useState(false);
+  const [reportCount, setReportCount] = useState(0);
 
   useEffect(() => {
     if (user) {
@@ -274,6 +277,11 @@ export default function ProfilePage() {
 
       getMyProfile()
         .then((data) => setProfileData(data.user))
+        .catch(() => {});
+
+      // Fetch count of reports received on user's prompts (admin-reviewed only)
+      getMyReceivedReports()
+        .then((data) => setReportCount(data.total || 0))
         .catch(() => {});
     }
   }, [user]);
@@ -477,6 +485,62 @@ export default function ProfilePage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── Reports on your prompts ──────────────────────────── */}
+      <div
+        className={
+          "mt-4 flex flex-col gap-4 rounded-xl border px-6 py-5 sm:flex-row sm:items-center sm:justify-between " +
+          (reportCount > 0
+            ? "border-warning/40 bg-warning/5"
+            : "border bg-surface")
+        }
+      >
+        <div className="flex items-start gap-3">
+          <div
+            className={
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-full " +
+              (reportCount > 0 ? "bg-warning/15" : "bg-surface-hover")
+            }
+          >
+            <Flag
+              className={
+                "h-5 w-5 " +
+                (reportCount > 0 ? "text-warning" : "text-text-secondary")
+              }
+            />
+          </div>
+          <div>
+            <p
+              className={
+                "text-base font-bold " +
+                (reportCount > 0 ? "text-warning" : "text-text-primary")
+              }
+            >
+              {reportCount > 0
+                ? `${reportCount} report${reportCount !== 1 ? "s" : ""} on your prompts`
+                : "Reports on your prompts"}
+            </p>
+            <p className="mt-0.5 text-base text-text-secondary">
+              {reportCount > 0
+                ? "Admin has reviewed and actioned these reports. See the details below."
+                : "No reviewed reports on any of your prompts. Keep it up!"}
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/dashboard/my-reports"
+          className={
+            "inline-flex h-10 shrink-0 items-center gap-2 rounded-lg px-5 text-base font-semibold transition-all active:scale-[0.98] " +
+            (reportCount > 0
+              ? "bg-warning text-white hover:opacity-90 "
+              : "border text-text-secondary hover:bg-surface-hover ") +
+            focusRing
+          }
+        >
+          <Flag className="h-4 w-4" />
+          {reportCount > 0 ? "See Reports" : "View Reports"}
+        </Link>
       </div>
 
       {/* Upgrade banner */}

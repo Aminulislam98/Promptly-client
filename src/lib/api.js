@@ -157,3 +157,15 @@ export const rejectCreatorRequest = (id) =>
 
 export const getAdminAnalytics = () => apiFetch("/api/admin/analytics");
 export const getCreatorAnalytics = () => apiFetch("/api/creator/analytics");
+
+// My received reports (prompts that were warned by admin)
+export const getMyReceivedReports = () => {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("server_token") : null;
+  const url = `/api/my-reports${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+  return fetch(url, { credentials: "include" }).then(async (res) => {
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to load reports");
+    return data;
+  });
+};

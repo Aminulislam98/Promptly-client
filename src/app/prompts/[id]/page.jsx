@@ -650,16 +650,19 @@ export default function PromptDetailsPage({ params }) {
                       />
                       {bookmarked ? "Remove Bookmark" : "Bookmark"}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowReport(true)}
-                      className={
-                        "flex h-11 w-full items-center justify-center gap-2 rounded-lg border text-base font-medium text-text-secondary transition-colors hover:bg-surface-hover hover:text-error " +
-                        focusRing
-                      }
-                    >
-                      <Flag className="h-4 w-4" /> Report
-                    </button>
+                    {/* Hide report button for the prompt's own creator */}
+                    {user?.name !== prompt?.creatorName && (
+                      <button
+                        type="button"
+                        onClick={() => setShowReport(true)}
+                        className={
+                          "flex h-11 w-full items-center justify-center gap-2 rounded-lg border text-base font-medium text-text-secondary transition-colors hover:bg-surface-hover hover:text-error " +
+                          focusRing
+                        }
+                      >
+                        <Flag className="h-4 w-4" /> Report
+                      </button>
+                    )}
                   </>
                 )}
                 {/* Share row — always visible */}
