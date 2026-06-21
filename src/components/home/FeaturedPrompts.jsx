@@ -102,7 +102,7 @@ export function FeaturedPrompts() {
                   whileInView="visible"
                   viewport={{ once: true }}
                   variants={fadeUp}
-                  className="group flex flex-col rounded-xl border bg-surface overflow-hidden transition-colors hover:bg-surface-hover"
+                  className="group flex flex-col rounded-xl border bg-surface transition-colors hover:bg-surface-hover"
                 >
                   {/* Thumbnail */}
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-brand-light shrink-0">

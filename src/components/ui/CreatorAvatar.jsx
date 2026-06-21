@@ -92,9 +92,9 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
         {initial}
       </Link>
 
-      {/* Hover card */}
+      {/* Hover card — centered above avatar, clamped so it never clips off-screen */}
       {open && (
-        <div className="absolute bottom-full left-1/2 z-50 mb-3 w-56 -translate-x-1/2 rounded-xl border bg-surface">
+        <div className="absolute bottom-full left-1/2 z-50 mb-3 w-56 -translate-x-1/2 rounded-xl border border-border bg-surface shadow-lg">
           {/* Caret */}
           <div className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1.5 rotate-45 border-b border-r border-border bg-surface" />
 

@@ -146,7 +146,7 @@ function StarRating({ rating, count }) {
 
 function PromptCard({ prompt, isLoggedIn }) {
   return (
-    <article className="group flex flex-col rounded-xl border bg-surface overflow-hidden transition-colors hover:bg-surface-hover">
+    <article className="group flex flex-col rounded-xl border bg-surface transition-colors hover:bg-surface-hover">
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-brand-light shrink-0">
         {prompt.thumbnail ? (
           <Image
