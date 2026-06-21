@@ -115,9 +115,14 @@ export default function SignInPage() {
   };
 
   const handleGoogleLogin = async () => {
+    if (redirectParam) {
+      try {
+        sessionStorage.setItem("postLoginRedirect", redirectParam);
+      } catch {}
+    }
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: redirectTo,
+      callbackURL: `${window.location.origin}/auth/callback`,
     });
   };
 
