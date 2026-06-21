@@ -287,7 +287,7 @@ function PromptCard({ prompt, isLoggedIn, initialSaved }) {
                 focusRing
               }
             >
-              Login
+              Log in to view
             </Link>
           )}
         </div>
