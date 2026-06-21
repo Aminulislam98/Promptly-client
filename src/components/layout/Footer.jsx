@@ -81,8 +81,8 @@ export function Footer({ name = "Promptly" }) {
   const isPremium = session?.user?.isPremium === true;
   const pathname = usePathname();
 
-  // Admin control panel has its own layout — footer would be hidden behind the fixed sidebar
-  if (pathname?.startsWith("/admin")) return null;
+  // Admin and dashboard have self-contained layouts with fixed sidebars — footer sits behind them
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/dashboard")) return null;
 
   const COLUMNS = [
     {
