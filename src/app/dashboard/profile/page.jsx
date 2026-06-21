@@ -404,11 +404,11 @@ export default function ProfilePage() {
           </div>
 
           <div className="min-w-0 flex-1">
+            {/* Name + verified badge */}
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-2xl font-bold leading-tight text-text-primary">
                 {user?.name ?? "User"}
               </h2>
-              {/* Verified badge next to name — like Facebook */}
               {isVerified && (
                 <BadgeCheck
                   className="h-6 w-6 text-brand"
@@ -418,6 +418,7 @@ export default function ProfilePage() {
               )}
             </div>
 
+            {/* Role / plan badges */}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1 rounded-full bg-brand-light px-3 py-1 text-base font-medium text-brand">
                 <Shield className="h-4 w-4" /> {currentRole}
@@ -432,7 +433,7 @@ export default function ProfilePage() {
                 </span>
               )}
               {isVerified && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-3 py-1 text-base font-medium text-brand">
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand px-3 py-1 text-base font-semibold text-on-brand">
                   <BadgeCheck className="h-4 w-4" /> Verified
                 </span>
               )}
@@ -442,6 +443,24 @@ export default function ProfilePage() {
                 </span>
               )}
             </div>
+
+            {/* ── Verification callout — right under the name ── */}
+            {!isVerified && (
+              <button
+                type="button"
+                onClick={() => setShowVerifyModal(true)}
+                className={
+                  "mt-3 inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-base font-semibold text-on-brand shadow-sm shadow-brand/30 transition-all hover:bg-brand-hover hover:shadow-md hover:shadow-brand/30 active:scale-[0.98] " +
+                  focusRing
+                }
+              >
+                <BadgeCheck className="h-5 w-5" />
+                Get Verified
+                <span className="rounded-full bg-on-brand/20 px-2 py-0.5 text-sm font-bold">
+                  Free
+                </span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -519,45 +538,53 @@ export default function ProfilePage() {
 
       {/* ── Get Verified ─────────────────────────────────────── */}
       {isVerified ? (
-        /* Already verified card */
-        <div className="mt-4 flex flex-col gap-3 rounded-xl border border-brand/30 bg-brand/5 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <BadgeCheck className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
-            <div>
-              <p className="text-base font-semibold text-text-primary">
-                Verified Promptly Member
-              </p>
-              <p className="mt-0.5 text-base text-text-secondary">
-                Your verified badge is active and visible on your profile.
-              </p>
+        /* Already verified — brand-filled celebration card */
+        <div className="mt-4 overflow-hidden rounded-xl bg-brand">
+          <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-on-brand/20">
+                <BadgeCheck className="h-5 w-5 text-on-brand" />
+              </div>
+              <div>
+                <p className="text-base font-bold text-on-brand">
+                  Verified Promptly Member ✓
+                </p>
+                <p className="mt-0.5 text-base text-on-brand/80">
+                  Your blue verified badge is active on your name and profile.
+                </p>
+              </div>
             </div>
+            <span className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-on-brand/20 px-5 text-base font-bold text-on-brand">
+              <BadgeCheck className="h-4 w-4" /> Verified
+            </span>
           </div>
-          <span className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-brand/10 px-5 text-base font-semibold text-brand">
-            <BadgeCheck className="h-4 w-4" /> Verified
-          </span>
         </div>
       ) : (
-        /* Get verified CTA */
-        <div className="mt-4 flex flex-col gap-4 rounded-xl border px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <BadgeCheck className="mt-0.5 h-5 w-5 shrink-0 text-text-secondary" />
-            <div>
-              <p className="text-base font-semibold text-text-primary">Get Verified</p>
-              <p className="mt-0.5 text-base text-text-secondary">
-                Post 3 prompts and write 3 reviews to earn your verified badge.
-              </p>
+        /* Get verified — prominent brand-light card */
+        <div className="mt-4 overflow-hidden rounded-xl border border-brand/30 bg-brand-light">
+          <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/15">
+                <BadgeCheck className="h-5 w-5 text-brand" />
+              </div>
+              <div>
+                <p className="text-base font-bold text-brand">Get Verified on Promptly</p>
+                <p className="mt-0.5 text-base text-text-secondary">
+                  Post 3 prompts + write 3 reviews → earn your blue verified badge.
+                </p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowVerifyModal(true)}
+              className={
+                "inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-brand px-5 text-base font-semibold text-on-brand shadow-sm shadow-brand/30 transition-all hover:bg-brand-hover active:scale-[0.98] " +
+                focusRing
+              }
+            >
+              <BadgeCheck className="h-4 w-4" /> Check Status
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowVerifyModal(true)}
-            className={
-              "inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border px-5 text-base font-semibold text-text-primary transition-all hover:bg-surface-hover active:scale-[0.98] " +
-              focusRing
-            }
-          >
-            <BadgeCheck className="h-4 w-4" /> Check Status
-          </button>
         </div>
       )}
     </section>
