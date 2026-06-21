@@ -217,6 +217,7 @@ export default function PromptDetailsPage({ params }) {
               difficulty: p.difficulty,
               visibility: p.visibility,
               copyCount: p.copyCount || 0,
+              creatorName: p.creatorName || "",
               viewedAt: Date.now(),
             };
             const raw = localStorage.getItem("recently_viewed");

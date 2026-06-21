@@ -13,6 +13,7 @@ import {
   Lock,
 } from "lucide-react";
 import { getPrompts } from "@/lib/api";
+import { CreatorAvatar } from "@/components/ui/CreatorAvatar";
 import { authClient } from "@/lib/auth-client";
 
 const focusRing =
@@ -169,10 +170,13 @@ function PromptCard({ prompt, isLoggedIn }) {
         )}
       </div>
       <div className="flex flex-1 flex-col p-4">
-        <div className="flex items-start justify-between gap-2">
-          <span className="text-base text-text-secondary truncate">
-            @ {prompt.creatorName}
-          </span>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <CreatorAvatar name={prompt.creatorName} size="sm" />
+            <span className="truncate text-base font-medium text-text-secondary">
+              {prompt.creatorName}
+            </span>
+          </div>
           <ArrowRight className="h-4 w-4 shrink-0 text-text-secondary group-hover:text-brand transition-colors" />
         </div>
         <h2 className="mt-2 text-base font-bold leading-snug text-text-primary line-clamp-2">

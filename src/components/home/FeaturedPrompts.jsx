@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Copy, ArrowRight, Lock } from "lucide-react";
+import { CreatorAvatar } from "@/components/ui/CreatorAvatar";
 import { motion } from "framer-motion";
 import { authClient } from "@/lib/auth-client";
 import { getFeaturedPrompts } from "@/lib/api";
@@ -154,9 +155,12 @@ export function FeaturedPrompts() {
                         <Copy className="h-3.5 w-3.5" /> {prompt.copyCount}
                       </span>
                     </div>
-                    <p className="mt-1 text-base text-text-secondary">
-                      by {prompt.creatorName}
-                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <CreatorAvatar name={prompt.creatorName} size="sm" />
+                      <span className="truncate text-base text-text-secondary">
+                        {prompt.creatorName}
+                      </span>
+                    </div>
 
                     <div className="mt-4">
                       {isLoggedIn ? (

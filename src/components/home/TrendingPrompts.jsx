@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { TrendingUp, Copy, Lock, ArrowRight } from "lucide-react";
+import { CreatorAvatar } from "@/components/ui/CreatorAvatar";
 import { motion } from "framer-motion";
 import { getPrompts } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
@@ -130,10 +131,20 @@ export function TrendingPrompts() {
 
                       {/* Info */}
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-base font-semibold text-text-primary group-hover:text-brand">
-                          {prompt.title}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="truncate text-base font-semibold text-text-primary group-hover:text-brand">
+                            {prompt.title}
+                          </p>
+                        </div>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
+                          {prompt.creatorName && (
+                            <span className="flex items-center gap-1.5">
+                              <CreatorAvatar name={prompt.creatorName} size="sm" stopPropagation />
+                              <span className="text-base text-text-secondary truncate max-w-24">
+                                {prompt.creatorName}
+                              </span>
+                            </span>
+                          )}
                           <span className="rounded-md bg-brand-light px-2 py-0.5 text-base font-medium text-brand">
                             {prompt.aiTool}
                           </span>

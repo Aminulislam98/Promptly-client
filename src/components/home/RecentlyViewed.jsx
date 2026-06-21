@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Clock, Copy, Lock } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { CreatorAvatar } from "@/components/ui/CreatorAvatar";
 
 const DIFFICULTY_STYLES = {
   Beginner: "text-success bg-success/10",
@@ -28,7 +29,6 @@ export function RecentlyViewed() {
     }
   }, [session]);
 
-  // Only render for logged-in users with history
   if (!session?.user || items.length === 0) return null;
 
   return (
@@ -58,18 +58,34 @@ export function RecentlyViewed() {
         </div>
 
         {/* Horizontal scroll row */}
-        <div className="mt-6 flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="mt-6 flex gap-4 overflow-x-auto pb-2">
           {items.map((p) => (
-            <Link
+            <article
               key={p._id}
-              href={`/prompts/${p._id}`}
-              className={
-                "group flex w-64 shrink-0 flex-col rounded-xl border bg-surface p-4 transition-colors hover:border-brand " +
-                focusRing
-              }
+              className="flex w-64 shrink-0 flex-col rounded-xl border bg-surface p-4 transition-colors hover:border-brand"
             >
+              {/* Creator row */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  {p.creatorName ? (
+                    <CreatorAvatar name={p.creatorName} size="sm" />
+                  ) : null}
+                  <span className="truncate text-base font-medium text-text-secondary">
+                    {p.creatorName || "Creator"}
+                  </span>
+                </div>
+                <span className="shrink-0 text-base text-text-secondary">
+                  {p.viewedAt
+                    ? new Date(p.viewedAt).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                      })
+                    : ""}
+                </span>
+              </div>
+
               {/* Badges */}
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span className="rounded-md bg-brand-light px-2 py-0.5 text-base font-medium text-brand">
                   {p.aiTool}
                 </span>
@@ -80,42 +96,38 @@ export function RecentlyViewed() {
                 )}
               </div>
 
-              {/* Title */}
-              <p className="mt-3 line-clamp-2 text-base font-semibold leading-snug text-text-primary group-hover:text-brand">
+              {/* Title — this is the primary navigation target */}
+              <Link
+                href={`/prompts/${p._id}`}
+                className={
+                  "mt-2 line-clamp-2 text-base font-semibold leading-snug text-text-primary hover:text-brand " +
+                  focusRing
+                }
+              >
                 {p.title}
-              </p>
-
-              {/* Category + difficulty */}
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="rounded-md border px-2 py-0.5 text-base text-text-secondary">
-                  {p.category}
-                </span>
-                <span
-                  className={
-                    "rounded-md px-2 py-0.5 text-base font-medium " +
-                    (DIFFICULTY_STYLES[p.difficulty] || "")
-                  }
-                >
-                  {p.difficulty}
-                </span>
-              </div>
+              </Link>
 
               {/* Footer */}
               <div className="mt-auto flex items-center justify-between pt-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-md border px-2 py-0.5 text-base text-text-secondary">
+                    {p.category}
+                  </span>
+                  <span
+                    className={
+                      "rounded-md px-2 py-0.5 text-base font-medium " +
+                      (DIFFICULTY_STYLES[p.difficulty] || "")
+                    }
+                  >
+                    {p.difficulty}
+                  </span>
+                </div>
                 <span className="flex items-center gap-1 text-base text-text-secondary">
                   <Copy className="h-3.5 w-3.5" />
                   {p.copyCount ?? 0}
                 </span>
-                <span className="text-base text-text-secondary">
-                  {p.viewedAt
-                    ? new Date(p.viewedAt).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                      })
-                    : ""}
-                </span>
               </div>
-            </Link>
+            </article>
           ))}
         </div>
       </div>
