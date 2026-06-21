@@ -18,6 +18,7 @@ import {
   ChevronDown,
   User,
   Sparkles,
+  BadgeCheck,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
@@ -321,9 +322,14 @@ export function Navbar({ name = "Promptly" }) {
                     <div className="flex items-center gap-3 border-b px-4 py-3">
                       <AvatarCircle size="lg" />
                       <div className="min-w-0">
-                        <p className="truncate text-base font-semibold text-text-primary">
-                          {user.name}
-                        </p>
+                        <div className="flex items-center gap-1">
+                          <p className="truncate text-base font-semibold text-text-primary">
+                            {user.name}
+                          </p>
+                          {user.isVerified && (
+                            <BadgeCheck className="h-4 w-4 shrink-0 text-brand" aria-label="Verified" />
+                          )}
+                        </div>
                         <p className="truncate text-sm text-text-muted">{user.email}</p>
                       </div>
                     </div>
@@ -452,7 +458,12 @@ export function Navbar({ name = "Promptly" }) {
                   <div className="flex items-center gap-3 rounded-xl bg-surface-hover px-4 py-3">
                     <AvatarCircle size="lg" />
                     <div className="min-w-0">
-                      <p className="truncate text-base font-semibold text-text-primary">{user.name}</p>
+                      <div className="flex items-center gap-1">
+                        <p className="truncate text-base font-semibold text-text-primary">{user.name}</p>
+                        {user.isVerified && (
+                          <BadgeCheck className="h-4 w-4 shrink-0 text-brand" aria-label="Verified" />
+                        )}
+                      </div>
                       <p className="truncate text-sm text-text-muted">{user.email}</p>
                     </div>
                   </div>

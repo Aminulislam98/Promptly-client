@@ -9,6 +9,7 @@ export const authClient = createAuthClient({
         role: { type: "string" },
         plan: { type: "string" },
         isPremium: { type: "boolean" },
+        isVerified: { type: "boolean" },
       },
     }),
   ],
