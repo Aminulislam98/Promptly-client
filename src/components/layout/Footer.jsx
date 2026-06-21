@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Command } from "lucide-react";
+import { Command, CheckCircle } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 // --- Icons defined inside the file ---
 function XIcon({ className }) {
@@ -54,30 +55,20 @@ const SOCIALS = [
   },
 ];
 
-const COLUMNS = [
-  {
-    title: "Product",
-    links: [
-      { href: "/", label: "Home" },
-      { href: "/prompts", label: "All Prompts" },
-      { href: "/payment", label: "Go Premium" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { href: "/about", label: "About" },
-      { href: "/contact", label: "Contact" },
-      { href: "/blog", label: "Blog" },
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      { href: "/privacy", label: "Privacy Policy" },
-      { href: "/terms", label: "Terms of Use" },
-    ],
-  },
+const PRODUCT_BASE_LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/prompts", label: "All Prompts" },
+];
+
+const COMPANY_LINKS = [
+  { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
+  { href: "/blog", label: "Blog" },
+];
+
+const LEGAL_LINKS = [
+  { href: "/privacy", label: "Privacy Policy" },
+  { href: "/terms", label: "Terms of Use" },
 ];
 
 const focusRing =
@@ -85,6 +76,22 @@ const focusRing =
 
 export function Footer({ name = "Promptly" }) {
   const year = new Date().getFullYear();
+  const { data: session } = authClient.useSession();
+  const isPremium = session?.user?.isPremium === true;
+
+  const COLUMNS = [
+    {
+      title: "Product",
+      links: [
+        ...PRODUCT_BASE_LINKS,
+        isPremium
+          ? { href: "/dashboard", label: "My Dashboard", premium: true }
+          : { href: "/payment", label: "Go Premium" },
+      ],
+    },
+    { title: "Company", links: COMPANY_LINKS },
+    { title: "Legal", links: LEGAL_LINKS },
+  ];
 
   return (
     <footer className="border-t bg-surface">
@@ -140,11 +147,22 @@ export function Footer({ name = "Promptly" }) {
                     <Link
                       href={link.href}
                       className={
-                        "inline-flex h-9 items-center text-sm font-medium text-text-secondary transition-colors duration-150 hover:text-text-primary " +
-                        focusRing
+                        "inline-flex h-9 items-center gap-1.5 text-sm font-medium transition-colors duration-150 " +
+                        focusRing +
+                        (link.premium
+                          ? " text-success hover:text-success"
+                          : " text-text-secondary hover:text-text-primary")
                       }
                     >
+                      {link.premium && (
+                        <CheckCircle className="h-3.5 w-3.5 shrink-0" />
+                      )}
                       {link.label}
+                      {link.premium && (
+                        <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-xs font-semibold text-success">
+                          Active
+                        </span>
+                      )}
                     </Link>
                   </li>
                 ))}
