@@ -35,8 +35,8 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section className="border-b bg-page-bg py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-7xl">
+    <section className="w-full border-b bg-page-bg py-16 sm:py-20">
+      <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <motion.div
           initial="hidden"
           whileInView="visible"

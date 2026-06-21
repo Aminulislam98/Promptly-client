@@ -9,6 +9,7 @@ import { authClient } from "@/lib/auth-client";
 import {
   getPromptById,
   getReviews,
+  getBookmarks,
   incrementCopyCount,
   toggleBookmark,
   addReview,
@@ -183,11 +184,15 @@ export default function PromptDetailsPage({ params }) {
 
   useEffect(() => {
     if (!id) return;
-    Promise.all([getPromptById(id), getReviews(id)])
-      .then(([promptData, reviewData]) => {
+    Promise.all([getPromptById(id), getReviews(id), getBookmarks()])
+      .then(([promptData, reviewData, bookmarksData]) => {
         setPrompt(promptData.prompt);
         setCopyCount(promptData.prompt?.copyCount || 0);
         setReviews(reviewData.reviews || []);
+        const bookmarkedIds = (bookmarksData?.bookmarks || []).map(
+          (b) => b._id || b.promptId || b
+        );
+        setBookmarked(bookmarkedIds.includes(id));
       })
       .catch(() => toast.error("Failed to load prompt"))
       .finally(() => setIsLoading(false));
@@ -410,7 +415,7 @@ export default function PromptDetailsPage({ params }) {
                       Subscribe to Premium to unlock this prompt.
                     </p>
                     <Link
-                      href="/payment"
+                      href={`/payment?from=/prompts/${id}`}
                       className={
                         "inline-flex h-10 items-center gap-2 rounded-md bg-brand px-5 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover " +
                         focusRing

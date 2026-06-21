@@ -57,6 +57,32 @@ export default function AddPromptPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [promptCount, setPromptCount] = useState(0);
+  const [isPremium, setIsPremium] = useState(false);
+  const [isCheckingLimit, setIsCheckingLimit] = useState(true);
+
+  useEffect(() => {
+    const role = session?.user?.role;
+    // Creators and Admins have no limit — treat as premium so the message hides
+    if (role === "creator" || role === "admin") {
+      setIsPremium(true);
+      setIsCheckingLimit(false);
+      return;
+    }
+    Promise.all([getMyPrompts(), getMyProfile()])
+      .then(([promptsData, profileData]) => {
+        setPromptCount(promptsData?.prompts?.length || 0);
+        // Check isPremium from session first (refreshed after payment),
+        // then fall back to profile API (handles both flat and nested shapes)
+        const premiumFromSession = session?.user?.isPremium === true;
+        const premiumFromProfile =
+          profileData?.user?.isPremium === true ||
+          profileData?.isPremium === true;
+        setIsPremium(premiumFromSession || premiumFromProfile);
+      })
+      .catch(() => {})
+      .finally(() => setIsCheckingLimit(false));
+  }, [session]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -183,6 +209,59 @@ export default function AddPromptPage() {
     }
   };
 
+  const FREE_LIMIT = 3;
+  const isLimitReached = !isPremium && promptCount >= FREE_LIMIT;
+
+  if (isCheckingLimit) {
+    return (
+      <section>
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-brand" />
+        </div>
+      </section>
+    );
+  }
+
+  if (isLimitReached) {
+    return (
+      <section>
+        <Toaster position="top-center" />
+        <div className="flex flex-col items-center justify-center rounded-xl border bg-surface py-16 text-center">
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-error/10">
+            <Lock className="h-8 w-8 text-error" />
+          </span>
+          <h1 className="mt-4 text-2xl font-bold text-text-primary">
+            Free limit reached
+          </h1>
+          <p className="mx-auto mt-2 max-w-sm text-base text-text-secondary">
+            Free accounts can publish up to {FREE_LIMIT} prompts. Upgrade to
+            Premium for unlimited prompt publishing.
+          </p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Link
+              href="/payment"
+              className={
+                "inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-brand px-6 text-base font-semibold text-on-brand transition-all hover:bg-brand-hover active:scale-[0.98] " +
+                focusRing
+              }
+            >
+              Upgrade to Premium — $5
+            </Link>
+            <Link
+              href="/dashboard/my-prompts"
+              className={
+                "inline-flex h-11 items-center justify-center rounded-lg border px-6 text-base font-medium text-text-primary transition-colors hover:bg-surface-hover " +
+                focusRing
+              }
+            >
+              View My Prompts
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section>
       <Toaster position="top-center" />
@@ -193,6 +272,11 @@ export default function AddPromptPage() {
         </h1>
         <p className="mt-1 text-base text-text-secondary">
           Your prompt will be reviewed by admin before going live.
+          {!isPremium && (
+            <span className="ml-2 font-medium text-warning">
+              ({FREE_LIMIT - promptCount} of {FREE_LIMIT} free prompts remaining)
+            </span>
+          )}
         </p>
       </div>
 

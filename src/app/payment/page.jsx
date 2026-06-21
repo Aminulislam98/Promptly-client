@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Check, Crown, Lock } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { createCheckout } from "@/lib/api";
@@ -25,11 +26,17 @@ const STEPS = [
 ];
 
 export default function PaymentPage() {
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
 
   const handlePayment = async () => {
     setIsLoading(true);
     try {
+      // Save the page the user came from so we can redirect back after success
+      const from = searchParams.get("from");
+      if (from) {
+        sessionStorage.setItem("postPaymentRedirect", from);
+      }
       const data = await createCheckout();
       if (data.url) {
         window.location.href = data.url;

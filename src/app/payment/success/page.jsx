@@ -31,6 +31,12 @@ export default function PaymentSuccessPage() {
         await authClient.getSession({ fetchOptions: { cache: "no-store" } });
         // clear old token so TokenSync gets fresh one
         localStorage.removeItem("server_token");
+        // redirect back to where the user came from (e.g. the locked prompt)
+        const returnTo = sessionStorage.getItem("postPaymentRedirect");
+        if (returnTo) {
+          sessionStorage.removeItem("postPaymentRedirect");
+          setTimeout(() => router.replace(returnTo), 2000);
+        }
       })
       .catch(() => {
         setStatus("error");
