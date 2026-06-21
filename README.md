@@ -2,8 +2,8 @@
 
 Promptly is a platform where people can share, discover, and copy AI prompts for tools like ChatGPT, Claude, Midjourney, and more. Users can browse free prompts or unlock premium ones with a one-time $5 payment.
 
-**Live site:** [your-live-url-here]  
-**Server repo:** [your-server-repo-url-here]
+**Live site:** https://promptly-client-plum.vercel.app  
+**Server:** https://promptly-server-ten.vercel.app
 
 ---
 
