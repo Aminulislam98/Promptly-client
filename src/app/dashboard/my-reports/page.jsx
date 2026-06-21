@@ -2,101 +2,70 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Flag, AlertTriangle, ArrowLeft, ExternalLink, CheckCircle } from "lucide-react";
+import { Flag, AlertTriangle, ArrowLeft, ExternalLink, CheckCircle, ShieldAlert } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { getMyReceivedReports } from "@/lib/api";
+import { getMyProfile, getMyPrompts } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
 
-const REASON_STYLES = {
-  "Inappropriate Content": "bg-error/10 text-error",
-  Spam: "bg-warning/10 text-warning",
-  "Copyright Violation": "bg-error/10 text-error",
-  "Misleading Information": "bg-warning/10 text-warning",
-  Other: "bg-surface-hover text-text-secondary",
-};
+function WarningCard({ warning, promptMap }) {
+  // Warning objects from the backend vary — handle all known field shapes
+  const reason   = warning.reason || warning.type || "Policy Violation";
+  const promptId = warning.promptId || warning.prompt || null;
+  const date     = warning.date || warning.createdAt || warning.warnedAt || null;
+  const message  = warning.message || warning.description || null;
 
-function ReportCard({ report }) {
-  const reasonStyle =
-    REASON_STYLES[report.reason] || "bg-surface-hover text-text-secondary";
+  const promptTitle = promptId ? (promptMap[String(promptId)] || "View Prompt") : null;
 
-  const formattedDate = report.createdAt
-    ? new Date(report.createdAt).toLocaleDateString("en-GB", {
+  const formattedDate = date
+    ? new Date(date).toLocaleDateString("en-GB", {
         day: "numeric",
         month: "short",
         year: "numeric",
       })
-    : "Unknown date";
+    : null;
 
   return (
-    <article className="rounded-xl border bg-surface p-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex flex-col gap-3 min-w-0">
+    <article className="rounded-xl border border-warning/30 bg-surface p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-2 min-w-0">
+          {/* Reason */}
+          <span className="w-fit rounded-full bg-warning/10 px-3 py-1 text-base font-semibold text-warning">
+            {reason}
+          </span>
+
           {/* Prompt link */}
-          <div className="flex flex-wrap items-center gap-2">
+          {promptId && (
             <Link
-              href={`/prompts/${report.promptId}`}
+              href={`/prompts/${promptId}`}
               className={
                 "inline-flex items-center gap-1.5 text-base font-semibold text-text-primary underline-offset-2 hover:text-brand hover:underline transition-colors " +
                 focusRing
               }
             >
-              {report.promptTitle}
+              {promptTitle}
               <ExternalLink className="h-4 w-4 shrink-0 text-text-muted" />
             </Link>
-            {report.promptCategory && (
-              <span className="rounded-full bg-surface-hover px-3 py-0.5 text-sm font-medium text-text-secondary">
-                {report.promptCategory}
-              </span>
-            )}
-          </div>
+          )}
 
-          {/* Reason chip */}
-          <span
-            className={
-              "w-fit rounded-full px-3 py-1 text-base font-semibold " +
-              reasonStyle
-            }
-          >
-            {report.reason}
-          </span>
-
-          {/* Description */}
-          {report.description && (
+          {/* Admin message */}
+          {message && (
             <p className="max-w-2xl text-base leading-relaxed text-text-secondary">
-              &ldquo;{report.description}&rdquo;
+              &ldquo;{message}&rdquo;
             </p>
           )}
 
-          {/* Meta */}
-          <div className="flex flex-wrap items-center gap-4">
-            <p className="text-base text-text-muted">
-              Reported by{" "}
-              <span className="font-medium text-text-secondary">
-                {report.reportedBy}
-              </span>
-            </p>
-            <span className="text-text-muted">·</span>
+          {formattedDate && (
             <p className="text-base text-text-muted">{formattedDate}</p>
-          </div>
-        </div>
-
-        {/* Status — pending or admin-reviewed */}
-        <div className="shrink-0">
-          {report.warned ? (
-            <span className="inline-flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-4 py-2 text-base font-semibold text-warning">
-              <AlertTriangle className="h-4 w-4" />
-              Admin Reviewed
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-2 rounded-lg border bg-surface-hover px-4 py-2 text-base font-medium text-text-secondary">
-              <CheckCircle className="h-4 w-4" />
-              Pending Review
-            </span>
           )}
         </div>
+
+        <span className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-4 py-2 text-base font-semibold text-warning">
+          <AlertTriangle className="h-4 w-4" />
+          Admin Warned
+        </span>
       </div>
     </article>
   );
@@ -105,20 +74,30 @@ function ReportCard({ report }) {
 export default function MyReportsPage() {
   const { data: session, isPending } = authClient.useSession();
   const router = useRouter();
-  const [reports, setReports] = useState([]);
+  const [warnings, setWarnings] = useState([]);
+  const [promptMap, setPromptMap] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!isPending && !session?.user) {
-      router.replace("/login");
-    }
+    if (!isPending && !session?.user) router.replace("/login");
   }, [isPending, session, router]);
 
   useEffect(() => {
     if (!session?.user) return;
-    getMyReceivedReports()
-      .then((data) => setReports(data.reports || []))
+
+    Promise.all([getMyProfile(), getMyPrompts()])
+      .then(([profileData, promptsData]) => {
+        const w = profileData?.user?.warnings || [];
+        setWarnings(w);
+
+        // Build promptId → title map for enrichment
+        const map = {};
+        (promptsData?.prompts || []).forEach((p) => {
+          map[String(p._id)] = p.title;
+        });
+        setPromptMap(map);
+      })
       .catch((err) => setError(err.message || "Failed to load reports"))
       .finally(() => setIsLoading(false));
   }, [session]);
@@ -127,7 +106,6 @@ export default function MyReportsPage() {
     return (
       <div className="flex flex-col gap-4">
         <div className="h-8 w-48 animate-pulse rounded bg-surface-hover" />
-        <div className="h-28 animate-pulse rounded-xl bg-surface-hover" />
         <div className="h-28 animate-pulse rounded-xl bg-surface-hover" />
         <div className="h-28 animate-pulse rounded-xl bg-surface-hover" />
       </div>
@@ -153,15 +131,7 @@ export default function MyReportsPage() {
           Reports on Your Prompts
         </h1>
         <p className="mt-1 text-base text-text-secondary">
-          Reports that were reviewed and actioned by the Promptly admin team.
-        </p>
-      </div>
-
-      {/* Info banner */}
-      <div className="mb-6 flex items-start gap-3 rounded-xl border border-brand/20 bg-brand-light px-5 py-4">
-        <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
-        <p className="text-base text-text-secondary">
-          All reports against your prompts are shown here. <span className="font-semibold text-text-primary">Pending Review</span> means admin hasn't acted yet. <span className="font-semibold text-text-primary">Admin Reviewed</span> means action was taken.
+          Warnings issued by the Promptly admin team against your content.
         </p>
       </div>
 
@@ -172,7 +142,7 @@ export default function MyReportsPage() {
         </div>
       )}
 
-      {!error && reports.length === 0 ? (
+      {!error && warnings.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border bg-surface py-20 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
             <CheckCircle className="h-8 w-8 text-success" />
@@ -181,8 +151,7 @@ export default function MyReportsPage() {
             All clear!
           </h2>
           <p className="mt-2 max-w-sm text-base text-text-secondary">
-            None of your prompts have received any reviewed reports. Keep up the
-            great work!
+            No warnings have been issued against any of your prompts.
           </p>
           <Link
             href="/dashboard"
@@ -196,11 +165,16 @@ export default function MyReportsPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          <p className="text-base font-medium text-text-secondary">
-            {reports.length} report{reports.length !== 1 ? "s" : ""} received
-          </p>
-          {reports.map((report) => (
-            <ReportCard key={report._id} report={report} />
+          {/* Warning count summary */}
+          <div className="flex items-center gap-3 rounded-xl border border-warning/30 bg-warning/5 px-5 py-4">
+            <ShieldAlert className="h-5 w-5 shrink-0 text-warning" />
+            <p className="text-base font-semibold text-warning">
+              {warnings.length}/3 warning{warnings.length !== 1 ? "s" : ""} — at 3 warnings your account is suspended.
+            </p>
+          </div>
+
+          {warnings.map((w, i) => (
+            <WarningCard key={i} warning={w} promptMap={promptMap} />
           ))}
         </div>
       )}
