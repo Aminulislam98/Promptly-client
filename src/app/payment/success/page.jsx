@@ -15,21 +15,36 @@ export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState("loading"); // loading | success | error
+  const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
+    // Wait for the session to finish loading before proceeding
+    if (isPending) return;
+
+    // If not logged in, can't confirm payment
+    if (!session?.session?.token) {
+      setStatus("error");
+      return;
+    }
+
     const sessionId = searchParams.get("session_id");
     if (!sessionId) {
       setStatus("error");
       return;
     }
 
+    // Sync the FRESH session token to localStorage before making the API call.
+    // Better Auth may have rotated the token during the Stripe redirect, so the
+    // old value in localStorage could be stale and cause a 401.
+    localStorage.setItem("server_token", session.session.token);
+
     confirmPayment(sessionId)
       .then(async () => {
         setStatus("success");
         toast.success("Premium unlocked!");
-        // refresh Better Auth session
+        // refresh Better Auth session so isPremium reflects in the UI
         await authClient.getSession({ fetchOptions: { cache: "no-store" } });
-        // clear old token so TokenSync gets fresh one
+        // clear old token so TokenSync picks up the refreshed session token
         localStorage.removeItem("server_token");
         // redirect back to where the user came from (e.g. the locked prompt)
         const returnTo = sessionStorage.getItem("postPaymentRedirect");
@@ -42,7 +57,7 @@ export default function PaymentSuccessPage() {
         setStatus("error");
         toast.error("Failed to confirm payment. Contact support.");
       });
-  }, [searchParams]);
+  }, [session, isPending, searchParams]);
 
   if (status === "loading") {
     return (
