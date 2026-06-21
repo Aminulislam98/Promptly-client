@@ -520,8 +520,8 @@ export default function ProfilePage() {
             </p>
             <p className="mt-0.5 text-base text-text-secondary">
               {reportCount > 0
-                ? "Admin has reviewed and actioned these reports. See the details below."
-                : "No reviewed reports on any of your prompts. Keep it up!"}
+                ? "Someone has reported one or more of your prompts. Tap to see the reasons."
+                : "No reports on any of your prompts. Keep it up!"}
             </p>
           </div>
         </div>
@@ -597,8 +597,8 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* ── Verification status row ───────────────────────────── */}
-      {isVerified ? (
+      {/* Verified state — only show a row when the account IS verified */}
+      {isVerified && (
         <div className="mt-4 flex items-center justify-between rounded-xl border border-brand/20 bg-brand-light px-5 py-4">
           <div className="flex items-center gap-2">
             <BadgeCheck className="h-5 w-5 shrink-0 text-brand" />
@@ -607,25 +607,6 @@ export default function ProfilePage() {
             </p>
           </div>
           <span className="text-base font-medium text-brand">Active ✓</span>
-        </div>
-      ) : (
-        <div className="mt-4 flex items-center justify-between rounded-xl border px-5 py-4">
-          <div className="flex items-center gap-2">
-            <BadgeCheck className="h-5 w-5 shrink-0 text-text-muted" />
-            <p className="text-base font-medium text-text-secondary">
-              Account not verified
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowVerifyModal(true)}
-            className={
-              "text-base font-semibold text-brand transition-colors hover:underline " +
-              focusRing
-            }
-          >
-            Get verified →
-          </button>
         </div>
       )}
     </section>

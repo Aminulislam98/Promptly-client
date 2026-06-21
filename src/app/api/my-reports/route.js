@@ -43,50 +43,42 @@ export async function GET(request) {
     // Build a map of promptId → prompt info for enrichment
     const promptMap = {};
     myPrompts.forEach((p) => {
-      promptMap[String(p._id)] = {
-        title: p.title,
-        category: p.category,
-        _id: String(p._id),
-      };
+      const id = String(p._id);
+      promptMap[id] = { title: p.title, category: p.category, _id: id };
     });
 
     const myPromptIds = Object.keys(promptMap);
 
-    // 3. Query the MongoDB reports collection for warned reports on user's prompts
-    //    Both auth and the external backend share the same MongoDB cluster + db
+    // Convert IDs to ObjectId where possible — handle both string & ObjectId storage
+    const objectIdList = myPromptIds.flatMap((id) => {
+      try { return [new ObjectId(id)]; } catch { return []; }
+    });
+
+    // 3. Query MongoDB — show ALL reports on the user's prompts (not just warned)
+    //    The external backend's warn action updates the user record, not the report doc,
+    //    so filtering by warned:true would hide all real reports.
     const mongoClient = new MongoClient(process.env.MONGODB_URI);
     try {
       await mongoClient.connect();
       const db = mongoClient.db(process.env.AUTH_DB_NAME || "promptly");
 
-      // Try to match by string promptId OR ObjectId — handle both formats
-      const objectIdList = myPromptIds.flatMap((id) => {
-        try {
-          return [new ObjectId(id)];
-        } catch {
-          return [];
-        }
-      });
+      const query =
+        objectIdList.length > 0
+          ? {
+              $or: [
+                { promptId: { $in: myPromptIds } },
+                { promptId: { $in: objectIdList } },
+              ],
+            }
+          : { promptId: { $in: myPromptIds } };
 
       const reports = await db
         .collection("reports")
-        .find({
-          $and: [
-            { warned: true },
-            {
-              $or: [
-                { promptId: { $in: myPromptIds } },
-                ...(objectIdList.length > 0
-                  ? [{ promptId: { $in: objectIdList } }]
-                  : []),
-              ],
-            },
-          ],
-        })
+        .find(query)
         .sort({ createdAt: -1 })
         .toArray();
 
-      // Enrich each report with prompt info
+      // Enrich each report with prompt title and a human-readable status
       const enriched = reports.map((r) => {
         const pid = String(r.promptId);
         const promptInfo = promptMap[pid] || null;
@@ -96,7 +88,8 @@ export async function GET(request) {
           description: r.description || null,
           reportedBy: r.reportedBy || "Anonymous",
           createdAt: r.createdAt,
-          warned: r.warned,
+          // warned may or may not be set depending on backend — default to false
+          warned: r.warned === true,
           promptId: pid,
           promptTitle: promptInfo?.title || "Unknown Prompt",
           promptCategory: promptInfo?.category || null,

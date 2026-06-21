@@ -83,12 +83,19 @@ function ReportCard({ report }) {
           </div>
         </div>
 
-        {/* Status — always warned/reviewed because we only show those */}
+        {/* Status — pending or admin-reviewed */}
         <div className="shrink-0">
-          <span className="inline-flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-4 py-2 text-base font-semibold text-warning">
-            <AlertTriangle className="h-4 w-4" />
-            Admin Reviewed
-          </span>
+          {report.warned ? (
+            <span className="inline-flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-4 py-2 text-base font-semibold text-warning">
+              <AlertTriangle className="h-4 w-4" />
+              Admin Reviewed
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-2 rounded-lg border bg-surface-hover px-4 py-2 text-base font-medium text-text-secondary">
+              <CheckCircle className="h-4 w-4" />
+              Pending Review
+            </span>
+          )}
         </div>
       </div>
     </article>
@@ -154,7 +161,7 @@ export default function MyReportsPage() {
       <div className="mb-6 flex items-start gap-3 rounded-xl border border-brand/20 bg-brand-light px-5 py-4">
         <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
         <p className="text-base text-text-secondary">
-          Only reports that have been <span className="font-semibold text-text-primary">reviewed and actioned</span> by the admin are shown here. Pending reports under review are not visible.
+          All reports against your prompts are shown here. <span className="font-semibold text-text-primary">Pending Review</span> means admin hasn't acted yet. <span className="font-semibold text-text-primary">Admin Reviewed</span> means action was taken.
         </p>
       </div>
 
