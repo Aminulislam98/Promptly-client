@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { TrendingUp, Copy, Lock, ArrowRight } from "lucide-react";
-import { CreatorAvatar, avatarBg } from "@/components/ui/CreatorAvatar";
+import { avatarBg } from "@/components/ui/CreatorAvatar";
 import { motion } from "framer-motion";
 import { getPrompts } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
