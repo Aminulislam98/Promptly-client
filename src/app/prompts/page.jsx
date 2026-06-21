@@ -13,7 +13,7 @@ import {
   Lock,
   Bookmark,
 } from "lucide-react";
-import { getPrompts, toggleBookmark } from "@/lib/api";
+import { getPrompts, toggleBookmark, getBookmarks } from "@/lib/api";
 import { CreatorAvatar } from "@/components/ui/CreatorAvatar";
 import { authClient } from "@/lib/auth-client";
 import { formatCount, isNew, categoryColor } from "@/lib/utils";
@@ -146,9 +146,14 @@ function StarRating({ rating, count }) {
   );
 }
 
-function BookmarkBtn({ promptId, isLoggedIn }) {
-  const [saved, setSaved] = useState(false);
+function BookmarkBtn({ promptId, initialSaved, isLoggedIn }) {
+  const [saved, setSaved] = useState(initialSaved);
   const [busy, setBusy] = useState(false);
+
+  // Sync when parent finishes loading bookmarks
+  useEffect(() => {
+    setSaved(initialSaved);
+  }, [initialSaved]);
 
   const handle = async (e) => {
     e.preventDefault();
@@ -157,12 +162,13 @@ function BookmarkBtn({ promptId, isLoggedIn }) {
       window.location.href = `/login?redirect=/prompts/${promptId}`;
       return;
     }
+    const next = !saved;
+    setSaved(next); // optimistic
     setBusy(true);
     try {
       await toggleBookmark(promptId);
-      setSaved((v) => !v);
     } catch {
-      /* silent */
+      setSaved(!next); // revert on error
     } finally {
       setBusy(false);
     }
@@ -184,7 +190,7 @@ function BookmarkBtn({ promptId, isLoggedIn }) {
   );
 }
 
-function PromptCard({ prompt, isLoggedIn }) {
+function PromptCard({ prompt, isLoggedIn, initialSaved }) {
   return (
     <article className="group flex flex-col rounded-xl border bg-surface transition-colors hover:bg-surface-hover">
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-brand-light shrink-0">
@@ -213,7 +219,7 @@ function PromptCard({ prompt, isLoggedIn }) {
             <Lock className="h-3 w-3" /> Premium
           </div>
         )}
-        <BookmarkBtn promptId={prompt._id} isLoggedIn={isLoggedIn} />
+        <BookmarkBtn promptId={prompt._id} initialSaved={initialSaved} isLoggedIn={isLoggedIn} />
       </div>
       <div className="flex flex-1 flex-col p-4">
         <div className="flex items-center justify-between gap-2">
@@ -526,12 +532,24 @@ export default function AllPromptsPage() {
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [savedIds, setSavedIds] = useState(new Set());
   const LIMIT = 12;
   const totalPages = Math.ceil(total / LIMIT);
 
   const { data: session } = authClient.useSession();
   useEffect(() => setMounted(true), []);
   const isLoggedIn = mounted && !!session?.user;
+
+  // Fetch user's existing bookmarks so buttons show correct saved state on load
+  useEffect(() => {
+    if (!session?.user) return;
+    getBookmarks()
+      .then((data) => {
+        const ids = new Set((data.bookmarks || []).map((b) => b.promptId));
+        setSavedIds(ids);
+      })
+      .catch(() => {});
+  }, [session?.user]);
 
   const updateURL = useCallback(
     (key, value) => {
@@ -820,6 +838,7 @@ export default function AllPromptsPage() {
                     key={prompt._id}
                     prompt={prompt}
                     isLoggedIn={isLoggedIn}
+                    initialSaved={savedIds.has(prompt._id)}
                   />
                 ))}
               </div>

@@ -33,6 +33,10 @@ function getDashboardPath(role) {
   return role === "admin" ? "/admin" : "/dashboard";
 }
 
+function getProfilePath(role) {
+  return role === "admin" ? "/admin/profile" : "/dashboard/profile";
+}
+
 // ─────────────────────────────────────────────────────────────
 // Logout Confirmation Modal
 // ─────────────────────────────────────────────────────────────
@@ -106,6 +110,7 @@ export function Navbar({ name = "Promptly" }) {
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
   const dashboardPath = getDashboardPath(user?.role);
+  const profilePath   = getProfilePath(user?.role);
 
   // Scroll shadow
   useEffect(() => {
@@ -324,7 +329,7 @@ export function Navbar({ name = "Promptly" }) {
                     </div>
                     <div className="p-1.5">
                       <Link
-                        href="/dashboard/profile"
+                        href={profilePath}
                         onClick={() => setProfileOpen(false)}
                         className={
                           "flex items-center gap-2 rounded-lg px-3 py-2.5 text-base font-medium text-text-primary transition-colors hover:bg-surface-hover " +
@@ -452,7 +457,7 @@ export function Navbar({ name = "Promptly" }) {
                     </div>
                   </div>
                   <Link
-                    href="/dashboard/profile"
+                    href={profilePath}
                     onClick={() => setMenuOpen(false)}
                     className={
                       "flex min-h-[48px] items-center gap-2 rounded-xl px-4 text-base font-medium text-text-primary transition-colors hover:bg-surface-hover " +

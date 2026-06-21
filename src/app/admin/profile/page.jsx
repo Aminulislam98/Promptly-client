@@ -18,7 +18,6 @@ import {
   UserCheck,
   Flag,
   BarChart2,
-  Crown,
   Zap,
   Globe,
   Settings,
@@ -44,7 +43,8 @@ function fmt(n) {
 
 function fmtMoney(n) {
   if (!n && n !== 0) return "$0";
-  return "$" + (n / 100).toFixed(2);
+  // amounts are already in dollars
+  return "$" + Number(n).toFixed(2);
 }
 
 function timeAgo(dateStr) {
@@ -229,59 +229,47 @@ export default function AdminProfilePage() {
   return (
     <div className="space-y-8">
       {/* ── Hero card ─────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl border bg-surface">
-        {/* gradient stripe */}
-        <div className="h-28 w-full bg-gradient-to-r from-brand via-[#8b5cf6] to-[#ec4899]" />
-
-        <div className="px-6 pb-8">
-          {/* avatar + badges */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex items-end gap-4 -mt-10">
-              {/* avatar */}
-              <div className="relative h-20 w-20 shrink-0">
-                <div className="h-20 w-20 rounded-full border-4 border-surface shadow-xl overflow-hidden bg-brand flex items-center justify-center">
-                  {user?.image ? (
-                    <Image
-                      src={user.image}
-                      alt={user.name || "Admin"}
-                      fill
-                      className="object-cover"
-                      sizes="80px"
-                    />
-                  ) : (
-                    <span className="text-2xl font-bold text-on-brand">{initials}</span>
-                  )}
-                </div>
-                {/* Shield badge */}
-                <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-brand shadow">
-                  <ShieldCheck className="h-3.5 w-3.5 text-on-brand" strokeWidth={2.5} />
-                </span>
+      <div className="rounded-xl border bg-surface p-6">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          {/* Left — avatar + name */}
+          <div className="flex items-center gap-4">
+            <div className="relative shrink-0">
+              <div className="h-16 w-16 overflow-hidden rounded-full border-2 border-border bg-brand flex items-center justify-center shadow-sm">
+                {user?.image ? (
+                  <Image
+                    src={user.image}
+                    alt={user.name || "Admin"}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                  />
+                ) : (
+                  <span className="text-xl font-bold text-on-brand">{initials}</span>
+                )}
               </div>
+              <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-brand">
+                <ShieldCheck className="h-3 w-3 text-on-brand" strokeWidth={2.5} />
+              </span>
+            </div>
 
-              <div className="mb-1 min-w-0">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl font-bold leading-tight text-text-primary">
                   {user?.name || "Admin"}
                 </h1>
-                <p className="text-base text-text-secondary">{user?.email || "—"}</p>
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-0.5 text-sm font-bold text-brand">
+                  <ShieldCheck className="h-3 w-3" /> Admin
+                </span>
               </div>
-            </div>
-
-            {/* right badges */}
-            <div className="flex flex-wrap gap-2 sm:mb-1">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-sm font-bold text-on-brand">
-                <Crown className="h-3.5 w-3.5" /> Super Admin
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-sm font-semibold text-success">
-                <Activity className="h-3.5 w-3.5" /> Active
-              </span>
+              <p className="mt-0.5 text-base text-text-secondary">{user?.email || "—"}</p>
+              <p className="mt-1 text-sm text-text-muted">Full platform access · No restrictions</p>
             </div>
           </div>
 
-          {/* caption */}
-          <p className="mt-4 max-w-prose text-base leading-relaxed text-text-secondary">
-            You have full administrative access to the Promptly platform. Monitor platform health,
-            manage users and content, and ensure a world-class experience for all members.
-          </p>
+          {/* Right — status */}
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-success/10 px-3 py-1.5 text-sm font-semibold text-success">
+            <Activity className="h-3.5 w-3.5" /> Account Active
+          </span>
         </div>
       </div>
 
@@ -309,7 +297,7 @@ export default function AdminProfilePage() {
           </div>
           <div className="divide-y px-6">
             <InfoRow icon={Mail} label="Email Address" value={user?.email || "—"} badge="Verified" />
-            <InfoRow icon={ShieldCheck} label="Account Role" value="Super Administrator" badge="Highest" />
+            <InfoRow icon={ShieldCheck} label="Account Role" value="Administrator" badge="Full Access" />
             <InfoRow icon={Calendar} label="Member Since" value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "—"} />
             <InfoRow icon={Lock} label="Account Security" value="Protected by Better Auth" badge="Secure" />
             <InfoRow icon={Zap} label="Access Level" value="Full platform — no restrictions" />

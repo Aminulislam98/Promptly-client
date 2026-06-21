@@ -7,7 +7,7 @@ import { Copy, ArrowRight, Lock, Bookmark } from "lucide-react";
 import { CreatorAvatar } from "@/components/ui/CreatorAvatar";
 import { motion } from "framer-motion";
 import { authClient } from "@/lib/auth-client";
-import { getFeaturedPrompts, toggleBookmark } from "@/lib/api";
+import { getFeaturedPrompts, toggleBookmark, getBookmarks } from "@/lib/api";
 import { formatCount, isNew, categoryColor } from "@/lib/utils";
 
 const focusRing =
@@ -28,9 +28,14 @@ const fadeUp = {
   }),
 };
 
-function BookmarkBtn({ promptId, isLoggedIn }) {
-  const [saved, setSaved] = useState(false);
+function BookmarkBtn({ promptId, initialSaved, isLoggedIn }) {
+  const [saved, setSaved] = useState(initialSaved);
   const [busy, setBusy] = useState(false);
+
+  // Sync when parent finishes loading bookmarks
+  useEffect(() => {
+    setSaved(initialSaved);
+  }, [initialSaved]);
 
   const handle = async (e) => {
     e.preventDefault();
@@ -39,12 +44,13 @@ function BookmarkBtn({ promptId, isLoggedIn }) {
       window.location.href = `/login?redirect=/prompts/${promptId}`;
       return;
     }
+    const next = !saved;
+    setSaved(next); // optimistic
     setBusy(true);
     try {
       await toggleBookmark(promptId);
-      setSaved((v) => !v);
     } catch {
-      /* silent */
+      setSaved(!next); // revert on error
     } finally {
       setBusy(false);
     }
@@ -87,6 +93,7 @@ export function FeaturedPrompts() {
   const [mounted, setMounted] = useState(false);
   const [prompts, setPrompts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [savedIds, setSavedIds] = useState(new Set());
   const { data: session } = authClient.useSession();
 
   useEffect(() => setMounted(true), []);
@@ -97,6 +104,17 @@ export function FeaturedPrompts() {
       .catch(() => setPrompts([]))
       .finally(() => setIsLoading(false));
   }, []);
+
+  // Fetch user's existing bookmarks so buttons show correct state on load
+  useEffect(() => {
+    if (!session?.user) return;
+    getBookmarks()
+      .then((data) => {
+        const ids = new Set((data.bookmarks || []).map((b) => b.promptId));
+        setSavedIds(ids);
+      })
+      .catch(() => {});
+  }, [session?.user]);
 
   const isLoggedIn = mounted && !!session?.user;
 
@@ -171,7 +189,7 @@ export function FeaturedPrompts() {
                       </div>
                     )}
                     {/* Quick bookmark */}
-                    <BookmarkBtn promptId={prompt._id} isLoggedIn={isLoggedIn} />
+                    <BookmarkBtn promptId={prompt._id} initialSaved={savedIds.has(prompt._id)} isLoggedIn={isLoggedIn} />
                   </div>
 
                   {/* Content */}

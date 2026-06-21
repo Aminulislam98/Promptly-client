@@ -161,7 +161,7 @@ export default function AdminLayout({ children }) {
                 {session?.user?.name || "Admin"}
               </p>
               <p className="truncate text-sm text-text-muted">
-                Super Admin
+                Admin
               </p>
             </div>
           )}

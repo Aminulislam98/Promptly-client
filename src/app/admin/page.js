@@ -82,7 +82,8 @@ function fmt(n) {
 
 function fmtMoney(n) {
   if (!n && n !== 0) return "$0";
-  return "$" + (n / 100).toFixed(0);
+  // amounts are already in dollars (e.g. 5, not 500)
+  return "$" + Number(n).toFixed(2);
 }
 
 /* ─── chart colour palettes ────────────────────────────────── */
@@ -191,12 +192,12 @@ export default function AdminHomePage() {
   }, []);
 
   /* derived data */
-  const revenueByMonth    = useMemo(() => groupByMonth(payments, "createdAt", "amount"), [payments]);
+  const revenueByMonth    = useMemo(() => groupByMonth(payments, "date", "amount"), [payments]);
   const usersJoinedMonth  = useMemo(() => groupByMonth(users, "createdAt"), [users]);
   const usersByRole       = useMemo(() => groupByField(users, "role"), [users]);
   const promptsByCategory = useMemo(() => groupByField(prompts, "category"), [prompts]);
   const totalRevenue      = useMemo(() => payments.reduce((s, p) => s + (p.amount || 0), 0), [payments]);
-  const recentPayments    = useMemo(() => [...payments].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 8), [payments]);
+  const recentPayments    = useMemo(() => [...payments].sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)).slice(0, 8), [payments]);
   const pendingPrompts    = useMemo(() => prompts.filter((p) => p.status === "pending").length, [prompts]);
 
   const KPI_CARDS = [
@@ -268,8 +269,8 @@ export default function AdminHomePage() {
               <LineChart data={revenueByMonth} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e4e6ea" />
                 <XAxis dataKey="name" tick={{ fontSize: 13, fill: "#606060" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 13, fill: "#606060" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v/100).toFixed(0)}`} />
-                <Tooltip content={<ChartTooltip prefix="$" />} formatter={(v) => (v/100).toFixed(0)} />
+                <YAxis tick={{ fontSize: 13, fill: "#606060" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${Number(v).toFixed(0)}`} />
+                <Tooltip content={<ChartTooltip prefix="$" />} />
                 <Line type="monotone" dataKey="total" stroke={CHART_AMBER} strokeWidth={2.5} dot={{ fill: CHART_AMBER, r: 4 }} activeDot={{ r: 6 }} name="Revenue" />
               </LineChart>
             </ResponsiveContainer>
@@ -397,11 +398,11 @@ export default function AdminHomePage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand/10 text-sm font-bold text-brand">
-                          {(p.userName || p.userEmail || "?")[0].toUpperCase()}
+                          {(p.name || p.email || "?")[0].toUpperCase()}
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate font-medium text-text-primary">{p.userName || "—"}</p>
-                          <p className="truncate text-sm text-text-muted">{p.userEmail || ""}</p>
+                          <p className="truncate font-medium text-text-primary">{p.name || "—"}</p>
+                          <p className="truncate text-sm text-text-muted">{p.email || ""}</p>
                         </div>
                       </div>
                     </td>
@@ -412,8 +413,8 @@ export default function AdminHomePage() {
                       <StatusBadge status={p.status} />
                     </td>
                     <td className="px-6 py-4 text-sm text-text-secondary">
-                      {p.createdAt
-                        ? new Date(p.createdAt).toLocaleDateString("en-US", {
+                      {(p.date || p.createdAt)
+                        ? new Date(p.date || p.createdAt).toLocaleDateString("en-US", {
                             month: "short", day: "numeric", year: "numeric",
                           })
                         : "—"}
