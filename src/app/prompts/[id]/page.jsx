@@ -197,7 +197,7 @@ export default function PromptDetailsPage({ params }) {
         setCopyCount(p?.copyCount || 0);
         setReviews(reviewData.reviews || []);
         const bookmarkedIds = (bookmarksData?.bookmarks || []).map(
-          (b) => b._id || b.promptId || b
+          (b) => b.promptId
         );
         setBookmarked(bookmarkedIds.includes(id));
 
@@ -648,7 +648,7 @@ export default function PromptDetailsPage({ params }) {
                           "h-4 w-4 " + (bookmarked ? "fill-brand" : "")
                         }
                       />
-                      {bookmarked ? "Bookmarked" : "Bookmark"}
+                      {bookmarked ? "Remove Bookmark" : "Bookmark"}
                     </button>
                     <button
                       type="button"
