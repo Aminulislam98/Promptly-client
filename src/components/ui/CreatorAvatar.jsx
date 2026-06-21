@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { FileText, Copy, BadgeCheck } from "lucide-react";
+import { FileText, Copy } from "lucide-react";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { getCreatorPrompts } from "@/lib/api";
 import { formatCount } from "@/lib/utils";
 
@@ -232,7 +233,7 @@ export function CreatorAvatar({ name, size = "md", stopPropagation = false }) {
                     {name}
                   </p>
                   {info.isVerified && (
-                    <BadgeCheck className="h-4 w-4 shrink-0 text-brand" title="Verified" />
+                    <VerifiedBadge size="xs" />
                   )}
                 </div>
                 <p className="truncate text-sm text-text-secondary">Prompt Creator</p>

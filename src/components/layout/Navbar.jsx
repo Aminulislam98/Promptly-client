@@ -18,9 +18,9 @@ import {
   ChevronDown,
   User,
   Sparkles,
-  BadgeCheck,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -327,7 +327,7 @@ export function Navbar({ name = "Promptly" }) {
                             {user.name}
                           </p>
                           {user.isVerified && (
-                            <BadgeCheck className="h-4 w-4 shrink-0 text-brand" aria-label="Verified" />
+                            <VerifiedBadge size="xs" />
                           )}
                         </div>
                         <p className="truncate text-sm text-text-muted">{user.email}</p>

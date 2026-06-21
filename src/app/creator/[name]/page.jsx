@@ -3,8 +3,9 @@
 import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Copy, Lock, User, FileText, BadgeCheck } from "lucide-react";
+import { ArrowLeft, Copy, Lock, User, FileText } from "lucide-react";
 import { getCreatorPrompts } from "@/lib/api";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { authClient } from "@/lib/auth-client";
 
 const focusRing =
@@ -100,20 +101,14 @@ export default function CreatorProfilePage({ params }) {
               <h1 className="text-3xl font-bold leading-tight text-text-primary">
                 {creatorName}
               </h1>
-              {creatorInfo.isVerified && (
-                <BadgeCheck
-                  className="h-7 w-7 text-brand"
-                  aria-label="Verified creator"
-                  title="Verified Promptly member"
-                />
-              )}
+              {creatorInfo.isVerified && <VerifiedBadge size="xl" />}
             </div>
 
             <div className="mt-1 flex items-center gap-2">
               <p className="text-base text-text-secondary">Prompt Creator</p>
               {creatorInfo.isVerified && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2.5 py-0.5 text-sm font-semibold text-on-brand">
-                  <BadgeCheck className="h-3.5 w-3.5" /> Verified
+                  <VerifiedBadge size="xs" /> Verified
                 </span>
               )}
             </div>

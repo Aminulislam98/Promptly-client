@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { getPrompts, toggleBookmark, getBookmarks } from "@/lib/api";
 import { CreatorAvatar, useCreatorInfo } from "@/components/ui/CreatorAvatar";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { authClient } from "@/lib/auth-client";
 import { formatCount, isNew, categoryColor } from "@/lib/utils";
 
@@ -230,13 +231,7 @@ function PromptCard({ prompt, isLoggedIn, initialSaved }) {
           <span className="truncate text-base font-medium text-text-secondary">
             {prompt.creatorName}
           </span>
-          {creatorInfo.isVerified && (
-            <BadgeCheck
-              className="h-4 w-4 shrink-0 text-brand"
-              aria-label="Verified creator"
-              title="Verified Promptly member"
-            />
-          )}
+          {creatorInfo.isVerified && <VerifiedBadge size="sm" />}
         </div>
         <h2 className="mt-2 text-base font-bold leading-snug text-text-primary line-clamp-2">
           {prompt.title}

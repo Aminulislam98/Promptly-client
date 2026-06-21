@@ -17,6 +17,7 @@ import {
   ArrowRight,
   Flag,
 } from "lucide-react";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { authClient } from "@/lib/auth-client";
 import {
   applyForCreator,
@@ -500,13 +501,7 @@ export default function ProfilePage() {
               <h2 className="text-2xl font-bold leading-tight text-text-primary">
                 {user?.name ?? "User"}
               </h2>
-              {isVerified && (
-                <BadgeCheck
-                  className="h-6 w-6 text-brand"
-                  aria-label="Verified account"
-                  title="Verified Promptly member"
-                />
-              )}
+              {isVerified && <VerifiedBadge size="lg" />}
             </div>
 
             {/* Role / plan badges */}
@@ -525,7 +520,7 @@ export default function ProfilePage() {
               )}
               {isVerified && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-brand px-3 py-1 text-base font-semibold text-on-brand">
-                  <BadgeCheck className="h-4 w-4" /> Verified
+                  <VerifiedBadge size="xs" /> Verified
                 </span>
               )}
               {isSuspended && (
@@ -684,7 +679,7 @@ export default function ProfilePage() {
       {isVerified && (
         <div className="mt-4 flex items-center justify-between rounded-xl border border-brand/20 bg-brand-light px-5 py-4">
           <div className="flex items-center gap-2">
-            <BadgeCheck className="h-5 w-5 shrink-0 text-brand" />
+            <VerifiedBadge size="md" />
             <p className="text-base font-semibold text-text-primary">
               Your account is verified
             </p>
