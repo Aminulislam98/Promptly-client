@@ -18,8 +18,8 @@ export default function HomePage() {
   return (
     <>
       <HeroBanner />
-      <RecentlyViewed />
       <FeaturedPrompts />
+      <RecentlyViewed />
       <TrendingPrompts />
       <BrowseByTool />
       <TopCreators />

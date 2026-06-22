@@ -42,9 +42,11 @@ function SkeletonCard() {
 
 export function TrendingPrompts() {
   const { data: session } = authClient.useSession();
+  const [mounted, setMounted] = useState(false);
   const [prompts, setPrompts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const isLoggedIn = !!session?.user;
+  useEffect(() => setMounted(true), []);
+  const isLoggedIn = mounted && !!session?.user;
 
   useEffect(() => {
     getPrompts({ sort: "copies", limit: 8, page: 1 })
@@ -56,42 +58,34 @@ export function TrendingPrompts() {
   if (!isLoading && prompts.length === 0) return null;
 
   return (
-    <section className="w-full border-t bg-surface-hover py-12 lg:py-16">
-      <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+    <section className="w-full border-t bg-surface py-12 lg:py-16">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-end justify-between">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4 }}
+          className="mb-6 flex items-end justify-between"
+        >
           <div>
-            <motion.p
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-base font-semibold uppercase tracking-widest text-brand"
-            >
-              Trending
-            </motion.p>
-            <motion.h2
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.1 }}
-              className="mt-2 text-2xl font-bold leading-tight text-text-primary"
-            >
+            <span className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-light px-4 py-1.5 text-base font-semibold text-brand">
+              <TrendingUp className="h-4 w-4" /> Trending
+            </span>
+            <h2 className="mt-4 text-2xl font-bold leading-tight text-text-primary sm:text-3xl">
               Most Copied This Week
-            </motion.h2>
+            </h2>
           </div>
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-6 w-6 text-brand" />
-            <Link
-              href="/prompts?sort=copies"
-              className={"text-base font-medium text-brand hover:underline " + focusRing}
-            >
-              See all →
-            </Link>
-          </div>
-        </div>
+          <Link
+            href="/prompts?sort=copies"
+            className={"hidden items-center gap-1 text-base font-medium text-brand hover:underline sm:flex " + focusRing}
+          >
+            See all →
+          </Link>
+        </motion.div>
 
         {/* Two-column list */}
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {isLoading
             ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
             : prompts.map((prompt, i) => {

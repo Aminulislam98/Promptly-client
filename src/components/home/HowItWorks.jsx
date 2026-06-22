@@ -8,77 +8,90 @@ const fadeUp = {
   visible: (i = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, delay: i * 0.1, ease: [0.21, 0.47, 0.32, 0.98] },
+    transition: { duration: 0.5, delay: i * 0.12, ease: [0.21, 0.47, 0.32, 0.98] },
   }),
 };
 
 const STEPS = [
   {
     icon: UserPlus,
-    step: "01",
-    title: "Create an Account",
-    desc: "Sign up for free in seconds. No credit card required. Start exploring thousands of community-curated AI prompts right away.",
+    title: "Create a free account",
+    desc: "Sign up in seconds — no credit card required. Unlock access to thousands of community-curated AI prompts right away.",
   },
   {
     icon: Search,
-    step: "02",
-    title: "Find the Right Prompt",
-    desc: "Search by title, filter by AI tool, category, or difficulty. Every prompt is reviewed by our team before going live.",
+    title: "Find the right prompt",
+    desc: "Search by title, filter by AI tool, category, or difficulty. Every prompt is reviewed before going live.",
   },
   {
     icon: Zap,
-    step: "03",
-    title: "Copy & Use Instantly",
-    desc: "One click copies the prompt to your clipboard. Paste it directly into ChatGPT, Claude, Midjourney, Gemini, or any AI tool.",
+    title: "Copy and use instantly",
+    desc: "One click copies the prompt to your clipboard. Paste it directly into ChatGPT, Claude, Midjourney, or any AI tool.",
   },
 ];
 
 export function HowItWorks() {
   return (
     <section className="w-full border-t bg-surface py-12 lg:py-16">
-      <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+
+        {/* Section header */}
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-80px" }}
           variants={fadeUp}
           custom={0}
-          className="mb-10 text-center"
+          className="mb-12 text-center"
         >
-          <p className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-light px-4 py-1.5 text-base font-semibold text-brand">
+          <span className="inline-flex items-center rounded-full border border-brand/20 bg-brand-light px-4 py-1.5 text-base font-semibold text-brand">
             Simple Process
-          </p>
+          </span>
           <h2 className="mt-4 text-2xl font-bold leading-tight text-text-primary sm:text-3xl">
-            How it works
+            Up and running in 2 minutes
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed text-text-secondary">
-            From sign-up to copying your first prompt — it takes under 2 minutes.
+            From sign-up to copying your first prompt — it really is that fast.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        {/* Steps */}
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-6">
           {STEPS.map((item, i) => (
             <motion.div
-              key={item.step}
+              key={item.title}
               custom={i + 1}
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-60px" }}
               variants={fadeUp}
-              className="relative flex flex-col rounded-xl border bg-surface p-6"
+              className="relative flex flex-col items-center text-center"
             >
-              <span className="absolute right-5 top-5 select-none text-4xl font-black text-border">
-                {item.step}
-              </span>
-              <span className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-brand-light">
-                <item.icon className="h-6 w-6 text-brand" />
-              </span>
-              <h3 className="text-lg font-semibold text-text-primary">
-                {item.title}
-              </h3>
-              <p className="mt-2 text-base leading-relaxed text-text-secondary">
-                {item.desc}
-              </p>
+              {/* Connector line between steps — desktop only */}
+              {i < STEPS.length - 1 && (
+                <div
+                  className="absolute left-full top-8 hidden w-full -translate-x-1/2 border-t-2 border-dashed border-border sm:block"
+                  aria-hidden="true"
+                />
+              )}
+
+              {/* Circle with icon + step number badge */}
+              <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-brand">
+                <item.icon className="h-7 w-7 text-white" />
+                <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-brand bg-surface text-sm font-bold text-brand">
+                  {i + 1}
+                </span>
+              </div>
+
+              {/* Text */}
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold leading-tight text-text-primary">
+                  {item.title}
+                </h3>
+                <p className="mx-auto mt-3 max-w-xs text-base leading-relaxed text-text-secondary">
+                  {item.desc}
+                </p>
+              </div>
             </motion.div>
           ))}
         </div>

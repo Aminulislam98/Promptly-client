@@ -67,43 +67,28 @@ export function TopCreators() {
 
   return (
     <section className="w-full border-t bg-surface-hover py-12 lg:py-16">
-      <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-end justify-between">
-          <div>
-            <motion.p
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-base font-semibold uppercase tracking-widest text-brand"
-            >
-              Community
-            </motion.p>
-            <motion.h2
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.1 }}
-              className="mt-2 text-2xl font-bold leading-tight text-text-primary"
-            >
-              Top Creators
-            </motion.h2>
-          </div>
-          <Trophy className="h-8 w-8 text-warning" />
-        </div>
-
-        <motion.p
+        <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="mt-2 text-base text-text-secondary"
+          transition={{ duration: 0.4 }}
+          className="mb-8 text-center"
         >
-          Meet the people building the best prompts on Promptly.
-        </motion.p>
+          <span className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-light px-4 py-1.5 text-base font-semibold text-brand">
+            <Trophy className="h-4 w-4" /> Community
+          </span>
+          <h2 className="mt-4 text-2xl font-bold leading-tight text-text-primary sm:text-3xl">
+            Top Creators
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed text-text-secondary">
+            Meet the people building the best prompts on Promptly.
+          </p>
+        </motion.div>
 
         {/* Grid */}
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {isLoading
             ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
             : creators.map((creator, i) => {

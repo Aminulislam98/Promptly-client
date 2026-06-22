@@ -122,33 +122,33 @@ export function FeaturedPrompts() {
 
   return (
     <section className="w-full border-t bg-surface py-12 lg:py-16">
-      <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-end justify-between">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4 }}
+          className="mb-6 flex items-end justify-between"
+        >
           <div>
-            <motion.h2
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.1 }}
-              className="mt-2 text-2xl font-bold text-text-primary"
-            >
-              Featured Prompts
-            </motion.h2>
+            <span className="inline-flex items-center rounded-full border border-brand/20 bg-brand-light px-4 py-1.5 text-base font-semibold text-brand">
+              Featured
+            </span>
+            <h2 className="mt-4 text-2xl font-bold leading-tight text-text-primary sm:text-3xl">
+              Hand-picked Prompts
+            </h2>
           </div>
           <Link
             href="/prompts"
-            className={
-              "hidden items-center gap-1 text-base font-medium text-brand hover:underline sm:flex " +
-              focusRing
-            }
+            className={"hidden items-center gap-1 text-base font-medium text-brand hover:underline sm:flex " + focusRing}
           >
             View all <ArrowRight className="h-4 w-4" />
           </Link>
-        </div>
+        </motion.div>
 
-        {/* Grid — with padding, cards with rounded corners */}
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Grid */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {isLoading
             ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
             : prompts.map((prompt, i) => (
@@ -208,7 +208,7 @@ export function FeaturedPrompts() {
                         {prompt.difficulty}
                       </span>
                     </div>
-                    <h3 className="mt-2 min-h-[3rem] text-lg font-semibold leading-snug text-text-primary line-clamp-2">
+                    <h3 className="mt-2 min-h-12 text-lg font-semibold leading-snug text-text-primary line-clamp-2">
                       {prompt.title}
                     </h3>
                     <div className="mt-2 flex items-center gap-3 text-base text-text-secondary">
@@ -245,7 +245,7 @@ export function FeaturedPrompts() {
                             focusRing
                           }
                         >
-                          Login to View
+                          Log in to view
                         </Link>
                       )}
                     </div>
