@@ -26,6 +26,10 @@ export async function GET(request, { params }) {
 
 // POST: save a snapshot of the current prompt state
 export async function POST(request, { params }) {
+  // Must be authenticated to save snapshots (prevents anonymous spam)
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session?.user?.id) return Response.json({ message: "Unauthorized" }, { status: 401 });
+
   const { promptId } = await params;
   let body;
   try { body = await request.json(); } catch {

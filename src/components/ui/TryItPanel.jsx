@@ -24,14 +24,18 @@ function extractVars(content = "") {
   return [...found.values()];
 }
 
+// Escape any regex special chars in the key so they match literally
+function escRe(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
 function fillContent(content = "", values = {}) {
   let result = content;
   for (const [key, val] of Object.entries(values)) {
-    // Replace all variants: [KEY], {{key}}, <KEY>
+    const safeKey = escRe(key);
+    const safeKeyLower = escRe(key.toLowerCase().replace(/ /g, "_"));
     result = result
-      .replace(new RegExp(`\\[${key}\\]`, "g"), val || `[${key}]`)
-      .replace(new RegExp(`\\{\\{${key.toLowerCase().replace(/ /g, "_")}\\}\\}`, "g"), val || `{{${key.toLowerCase().replace(/ /g, "_")}}}`)
-      .replace(new RegExp(`<${key}>`, "g"), val || `<${key}>`);
+      .replace(new RegExp(`\\[${safeKey}\\]`, "g"), val || `[${key}]`)
+      .replace(new RegExp(`\\{\\{${safeKeyLower}\\}\\}`, "g"), val || `{{${key.toLowerCase().replace(/ /g, "_")}}}`)
+      .replace(new RegExp(`<${safeKey}>`, "g"), val || `<${key}>`);
   }
   return result;
 }

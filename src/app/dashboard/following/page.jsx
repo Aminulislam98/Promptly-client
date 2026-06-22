@@ -5,14 +5,11 @@ import Link from "next/link";
 import { Users, ArrowRight, UserMinus } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { unfollowCreator } from "@/lib/api";
-import { authClient } from "@/lib/auth-client";
-import { MongoClient } from "mongodb";
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2";
 
 export default function FollowingPage() {
-  const { data: session } = authClient.useSession();
   const [following, setFollowing] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [unfollowingName, setUnfollowingName] = useState(null);

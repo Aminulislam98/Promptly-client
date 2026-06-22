@@ -3,7 +3,7 @@
 import { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy, Bookmark, Flag, ArrowLeft, Check, Lock, Share2, GitFork, FolderPlus, MessageSquare, Trash2, FolderOpen, Plus, UserPlus, UserCheck, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Copy, Bookmark, Flag, ArrowLeft, Check, Lock, Share2, GitFork, FolderPlus, MessageSquare, Trash2, FolderOpen, Plus, UserPlus, UserCheck, Clock, ChevronDown, ChevronUp, X } from "lucide-react";
 import { TryItPanel } from "@/components/ui/TryItPanel";
 import toast, { Toaster } from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
@@ -886,15 +886,17 @@ export default function PromptDetailsPage({ params }) {
                       <button
                         type="button"
                         onClick={() => {
-                          const data = encodeURIComponent(JSON.stringify({
-                            title: `Remix of: ${prompt.title}`,
-                            content: prompt.content,
-                            category: prompt.category,
-                            aiTool: prompt.aiTool,
-                            difficulty: prompt.difficulty,
-                            remixedFrom: id,
-                          }));
-                          router.push(`/dashboard/create?remix=${data}`);
+                          try {
+                            sessionStorage.setItem("promptly_remix", JSON.stringify({
+                              title: `Remix of: ${prompt.title}`,
+                              content: prompt.content,
+                              category: prompt.category,
+                              aiTool: prompt.aiTool,
+                              difficulty: prompt.difficulty,
+                              remixedFrom: id,
+                            }));
+                          } catch { /* */ }
+                          router.push("/dashboard/add-prompt?remix=1");
                         }}
                         className={
                           "flex h-11 w-full items-center justify-center gap-2 rounded-lg border text-base font-medium text-text-secondary transition-colors hover:bg-surface-hover hover:text-brand " +
@@ -1105,8 +1107,8 @@ export default function PromptDetailsPage({ params }) {
           <div className="w-full max-w-sm rounded-2xl border bg-surface p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-text-primary">Save to Collection</h3>
-              <button type="button" onClick={() => setShowCollectionModal(false)} className={"rounded-lg p-1.5 transition-colors hover:bg-surface-hover " + focusRing}>
-                <Check className="h-4 w-4 text-text-muted" />
+              <button type="button" onClick={() => setShowCollectionModal(false)} aria-label="Close" className={"rounded-lg p-1.5 transition-colors hover:bg-surface-hover " + focusRing}>
+                <X className="h-4 w-4 text-text-muted" />
               </button>
             </div>
             {/* Create new collection */}

@@ -69,9 +69,18 @@ function SidebarLink({ link, expanded }) {
   );
 }
 
+// Fixed set for mobile bottom bar — always these 5 regardless of sidebar order
+const MOBILE_TABS = [
+  USER_LINKS.find((l) => l.href === "/dashboard"),
+  USER_LINKS.find((l) => l.href === "/dashboard/add-prompt"),
+  USER_LINKS.find((l) => l.href === "/dashboard/my-prompts"),
+  USER_LINKS.find((l) => l.href === "/dashboard/saved"),
+  USER_LINKS.find((l) => l.href === "/dashboard/profile"),
+].filter(Boolean);
+
 function BottomTabBar() {
   const pathname = usePathname();
-  const TABS = USER_LINKS.slice(0, 5);
+  const TABS = MOBILE_TABS;
 
   return (
     <nav

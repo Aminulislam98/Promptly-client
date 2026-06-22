@@ -43,11 +43,15 @@ function AddPromptPageInner() {
   const searchParams = useSearchParams();
   const { data: session } = authClient.useSession();
 
-  // Pre-fill from remix query param
-  const remixParam = searchParams.get("remix");
+  // Pre-fill from remix data stored in sessionStorage (avoids URL length limits)
+  const isRemix = searchParams.get("remix") === "1";
   const remixData = (() => {
-    if (!remixParam) return null;
-    try { return JSON.parse(decodeURIComponent(remixParam)); } catch { return null; }
+    if (!isRemix) return null;
+    try {
+      const raw = sessionStorage.getItem("promptly_remix");
+      if (raw) { sessionStorage.removeItem("promptly_remix"); return JSON.parse(raw); }
+    } catch { /* */ }
+    return null;
   })();
 
   const [formData, setFormData] = useState({
