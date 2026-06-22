@@ -50,7 +50,7 @@ export default function ContactPage() {
 
       {/* Channels */}
       <section className="py-16">
-        <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {CHANNELS.map(({ Icon, title, body, cta, href }) => (
               <div key={title} className="flex flex-col rounded-xl border bg-surface p-6">

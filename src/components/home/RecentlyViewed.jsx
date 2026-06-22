@@ -33,7 +33,7 @@ export function RecentlyViewed() {
 
   return (
     <section className="w-full border-t bg-surface py-8 lg:py-10">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

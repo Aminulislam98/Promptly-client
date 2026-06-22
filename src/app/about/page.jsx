@@ -86,7 +86,7 @@ export default function AboutPage() {
 
       {/* Live stats */}
       <section className="border-b bg-page-bg py-12">
-        <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8">
           <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border lg:grid-cols-4">
             {STATS.map((s) => (
               <div
@@ -126,7 +126,7 @@ export default function AboutPage() {
 
       {/* Values */}
       <section className="border-b bg-page-bg py-16">
-        <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl font-bold text-text-primary">
             What we believe
           </h2>

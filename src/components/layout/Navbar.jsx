@@ -212,7 +212,7 @@ export function Navbar({ name = "Promptly" }) {
         }
       >
         {/* ── Three-column grid so nav is truly centred ── */}
-        <div className="mx-auto grid h-16 w-full max-w-[1600px] grid-cols-3 items-center px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto grid h-16 w-full max-w-content grid-cols-3 items-center px-4 sm:px-6 lg:px-8">
 
           {/* ── Col 1 — Logo ── */}
           <div className="flex items-center">
@@ -430,7 +430,7 @@ export function Navbar({ name = "Promptly" }) {
         {/* ── Mobile Drawer ── */}
         {menuOpen && (
           <nav className="border-t bg-surface lg:hidden" aria-label="Mobile navigation">
-            <div className="mx-auto max-w-[1600px] space-y-1 px-4 py-3">
+            <div className="mx-auto max-w-content space-y-1 px-4 py-3">
               {NAV_LINKS.map((link) => {
                 const active = isActive(link.href);
                 return (

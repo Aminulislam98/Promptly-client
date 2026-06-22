@@ -55,6 +55,8 @@
   --color-error: var(--error);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  /* Site-wide content width token — use max-w-content everywhere */
+  --max-width-content: 1600px;
 }
 
 @layer base {

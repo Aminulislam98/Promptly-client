@@ -70,7 +70,7 @@ const TOOLS = [
 export function BrowseByTool() {
   return (
     <section className="w-full border-t bg-page-bg py-12 lg:py-16">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8">
 
         {/* Section header */}
         <motion.div

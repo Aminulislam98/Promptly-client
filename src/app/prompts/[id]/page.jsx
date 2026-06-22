@@ -517,7 +517,7 @@ export default function PromptDetailsPage({ params }) {
   if (isLoading) {
     return (
       <main className="min-h-screen bg-page-bg px-3 py-6">
-        <div className="mx-auto w-full max-w-screen-xl">
+        <div className="mx-auto w-full max-w-content">
           <div className="h-6 w-32 animate-pulse rounded bg-surface-hover" />
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2 flex flex-col gap-4">
@@ -555,7 +555,7 @@ export default function PromptDetailsPage({ params }) {
   return (
     <main className="min-h-screen bg-page-bg px-3 py-6">
       <Toaster position="top-center" />
-      <div className="mx-auto w-full max-w-screen-xl">
+      <div className="mx-auto w-full max-w-content">
         <Link
           href="/prompts"
           className={

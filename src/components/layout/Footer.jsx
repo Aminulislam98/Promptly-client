@@ -100,7 +100,7 @@ export function Footer({ name = "Promptly" }) {
 
   return (
     <footer className="border-t bg-surface">
-      <div className="mx-auto w-full max-w-[1600px] px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-content px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           <div className="flex flex-col gap-4">
             <Link

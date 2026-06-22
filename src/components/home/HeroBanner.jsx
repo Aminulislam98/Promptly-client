@@ -235,7 +235,7 @@ function SearchOverlay({ onClose, isLoggedIn }) {
         className="relative z-10 flex flex-col border-b bg-surface"
         style={{ maxHeight: "80vh" }}
       >
-        <div className="mx-auto flex w-full max-w-[1600px] items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-content items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <Search className="h-5 w-5 shrink-0 text-brand" />
           <input
             ref={inputRef}
@@ -267,7 +267,7 @@ function SearchOverlay({ onClose, isLoggedIn }) {
         </div>
 
         <div className="overflow-y-auto border-t">
-          <div className="mx-auto w-full max-w-[1600px] px-4 pb-5 pt-4 sm:px-6 lg:px-8">
+          <div className="mx-auto w-full max-w-content px-4 pb-5 pt-4 sm:px-6 lg:px-8">
             {!query.trim() && !isSearching && (
               <div>
                 <p className="mb-3 text-base font-medium text-text-secondary">

@@ -40,7 +40,7 @@ const cardVariants = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 
 export function WhyChooseUs() {
   return (
     <section className="w-full border-t bg-surface py-12 lg:py-16">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
         <motion.div
