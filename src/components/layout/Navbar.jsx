@@ -460,9 +460,7 @@ export function Navbar({ name = "Promptly" }) {
                     <div className="min-w-0">
                       <div className="flex items-center gap-1">
                         <p className="truncate text-base font-semibold text-text-primary">{user.name}</p>
-                        {user.isVerified && (
-                          <BadgeCheck className="h-4 w-4 shrink-0 text-brand" aria-label="Verified" />
-                        )}
+                        {user.isVerified && <VerifiedBadge size="xs" />}
                       </div>
                       <p className="truncate text-sm text-text-muted">{user.email}</p>
                     </div>

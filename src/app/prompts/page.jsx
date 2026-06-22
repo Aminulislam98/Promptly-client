@@ -12,7 +12,6 @@ import {
   X,
   Lock,
   Bookmark,
-  BadgeCheck,
 } from "lucide-react";
 import { getPrompts, toggleBookmark, getBookmarks } from "@/lib/api";
 import { CreatorAvatar, useCreatorInfo } from "@/components/ui/CreatorAvatar";
