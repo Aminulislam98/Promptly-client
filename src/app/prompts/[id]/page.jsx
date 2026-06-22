@@ -760,64 +760,6 @@ export default function PromptDetailsPage({ params }) {
             </div>
           </div>
 
-          {/* Comments section */}
-          <section className="rounded-xl border bg-surface p-6">
-            <h2 className="flex items-center gap-2 text-xl font-semibold text-text-primary">
-              <MessageSquare className="h-5 w-5 text-text-secondary" />
-              Discussion
-              <span className="rounded-full bg-surface-hover px-2 py-0.5 text-base text-text-secondary">{comments.length}</span>
-            </h2>
-            <form onSubmit={handlePostComment} className="mt-4 flex flex-col gap-3">
-              <textarea
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Share a tip, result, or variation…"
-                rows={3}
-                className={"w-full resize-none rounded-lg border bg-surface-hover px-4 py-3 text-base text-text-primary placeholder:text-text-muted transition-colors focus:border-brand outline-none " + focusRing}
-              />
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={submittingComment || !commentText.trim()}
-                  className={"h-10 rounded-lg bg-brand px-5 text-base font-semibold text-white transition-all hover:bg-brand-hover active:scale-[0.98] disabled:opacity-50 " + focusRing}
-                >
-                  {submittingComment ? "Posting…" : "Post"}
-                </button>
-              </div>
-            </form>
-            <div className="mt-4 flex flex-col gap-4">
-              {comments.length === 0 && (
-                <p className="py-6 text-center text-base text-text-muted">No comments yet — be the first!</p>
-              )}
-              {comments.map((c) => (
-                <div key={String(c._id)} className="flex gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-base font-bold text-white">
-                    {c.userName?.charAt(0).toUpperCase() || "?"}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-base font-semibold text-text-primary">{c.userName}</p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-text-muted">{new Date(c.createdAt).toLocaleDateString()}</span>
-                        {(user?.id === c.userId || user?.role === "admin") && (
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteComment(String(c._id))}
-                            className={"rounded p-1 text-text-muted transition-colors hover:text-error " + focusRing}
-                            aria-label="Delete comment"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <p className="mt-1 text-base leading-relaxed text-text-secondary">{c.text}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
           {/* Sidebar */}
           <aside className="flex flex-col gap-4">
             <div className="rounded-xl border bg-surface p-5">
@@ -1047,6 +989,64 @@ export default function PromptDetailsPage({ params }) {
             )}
           </aside>
         </div>
+
+        {/* Comments — full width below the main grid */}
+        <section className="mt-6 rounded-xl border bg-surface p-6">
+          <h2 className="flex items-center gap-2 text-xl font-semibold text-text-primary">
+            <MessageSquare className="h-5 w-5 text-text-secondary" />
+            Discussion
+            <span className="rounded-full bg-surface-hover px-2 py-0.5 text-base text-text-secondary">{comments.length}</span>
+          </h2>
+          <form onSubmit={handlePostComment} className="mt-4 flex flex-col gap-3">
+            <textarea
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Share a tip, result, or variation…"
+              rows={3}
+              className={"w-full resize-none rounded-lg border bg-surface-hover px-4 py-3 text-base text-text-primary placeholder:text-text-muted transition-colors focus:border-brand outline-none " + focusRing}
+            />
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={submittingComment || !commentText.trim()}
+                className={"h-10 rounded-lg bg-brand px-5 text-base font-semibold text-white transition-all hover:bg-brand-hover active:scale-[0.98] disabled:opacity-50 " + focusRing}
+              >
+                {submittingComment ? "Posting…" : "Post"}
+              </button>
+            </div>
+          </form>
+          <div className="mt-4 flex flex-col gap-4">
+            {comments.length === 0 && (
+              <p className="py-6 text-center text-base text-text-muted">No comments yet — be the first!</p>
+            )}
+            {comments.map((c) => (
+              <div key={String(c._id)} className="flex gap-3 border-t pt-4 first:border-t-0 first:pt-0">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-base font-bold text-white">
+                  {c.userName?.charAt(0).toUpperCase() || "?"}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-base font-semibold text-text-primary">{c.userName}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-base text-text-muted">{new Date(c.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+                      {(user?.id === c.userId || user?.role === "admin") && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteComment(String(c._id))}
+                          className={"rounded p-1 text-text-muted transition-colors hover:text-error " + focusRing}
+                          aria-label="Delete comment"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <p className="mt-1 text-base leading-relaxed text-text-secondary">{c.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* Related Prompts */}
         {related.length > 0 && (
