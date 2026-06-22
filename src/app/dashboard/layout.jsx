@@ -10,6 +10,9 @@ import {
   Star,
   User,
   PlusCircle,
+  FolderOpen,
+  History,
+  Users,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
@@ -23,6 +26,10 @@ const PAGE_TITLES = {
   "/dashboard/saved": "Saved Prompts | Promptly",
   "/dashboard/reviews": "My Reviews | Promptly",
   "/dashboard/profile": "Profile | Promptly",
+  "/dashboard/collections": "Collections | Promptly",
+  "/dashboard/copy-history": "Copy History | Promptly",
+  "/dashboard/following": "Following | Promptly",
+  "/dashboard/my-reports": "My Reports | Promptly",
 };
 
 const USER_LINKS = [
@@ -30,6 +37,9 @@ const USER_LINKS = [
   { href: "/dashboard/add-prompt", label: "Add Prompt", icon: PlusCircle },
   { href: "/dashboard/my-prompts", label: "My Prompts", icon: FileText },
   { href: "/dashboard/saved", label: "Saved", icon: Bookmark },
+  { href: "/dashboard/collections", label: "Collections", icon: FolderOpen },
+  { href: "/dashboard/copy-history", label: "Copy History", icon: History },
+  { href: "/dashboard/following", label: "Following", icon: Users },
   { href: "/dashboard/profile", label: "Profile", icon: User },
   { href: "/dashboard/reviews", label: "My Reviews", icon: Star },
 ];

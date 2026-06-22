@@ -206,3 +206,88 @@ export const getMyReceivedReports = () => {
     return data;
   });
 };
+
+// ── Comments ────────────────────────────────────────────────
+export const getComments = (promptId) =>
+  fetch(`/api/comments/${promptId}`, { credentials: "include" }).then((r) => r.json());
+
+export const postComment = (promptId, text) =>
+  fetch(`/api/comments/${promptId}`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  }).then(async (r) => {
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.message || "Failed to post comment");
+    return d;
+  });
+
+export const deleteComment = (promptId, commentId) =>
+  fetch(`/api/comments/${promptId}?commentId=${commentId}`, {
+    method: "DELETE",
+    credentials: "include",
+  }).then(async (r) => {
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.message || "Failed to delete comment");
+    return d;
+  });
+
+// ── Copy History ─────────────────────────────────────────────
+export const getCopyHistory = () =>
+  fetch("/api/copy-history", { credentials: "include" }).then((r) => r.json());
+
+export const recordCopy = (promptId, promptTitle, promptCategory) =>
+  fetch("/api/copy-history", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ promptId, promptTitle, promptCategory }),
+  }).then((r) => r.json());
+
+// ── Collections ──────────────────────────────────────────────
+export const getCollections = () =>
+  fetch("/api/collections", { credentials: "include" }).then((r) => r.json());
+
+export const createCollection = (name) =>
+  fetch("/api/collections", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  }).then(async (r) => {
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.message || "Failed to create collection");
+    return d;
+  });
+
+export const deleteCollection = (id) =>
+  fetch(`/api/collections/${id}`, { method: "DELETE", credentials: "include" }).then((r) => r.json());
+
+export const togglePromptInCollection = (collectionId, promptId, action) =>
+  fetch(`/api/collections/${collectionId}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ promptId, action }),
+  }).then((r) => r.json());
+
+// ── Follow ───────────────────────────────────────────────────
+export const getFollowStatus = (creatorName) =>
+  fetch(`/api/follow/${encodeURIComponent(creatorName)}`, { credentials: "include" }).then((r) => r.json());
+
+export const followCreator = (creatorName) =>
+  fetch(`/api/follow/${encodeURIComponent(creatorName)}`, {
+    method: "POST",
+    credentials: "include",
+  }).then(async (r) => {
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.message || "Failed to follow");
+    return d;
+  });
+
+export const unfollowCreator = (creatorName) =>
+  fetch(`/api/follow/${encodeURIComponent(creatorName)}`, {
+    method: "DELETE",
+    credentials: "include",
+  }).then((r) => r.json());

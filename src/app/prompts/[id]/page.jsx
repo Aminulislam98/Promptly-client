@@ -3,7 +3,8 @@
 import { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy, Bookmark, Flag, ArrowLeft, Check, Lock, Share2 } from "lucide-react";
+import { Copy, Bookmark, Flag, ArrowLeft, Check, Lock, Share2, GitFork, FolderPlus, MessageSquare, Trash2, FolderOpen, Plus, UserPlus, UserCheck, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { TryItPanel } from "@/components/ui/TryItPanel";
 import toast, { Toaster } from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -16,6 +17,13 @@ import {
   toggleBookmark,
   addReview,
   reportPrompt,
+  getComments,
+  postComment,
+  deleteComment,
+  recordCopy,
+  getCollections,
+  createCollection,
+  togglePromptInCollection,
 } from "@/lib/api";
 
 const focusRing =
@@ -34,6 +42,64 @@ const DIFFICULTY_STYLES = {
   Intermediate: "text-warning bg-warning/10",
   Pro: "text-error bg-error/10",
 };
+
+const DIFFICULTY_DESC = {
+  Beginner: "Simple, single-task prompts. No AI expertise needed — just copy and use.",
+  Intermediate: "Multi-step prompts that may need light customisation before use.",
+  Pro: "Complex prompts requiring understanding of prompt engineering and the AI model.",
+};
+
+function DifficultyBadge({ difficulty, className = "" }) {
+  const style = DIFFICULTY_STYLES[difficulty] || "";
+  const desc = DIFFICULTY_DESC[difficulty];
+  return (
+    <span className={"group relative inline-flex items-center " + className}>
+      <span className={"rounded-md px-3 py-1 text-base font-medium cursor-default " + style}>
+        {difficulty}
+      </span>
+      {desc && (
+        <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-56 -translate-x-1/2 rounded-lg border border-border bg-surface px-3 py-2 text-base text-text-secondary opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+          {desc}
+          <span className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1 rotate-45 border-b border-r border-border bg-surface" />
+        </span>
+      )}
+    </span>
+  );
+}
+
+// Heuristic quality score 0-100 based on prompt metadata
+function computeQuality(p) {
+  if (!p) return 0;
+  let score = 0;
+  if (p.content?.length > 100) score += 20;
+  if (p.content?.length > 400) score += 10;
+  if (p.description?.length > 40) score += 15;
+  if (p.usageInstructions?.length > 20) score += 10;
+  if (p.tags?.length >= 2) score += 10;
+  if ((p.avgRating || 0) >= 4) score += 20;
+  else if ((p.avgRating || 0) >= 3) score += 10;
+  if ((p.reviewCount || 0) >= 5) score += 10;
+  if ((p.copyCount || 0) >= 10) score += 5;
+  return Math.min(score, 100);
+}
+
+function QualityBadge({ score }) {
+  const label = score >= 80 ? "Excellent" : score >= 60 ? "Good" : score >= 40 ? "Fair" : "Basic";
+  const colorClass =
+    score >= 80 ? "bg-success/10 text-success border-success/30" :
+    score >= 60 ? "bg-brand-light text-brand border-brand/30" :
+    score >= 40 ? "bg-warning/10 text-warning border-warning/30" :
+    "bg-surface-hover text-text-secondary border-border";
+  return (
+    <div className={"flex items-center justify-between rounded-xl border px-4 py-3 " + colorClass}>
+      <div>
+        <p className="text-base font-semibold">Quality Score</p>
+        <p className="text-sm">{label}</p>
+      </div>
+      <span className="text-2xl font-bold">{score}</span>
+    </div>
+  );
+}
 
 function Stars({ rating, interactive = false, onRate }) {
   return (
@@ -175,6 +241,15 @@ export default function PromptDetailsPage({ params }) {
   const [reviewText, setReviewText] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const [isOwnPrompt, setIsOwnPrompt] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [collections, setCollections] = useState([]);
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
+  const [newColName, setNewColName] = useState("");
+  const [creatingCol, setCreatingCol] = useState(false);
+  const [versions, setVersions] = useState([]);
+  const [showVersions, setShowVersions] = useState(false);
   const copyingRef = useRef(false);
   const { data: session, isPending: sessionPending } = authClient.useSession();
 
@@ -192,6 +267,13 @@ export default function PromptDetailsPage({ params }) {
     // On reload, TokenSync needs a moment to write the fresh session token
     // to localStorage — fetching before that causes a 401.
     if (!id || sessionPending || !session?.user) return;
+    // Fetch comments, collections, and versions independently (non-blocking)
+    getComments(id).then((d) => setComments(d.comments || [])).catch(() => {});
+    getCollections().then((d) => setCollections(d.collections || [])).catch(() => {});
+    fetch(`/api/prompt-versions/${id}`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((d) => setVersions(d.versions || []))
+      .catch(() => {});
     Promise.all([getPromptById(id), getReviews(id), getBookmarks(), getMyPrompts()])
       .then(([promptData, reviewData, bookmarksData, myPromptsData]) => {
         const p = promptData.prompt;
@@ -205,6 +287,15 @@ export default function PromptDetailsPage({ params }) {
         setIsOwnPrompt(myIds.has(String(id)));
         setCopyCount(p?.copyCount || 0);
         setReviews(reviewData.reviews || []);
+        // Save a version snapshot (fire-and-forget)
+        if (p?.content) {
+          fetch(`/api/prompt-versions/${id}`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: p.title, content: p.content, description: p.description }),
+          }).catch(() => {});
+        }
         const bookmarkedIds = (bookmarksData?.bookmarks || []).map(
           (b) => b.promptId
         );
@@ -274,6 +365,10 @@ export default function PromptDetailsPage({ params }) {
         localStorage.setItem(copiedKey, "true");
       }
       toast.success("Prompt copied to clipboard");
+      // Record in copy history (fire-and-forget)
+      if (session?.user?.id) {
+        recordCopy(prompt._id, prompt.title, prompt.category).catch(() => {});
+      }
       setTimeout(() => {
         setCopied(false);
         copyingRef.current = false;
@@ -355,6 +450,67 @@ export default function PromptDetailsPage({ params }) {
     }
   };
 
+  const handlePostComment = async (e) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+    setSubmittingComment(true);
+    try {
+      const data = await postComment(id, commentText.trim());
+      setComments((prev) => [data.comment, ...prev]);
+      setCommentText("");
+      toast.success("Comment posted");
+    } catch (err) {
+      toast.error(err.message || "Failed to post comment");
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await deleteComment(id, commentId);
+      setComments((prev) => prev.filter((c) => String(c._id) !== commentId));
+    } catch {
+      toast.error("Failed to delete comment");
+    }
+  };
+
+  const handleCreateCollection = async (e) => {
+    e.preventDefault();
+    if (!newColName.trim()) return;
+    setCreatingCol(true);
+    try {
+      const data = await createCollection(newColName.trim());
+      setCollections((prev) => [data.collection, ...prev]);
+      setNewColName("");
+      toast.success("Collection created");
+    } catch (err) {
+      toast.error(err.message || "Failed to create collection");
+    } finally {
+      setCreatingCol(false);
+    }
+  };
+
+  const handleToggleCollection = async (colId, isIn) => {
+    try {
+      await togglePromptInCollection(colId, id, isIn ? "remove" : "add");
+      setCollections((prev) =>
+        prev.map((c) =>
+          String(c._id) === colId
+            ? {
+                ...c,
+                promptIds: isIn
+                  ? c.promptIds.filter((pid) => pid !== String(id))
+                  : [...(c.promptIds || []), String(id)],
+              }
+            : c
+        )
+      );
+    } catch {
+      toast.error("Failed to update collection");
+    }
+  };
+
   // Show nothing while checking auth (avoids flash of content or premature redirect)
   if (!mounted || sessionPending || !session?.user) return null;
 
@@ -421,14 +577,7 @@ export default function PromptDetailsPage({ params }) {
                 <span className="rounded-md border px-3 py-1 text-base font-medium text-text-secondary">
                   {prompt.category}
                 </span>
-                <span
-                  className={
-                    "rounded-md px-3 py-1 text-base font-medium " +
-                    (DIFFICULTY_STYLES[prompt.difficulty] || "")
-                  }
-                >
-                  {prompt.difficulty}
-                </span>
+                <DifficultyBadge difficulty={prompt.difficulty} />
               </div>
               <h1 className="mt-4 text-2xl font-bold leading-tight text-text-primary sm:text-3xl">
                 {prompt.title}
@@ -511,6 +660,9 @@ export default function PromptDetailsPage({ params }) {
                 </pre>
               )}
             </div>
+
+            {/* Try It panel */}
+            <TryItPanel content={prompt.content} isLocked={isLocked} />
 
             {/* Usage instructions */}
             {prompt.usageInstructions && (
@@ -608,6 +760,64 @@ export default function PromptDetailsPage({ params }) {
             </div>
           </div>
 
+          {/* Comments section */}
+          <section className="rounded-xl border bg-surface p-6">
+            <h2 className="flex items-center gap-2 text-xl font-semibold text-text-primary">
+              <MessageSquare className="h-5 w-5 text-text-secondary" />
+              Discussion
+              <span className="rounded-full bg-surface-hover px-2 py-0.5 text-base text-text-secondary">{comments.length}</span>
+            </h2>
+            <form onSubmit={handlePostComment} className="mt-4 flex flex-col gap-3">
+              <textarea
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Share a tip, result, or variation…"
+                rows={3}
+                className={"w-full resize-none rounded-lg border bg-surface-hover px-4 py-3 text-base text-text-primary placeholder:text-text-muted transition-colors focus:border-brand outline-none " + focusRing}
+              />
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={submittingComment || !commentText.trim()}
+                  className={"h-10 rounded-lg bg-brand px-5 text-base font-semibold text-white transition-all hover:bg-brand-hover active:scale-[0.98] disabled:opacity-50 " + focusRing}
+                >
+                  {submittingComment ? "Posting…" : "Post"}
+                </button>
+              </div>
+            </form>
+            <div className="mt-4 flex flex-col gap-4">
+              {comments.length === 0 && (
+                <p className="py-6 text-center text-base text-text-muted">No comments yet — be the first!</p>
+              )}
+              {comments.map((c) => (
+                <div key={String(c._id)} className="flex gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-base font-bold text-white">
+                    {c.userName?.charAt(0).toUpperCase() || "?"}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-base font-semibold text-text-primary">{c.userName}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-text-muted">{new Date(c.createdAt).toLocaleDateString()}</span>
+                        {(user?.id === c.userId || user?.role === "admin") && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteComment(String(c._id))}
+                            className={"rounded p-1 text-text-muted transition-colors hover:text-error " + focusRing}
+                            aria-label="Delete comment"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <p className="mt-1 text-base leading-relaxed text-text-secondary">{c.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
           {/* Sidebar */}
           <aside className="flex flex-col gap-4">
             <div className="rounded-xl border bg-surface p-5">
@@ -659,6 +869,42 @@ export default function PromptDetailsPage({ params }) {
                       />
                       {bookmarked ? "Remove Bookmark" : "Bookmark"}
                     </button>
+                    {/* Save to Collection */}
+                    <button
+                      type="button"
+                      onClick={() => setShowCollectionModal(true)}
+                      className={
+                        "flex h-11 w-full items-center justify-center gap-2 rounded-lg border text-base font-medium text-text-primary transition-colors hover:bg-surface-hover " +
+                        focusRing
+                      }
+                    >
+                      <FolderPlus className="h-4 w-4" /> Save to Collection
+                    </button>
+
+                    {/* Remix */}
+                    {!isOwnPrompt && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const data = encodeURIComponent(JSON.stringify({
+                            title: `Remix of: ${prompt.title}`,
+                            content: prompt.content,
+                            category: prompt.category,
+                            aiTool: prompt.aiTool,
+                            difficulty: prompt.difficulty,
+                            remixedFrom: id,
+                          }));
+                          router.push(`/dashboard/create?remix=${data}`);
+                        }}
+                        className={
+                          "flex h-11 w-full items-center justify-center gap-2 rounded-lg border text-base font-medium text-text-secondary transition-colors hover:bg-surface-hover hover:text-brand " +
+                          focusRing
+                        }
+                      >
+                        <GitFork className="h-4 w-4" /> Remix this prompt
+                      </button>
+                    )}
+
                     {/* Show Report only if this prompt does NOT belong to the logged-in user.
                         isOwnPrompt is set by cross-checking against the user's own prompt list
                         from the backend — immune to display-name collisions across accounts. */}
@@ -759,6 +1005,44 @@ export default function PromptDetailsPage({ params }) {
                 ))}
               </div>
             </div>
+
+            {/* Quality score */}
+            <QualityBadge score={computeQuality(prompt)} />
+
+            {/* Version history */}
+            {versions.length > 0 && (
+              <div className="rounded-xl border bg-surface p-5">
+                <button
+                  type="button"
+                  onClick={() => setShowVersions((v) => !v)}
+                  className={"flex w-full items-center justify-between gap-2 text-left " + focusRing}
+                >
+                  <span className="flex items-center gap-2 text-base font-semibold text-text-primary">
+                    <Clock className="h-4 w-4 text-text-secondary" />
+                    Version History
+                    <span className="rounded-full bg-surface-hover px-2 py-0.5 text-base text-text-muted">{versions.length}</span>
+                  </span>
+                  {showVersions ? <ChevronUp className="h-4 w-4 text-text-muted" /> : <ChevronDown className="h-4 w-4 text-text-muted" />}
+                </button>
+                {showVersions && (
+                  <div className="mt-3 flex flex-col gap-2">
+                    {versions.map((v, i) => (
+                      <div key={String(v._id)} className="flex items-start gap-3 rounded-lg border p-3">
+                        <div className={"flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm font-bold " + (i === 0 ? "bg-brand text-white" : "bg-surface-hover text-text-muted")}>
+                          {versions.length - i}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-text-muted">
+                            {new Date(v.savedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                          </p>
+                          <p className="mt-1 line-clamp-2 font-mono text-sm text-text-secondary">{v.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </aside>
         </div>
 
@@ -814,6 +1098,50 @@ export default function PromptDetailsPage({ params }) {
           </div>
         )}
       </div>
+
+      {/* Save to Collection modal */}
+      {showCollectionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => setShowCollectionModal(false)}>
+          <div className="w-full max-w-sm rounded-2xl border bg-surface p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-text-primary">Save to Collection</h3>
+              <button type="button" onClick={() => setShowCollectionModal(false)} className={"rounded-lg p-1.5 transition-colors hover:bg-surface-hover " + focusRing}>
+                <Check className="h-4 w-4 text-text-muted" />
+              </button>
+            </div>
+            {/* Create new collection */}
+            <form onSubmit={handleCreateCollection} className="mt-4 flex gap-2">
+              <input
+                type="text"
+                value={newColName}
+                onChange={(e) => setNewColName(e.target.value)}
+                placeholder="New collection name…"
+                className={"flex-1 h-10 rounded-lg border bg-surface-hover px-3 text-base text-text-primary placeholder:text-text-muted focus:border-brand outline-none " + focusRing}
+              />
+              <button type="submit" disabled={creatingCol || !newColName.trim()} className={"h-10 rounded-lg bg-brand px-4 text-base font-semibold text-white disabled:opacity-50 " + focusRing}>
+                <Plus className="h-4 w-4" />
+              </button>
+            </form>
+            <div className="mt-4 flex flex-col gap-2 max-h-64 overflow-y-auto">
+              {collections.length === 0 && <p className="py-4 text-center text-base text-text-muted">No collections yet</p>}
+              {collections.map((col) => {
+                const isIn = (col.promptIds || []).includes(String(id));
+                return (
+                  <button
+                    key={String(col._id)}
+                    type="button"
+                    onClick={() => handleToggleCollection(String(col._id), isIn)}
+                    className={"flex items-center justify-between rounded-lg border px-4 py-3 text-base font-medium transition-colors hover:bg-surface-hover " + (isIn ? "border-brand text-brand" : "text-text-primary") + " " + focusRing}
+                  >
+                    <span className="flex items-center gap-2"><FolderOpen className="h-4 w-4" />{col.name}</span>
+                    {isIn && <Check className="h-4 w-4" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {showReport && (
         <ReportModal

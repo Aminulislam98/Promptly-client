@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Upload, X, Loader2, Lock } from "lucide-react";
@@ -38,18 +38,26 @@ const AI_TOOLS = [
 ];
 const DIFFICULTIES = ["Beginner", "Intermediate", "Pro"];
 
-export default function AddPromptPage() {
+function AddPromptPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = authClient.useSession();
 
+  // Pre-fill from remix query param
+  const remixParam = searchParams.get("remix");
+  const remixData = (() => {
+    if (!remixParam) return null;
+    try { return JSON.parse(decodeURIComponent(remixParam)); } catch { return null; }
+  })();
+
   const [formData, setFormData] = useState({
-    title: "",
+    title: remixData?.title || "",
     description: "",
-    content: "",
-    category: "",
-    aiTool: "",
+    content: remixData?.content || "",
+    category: remixData?.category || "",
+    aiTool: remixData?.aiTool || "",
     tags: "",
-    difficulty: "",
+    difficulty: remixData?.difficulty || "",
     visibility: "Public",
   });
   const [preview, setPreview] = useState(null);
@@ -279,6 +287,13 @@ export default function AddPromptPage() {
           )}
         </p>
       </div>
+
+      {remixData && (
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-brand/30 bg-brand-light px-5 py-4">
+          <span className="text-base font-semibold text-brand">🔀 Remixing a prompt</span>
+          <span className="text-base text-brand/80">— content pre-filled. Edit freely and make it your own.</span>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
         {/* Basic Info */}
@@ -557,5 +572,13 @@ export default function AddPromptPage() {
         </div>
       </form>
     </section>
+  );
+}
+
+export default function AddPromptPage() {
+  return (
+    <Suspense>
+      <AddPromptPageInner />
+    </Suspense>
   );
 }

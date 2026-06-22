@@ -3,13 +3,14 @@
 import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Copy, Lock, User, FileText } from "lucide-react";
-import { getCreatorPrompts } from "@/lib/api";
+import { ArrowLeft, Copy, Lock, User, FileText, UserPlus, UserCheck } from "lucide-react";
+import { getCreatorPrompts, getFollowStatus, followCreator, unfollowCreator } from "@/lib/api";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
+import toast, { Toaster } from "react-hot-toast";
 import { authClient } from "@/lib/auth-client";
 
 const focusRing =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-page-bg";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2";
 
 const DIFFICULTY_STYLES = {
   Beginner: "text-success bg-success/10",
@@ -61,24 +62,51 @@ export default function CreatorProfilePage({ params }) {
   const [prompts, setPrompts] = useState([]);
   const [creatorInfo, setCreatorInfo] = useState({ image: null, isVerified: false });
   const [isLoading, setIsLoading] = useState(true);
+  const [followCount, setFollowCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([
       getCreatorPrompts(creatorName),
       fetch(`/api/creator-info/${encodeURIComponent(creatorName)}`).then((r) => r.json()),
+      getFollowStatus(creatorName),
     ])
-      .then(([promptsData, info]) => {
+      .then(([promptsData, info, followData]) => {
         setPrompts(promptsData.prompts || []);
         setCreatorInfo({ image: info.image || null, isVerified: !!info.isVerified });
+        setFollowCount(followData.count || 0);
+        setIsFollowing(!!followData.isFollowing);
       })
       .catch(() => setPrompts([]))
       .finally(() => setIsLoading(false));
   }, [creatorName]);
 
+  const handleFollow = async () => {
+    if (!isLoggedIn) { toast.error("Log in to follow creators"); return; }
+    setFollowLoading(true);
+    try {
+      if (isFollowing) {
+        await unfollowCreator(creatorName);
+        setIsFollowing(false);
+        setFollowCount((n) => Math.max(0, n - 1));
+      } else {
+        await followCreator(creatorName);
+        setIsFollowing(true);
+        setFollowCount((n) => n + 1);
+      }
+    } catch (err) {
+      toast.error(err.message || "Action failed");
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
   const totalCopies = prompts.reduce((s, p) => s + (p.copyCount || 0), 0);
 
   return (
     <main className="min-h-screen bg-page-bg py-6 px-3">
+      <Toaster position="top-center" />
       <div className="mx-auto w-full max-w-screen-xl">
         {/* Back */}
         <Link
@@ -114,22 +142,42 @@ export default function CreatorProfilePage({ params }) {
             </div>
 
             {!isLoading && (
-              <div className="mt-3 flex flex-wrap gap-4">
+              <div className="mt-3 flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-text-secondary" />
-                  <span className="text-base font-semibold text-text-primary">
-                    {prompts.length}
-                  </span>
+                  <span className="text-base font-semibold text-text-primary">{prompts.length}</span>
                   <span className="text-base text-text-secondary">Prompts</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Copy className="h-4 w-4 text-text-secondary" />
-                  <span className="text-base font-semibold text-text-primary">
-                    {totalCopies}
-                  </span>
+                  <span className="text-base font-semibold text-text-primary">{totalCopies}</span>
                   <span className="text-base text-text-secondary">Total copies</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4 text-text-secondary" />
+                  <span className="text-base font-semibold text-text-primary">{followCount}</span>
+                  <span className="text-base text-text-secondary">Followers</span>
+                </div>
               </div>
+            )}
+
+            {/* Follow button — don't show on own profile */}
+            {isLoggedIn && session?.user?.name !== creatorName && (
+              <button
+                type="button"
+                onClick={handleFollow}
+                disabled={followLoading}
+                className={
+                  "mt-4 inline-flex h-10 items-center gap-2 rounded-lg px-5 text-base font-semibold transition-all active:scale-[0.98] disabled:opacity-60 " +
+                  (isFollowing
+                    ? "border border-border bg-surface text-text-primary hover:bg-surface-hover"
+                    : "bg-brand text-white hover:bg-brand-hover") +
+                  " " + focusRing
+                }
+              >
+                {isFollowing ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                {isFollowing ? "Following" : "Follow"}
+              </button>
             )}
           </div>
         </div>
