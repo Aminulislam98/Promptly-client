@@ -16,6 +16,7 @@ import {
 import { getPrompts, toggleBookmark, getBookmarks } from "@/lib/api";
 import { CreatorAvatar, useCreatorInfo } from "@/components/ui/CreatorAvatar";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
+import { LoginNudgeModal } from "@/components/ui/LoginNudgeModal";
 import { authClient } from "@/lib/auth-client";
 import { formatCount, isNew, categoryColor } from "@/lib/utils";
 
@@ -658,6 +659,8 @@ export default function AllPromptsPage() {
 
   return (
     <main className="min-h-screen bg-page-bg">
+      {!isLoggedIn && <LoginNudgeModal redirectPath="/prompts" />}
+
       {searchOverlayOpen && (
         <SearchOverlay
           onClose={() => setSearchOverlayOpen(false)}
